@@ -12,7 +12,7 @@ function Navigation() {
   const [logoutUser] = useLogoutUserMutation();
   const notifications = useSelector((state) => state.user.newMessages);
   const dispatch = useDispatch();
-  const { socket, currentRoom, messages } = useContext(AppContext);
+  const { socket, currentRoom, messages,setPrivateMemberMsg } = useContext(AppContext);
   const [showBadge, setShowBadge] = useState(false);
   const navigate = useNavigate();
 
@@ -23,6 +23,7 @@ function Navigation() {
 
   function back() {
     dispatch(resetNotifications(currentRoom));
+    setPrivateMemberMsg({});
     navigate('/');
   }
 
