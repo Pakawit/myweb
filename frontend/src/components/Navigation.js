@@ -1,11 +1,11 @@
+import "./Navigation.css"; 
 import React, { useEffect, useContext, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { useLogoutUserMutation } from "../services/appApi";
 import { resetNotifications } from "../features/userSlice";
 import { AppContext } from "../context/appContext";
-import "./Navigation.css"; // Import your CSS file for styling (you can create this file)
-
+import {useNavigate} from 'react-router-dom'
 
 function Navigation() {
   const user = useSelector((state) => state.user);
@@ -14,6 +14,7 @@ function Navigation() {
   const dispatch = useDispatch();
   const { socket, currentRoom, messages } = useContext(AppContext);
   const [showBadge, setShowBadge] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Update showBadge state based on the number of notifications
@@ -22,13 +23,12 @@ function Navigation() {
 
   function back() {
     dispatch(resetNotifications(currentRoom));
-    window.location.replace("/");
+    navigate('/');
   }
 
   async function handleLogout(e) {
     e.preventDefault();
     await logoutUser(user);
-
   }
 
   return (

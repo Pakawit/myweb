@@ -12,8 +12,6 @@ function Login() {
   const { socket } = useContext(AppContext);
   const navigate = useNavigate();
 
-
-
   function handleLogin(e) {
     e.preventDefault();
     loginUser({ name, password }).then(({ data }) => {

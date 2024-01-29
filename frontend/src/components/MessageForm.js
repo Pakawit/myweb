@@ -3,6 +3,7 @@ import { Form, Button } from "react-bootstrap";
 import "./MessageForm.css";
 import { useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
+
 function MessageForm() {
   const [message, setMessage] = useState("");
   const user = useSelector((state) => state.user);
@@ -17,15 +18,11 @@ function MessageForm() {
     const date = new Date();
     const year = date.getFullYear();
     let month = (1 + date.getMonth()).toString();
-
     month = month.length > 1 ? month : "0" + month;
     let day = date.getDate().toString();
-
     day = day.length > 1 ? day : "0" + day;
-
     return month + "/" + day + "/" + year;
   }
-
 
   function scrollToBottom() {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });

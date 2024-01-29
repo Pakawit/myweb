@@ -4,8 +4,6 @@ import Navigation from "../components/Navigation";
 
 function Chat() {
   
-
-
   return (
     <Container>
       <Navigation />
