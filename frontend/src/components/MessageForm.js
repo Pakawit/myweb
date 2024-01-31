@@ -76,7 +76,6 @@ function MessageForm() {
       
       if (image) {
         const url = await uploadImage();
-        console.log(url);
         socket.emit("message-room", roomId, url, user, time, todayDate);
         setImage(null);
       } else {

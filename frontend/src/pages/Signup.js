@@ -49,7 +49,7 @@ function Signup() {
             </Button>
             <div className="py-4">
               <p className="text-center">
-                Already have an account ? <Link to="/login">Login</Link>
+                Already have an account ? <Link to="/">Login</Link>
               </p>
             </div>
           </Form>
