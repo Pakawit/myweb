@@ -10,6 +10,34 @@ function MessageForm() {
   const { socket, currentRoom, setMessages, messages } = useContext(AppContext);
   const messageEndRef = useRef(null);
 
+  const [image, setImage] = useState(null);
+
+  function validateImg(e) {
+    const file = e.target.files[0];
+    if (file.size >= 3048576) {
+      return alert("Max file size is 3mb");
+    } else {
+      setImage(file);
+    }
+  }
+
+  async function uploadImage() {
+    const data = new FormData();
+    data.append("file", image);
+    data.append("upload_preset", "x3tgzzl8");
+    try {
+      let res = await fetch("https://api.cloudinary.com/v1_1/dje07eo2t/image/upload", {
+        method: "post",
+        body: data,
+      });
+      const urlData = await res.json();
+      return urlData.url;
+    } catch (error) {
+      console.log(error);
+      throw new Error("Error uploading image");
+    }
+  }
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -34,16 +62,31 @@ function MessageForm() {
     setMessages(roomMessages);
   });
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (!message) return;
-    const today = new Date();
-    const minutes =
-      today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
-    const time = today.getHours() + ":" + minutes;
-    const roomId = currentRoom;
-    socket.emit("message-room", roomId, message, user, time, todayDate);
-    setMessage("");
+    
+    try {
+      if (!message && !image ) {
+        return;
+      }
+      const today = new Date();
+      const minutes = today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
+      const time = today.getHours() + ":" + minutes;
+      const roomId = currentRoom;
+      
+      if (image) {
+        const url = await uploadImage();
+        console.log(url);
+        socket.emit("message-room", roomId, url, user, time, todayDate);
+        setImage(null);
+      } else {
+        socket.emit("message-room", roomId, message, user, time, todayDate);
+        setMessage("");
+      }
+      
+    } catch (error) {
+      console.error('Error handling form submission:', error);
+    }
   }
 
   return (
@@ -71,7 +114,11 @@ function MessageForm() {
                           {sender._id === user?._id ? "You" : sender.name}
                         </p>
                       </div>
-                      <p className="message-content">{content}</p>
+                      {content.startsWith("http") ? (
+                        <img src={content} alt="Uploaded" style={{ maxWidth: "500px" }} />
+                      ) : (
+                        <p className="message-content">{content}</p>
+                      )}
                       <p className="message-timestamp-left">{time}</p>
                     </div>
                   </div>
@@ -82,30 +129,30 @@ function MessageForm() {
         <div ref={messageEndRef} />
       </div>
       <div>
-      <Form onSubmit={handleSubmit}>
-      <Form.Group style={{display:"flex"}}>
-      <Form.Control  style={{ display: "none" }} type="file" id="file" />
-          <label htmlFor="file">
-          <div className="img">
-            <i className="bi bi-image" ></i>
-            </div> 
-          </label>
-              <Form.Control
-                type="text"
-                placeholder="Your message"
-                value={message}
-                style={{ backgroundColor: "#DDDDDD"}}
-                onChange={(e) => setMessage(e.target.value)}
-              ></Form.Control>
+        <Form onSubmit={handleSubmit}>
+          <Form.Group style={{ display: "flex" }}>
+            <input style={{ display: "none" }} type="file" id="image-upload" hidden accept="image/png, image/jpeg" onChange={validateImg} />
+            <label htmlFor="image-upload">
+              <div className="img">
+                <i className="bi bi-image"></i>
+              </div>
+            </label>
+            <Form.Control
+              type="text"
+              placeholder="Your message"
+              value={message}
+              style={{ backgroundColor: "#DDDDDD" }}
+              onChange={(e) => setMessage(e.target.value)}
+            ></Form.Control>
             <Button
               variant="outline-dark"
               type="submit"
-              style={{ backgroundColor: "#DDDDD" , borderColor: "#DDDDD" }}
+              style={{ backgroundColor: "#DDDDD", borderColor: "#DDDDD" }}
             >
               <i className="bi bi-send-fill"></i>
             </Button>
-            </Form.Group>
-      </Form>
+          </Form.Group>
+        </Form>
       </div>
     </>
   );
