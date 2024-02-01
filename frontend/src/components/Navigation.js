@@ -17,7 +17,6 @@ function Navigation() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Update showBadge state based on the number of notifications
     setShowBadge(Object.keys(notifications).length > 0);
   }, [socket, notifications, messages ]);
 

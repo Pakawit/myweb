@@ -73,10 +73,10 @@ function Home() {
               {otherMembers.map((member, index) => (
                 <tr key={index}>
                   <td>{member.name}</td>
-                  <td>{index}</td>
-                  <td>{index}</td>
-                  <td>{index}</td>
-                  <td>{index}</td>
+                  <td>{'0000000000'}</td>
+                  <td>{'60'}</td>
+                  <td>{'0'}</td>
+                  <td>{'กินแล้ว'}</td>
                   <td>
                     <Button variant="outline-success">ข้อมูลส่วนบุคคล</Button>{' '}
                     <Button variant="outline-success">รายละเอียดการกินยา</Button>{' '}
