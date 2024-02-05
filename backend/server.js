@@ -44,7 +44,7 @@ function sortRoomMessagesByDate(messages) {
 // socket connection
 
 io.on("connection", (socket) => {
-  //อัพเดท member
+
   socket.on("new-user", async () => {
     const members = await User.find();
     io.emit("new-user", members);

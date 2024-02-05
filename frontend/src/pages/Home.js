@@ -50,6 +50,12 @@ function Home() {
     navigate("/chat");
   }
 
+  function handleSetMember(member) {
+    setPrivateMemberMsg(member);
+    navigate("/personal");
+  }
+
+
   // Filter out members that are not the current user
   const otherMembers = members.filter(member => member._id !== user._id);
 
@@ -66,19 +72,19 @@ function Home() {
                 <th>อายุ</th>
                 <th>ขาดยา</th>
                 <th>สถานะการกินยา</th>
-                <th>Action</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {otherMembers.map((member, index) => (
                 <tr key={index}>
                   <td>{member.name}</td>
-                  <td>{'0000000000'}</td>
-                  <td>{'60'}</td>
-                  <td>{'0'}</td>
-                  <td>{'กินแล้ว'}</td>
+                  <td>{member.phone}</td>
+                  <td>{member.age}</td>
+                  <td>{member.ms_medicine}</td>
+                  <td>{member.status}</td>
                   <td>
-                    <Button variant="outline-success">ข้อมูลส่วนบุคคล</Button>{' '}
+                    <Button variant="outline-success"onClick={() => handleSetMember(member)}>ข้อมูลส่วนบุคคล</Button>{' '}
                     <Button variant="outline-success">รายละเอียดการกินยา</Button>{' '}
                     <Button variant="outline-success">การประเมินอาการ HFS</Button>{' '}
                     <Button variant="outline-success" active={privateMemberMsg?._id === member?._id} onClick={() => handlePrivateMemberMsg(member)}>แชท</Button>

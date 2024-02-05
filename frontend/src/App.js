@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
+import Personal from "./pages/Personal";
 import { useState } from "react";
 import { AppContext, socket } from "./context/appContext";
 
@@ -51,6 +52,10 @@ function App() {
                 path="/chat"
                 element={<Navigate to="/" replace />}
               />
+                            <Route
+                path="/personal"
+                element={<Navigate to="/" replace />}
+              />
             </>
           ) : (
             <>
@@ -58,6 +63,7 @@ function App() {
               <Route path="/" element={<Navigate to="/home" replace />} />
               <Route path="/home" element={<Home />} />
               <Route path="/chat" element={<Chat />} />
+              <Route path="/personal" element={<Personal />} />
             </>
           )}
         </Routes>
