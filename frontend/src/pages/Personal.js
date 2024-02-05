@@ -4,29 +4,36 @@ import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 
 function Personal() {
-  const { privateMemberMsg } = useContext(AppContext);
-  const [editedFields, setEditedFields] = useState({}); // เพิ่มสถานะการแก้ไขแต่ละฟิลด์
+  const { privateMemberMsg, socket } = useContext(AppContext);
+  const [editedFields, setEditedFields] = useState({});
+  const [formData, setFormData] = useState({});
 
   const member = privateMemberMsg;
 
-  const handleEdit = (fieldName) => {
-    setEditedFields({ ...editedFields, [fieldName]: true }); // ระบุฟิลด์ที่กำลังแก้ไข
+  const handleEdit = (fieldName, value) => {
+    setEditedFields({ ...editedFields, [fieldName]: true });
+    setFormData({ ...formData, [fieldName]: value });
   };
 
-  const handleSave = (fieldName) => {
-    // ทำการบันทึกข้อมูลในฟิลด์ที่แก้ไข
-    console.log(`บันทึกข้อมูล ${fieldName}`);
-    setEditedFields({ ...editedFields, [fieldName]: false }); // เมื่อบันทึกแล้วให้เปลี่ยนสถานะการแก้ไขเป็นเท็จ
+  const handleInputChange = (fieldName, value) => {
+    setFormData({ ...formData, [fieldName]: value });
   };
 
-  const renderEditButton = (fieldName) => {
+  const handleSave = async (fieldName) => {
+    // ส่งข้อมูลที่แก้ไขไปยังเซิร์ฟเวอร์ผ่าน Socket.IO
+    
+    socket.emit("edit-field", { memberId: member._id, fieldName, value: formData[fieldName] });
+    setEditedFields({ ...editedFields, [fieldName]: false });
+};
+
+  const renderEditButton = (fieldName, value) => {
     if (editedFields[fieldName]) {
       return (
         <Button variant="success" onClick={() => handleSave(fieldName)}>บันทึก</Button>
       );
     } else {
       return (
-        <Button variant="outline-secondary" onClick={() => handleEdit(fieldName)}>
+        <Button variant="outline-secondary" onClick={() => handleEdit(fieldName, value)}>
           <i className="bi bi-box-arrow-in-down-left"></i>
         </Button>
       );
@@ -37,9 +44,19 @@ function Personal() {
     return (
       <Row className="border border-dark p-2 mb-2">
         <Col className="col-5 d-flex justify-content-center">{label}</Col>
-        <Col className="col-6 d-flex justify-content-center">{value}</Col>
+        <Col className="col-6 d-flex justify-content-center">
+          {editedFields[fieldName] ? (
+            <input
+              type="text"
+              value={formData[fieldName] || value}
+              onChange={(e) => handleInputChange(fieldName, e.target.value)}
+            />
+          ) : (
+            value
+          )}
+        </Col>
         <Col className="col-1 d-flex justify-content-center">
-          {renderEditButton(fieldName)}
+          {renderEditButton(fieldName, value)}
         </Col>
       </Row>
     );

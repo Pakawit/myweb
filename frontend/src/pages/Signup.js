@@ -14,7 +14,7 @@ function Signup() {
     signupUser({ name, password }).then(({ data }) => {
       if (data) {
         console.log(data);
-        navigate("/chat");
+        navigate("/");
       }
     });
   }

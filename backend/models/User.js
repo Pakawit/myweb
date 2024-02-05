@@ -19,8 +19,43 @@ const UserSchema = new mongoose.Schema(
     },
     isAdmin: {
       type: Boolean,
-      required: true,
       default: false,
+    },
+    phone: {
+      type: String,
+      default: "0000000000",
+    },
+    other_numbers: {
+      type: String,
+      default: "0000000000",
+    },
+    age: {
+      type: Number,
+      default: 0,
+    },
+    diagnosis: {
+      type: String,
+      default: "",
+    },
+    hospital_number: {
+      type: String,
+      default: "",
+    },
+    ms_medicine : {
+      type: Number,
+      default: 0,
+    },
+    other_medicine : {
+      type: String,
+      default: "",
+    },
+    status : {
+      type: Number,
+      default: 0,
+    },
+    taking_capecitabine : {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true, minimize: false }
@@ -28,8 +63,11 @@ const UserSchema = new mongoose.Schema(
 
 UserSchema.pre("save", function (next) {
   const user = this;
+  
+  // ตรวจสอบว่ามีการเปลี่ยนแปลงรหัสผ่านหรือไม่
   if (!user.isModified("password")) return next();
 
+  // สร้าง salt และ hash รหัสผ่านเฉพาะเมื่อมีการเปลี่ยนแปลงรหัสผ่าน
   bcrypt.genSalt(10, function (err, salt) {
     if (err) return next(err);
 
@@ -41,6 +79,7 @@ UserSchema.pre("save", function (next) {
     });
   });
 });
+
 
 UserSchema.methods.toJSON = function () {
   const user = this;

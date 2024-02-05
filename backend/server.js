@@ -42,9 +42,7 @@ function sortRoomMessagesByDate(messages) {
 }
 
 // socket connection
-
 io.on("connection", (socket) => {
-
   socket.on("new-user", async () => {
     const members = await User.find();
     io.emit("new-user", members);
@@ -57,6 +55,22 @@ io.on("connection", (socket) => {
     roomMessages = sortRoomMessagesByDate(roomMessages);
     socket.emit("room-messages", roomMessages);
   });
+
+  socket.on("edit-field", async ({ memberId, fieldName, value }) => {
+    try {
+      // ค้นหาผู้ใช้ที่ต้องการอัปเดตข้อมูล
+      const user = await User.findById(memberId);
+      if (!user) {
+        throw new Error('ไม่พบผู้ใช้');
+      }
+      user[fieldName] = value;
+      await user.save();
+      console.log(`แก้ไข ${fieldName} เป็น ${value} สำเร็จแล้ว`);
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
+    }
+  });
+  
 
   socket.on("message-room", async (room, content, sender, time, date) => {
     const newMessage = await Message.create({
