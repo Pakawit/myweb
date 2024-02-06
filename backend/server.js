@@ -58,7 +58,6 @@ io.on("connection", (socket) => {
 
   socket.on("edit-field", async ({ memberId, fieldName, value }) => {
     try {
-      // ค้นหาผู้ใช้ที่ต้องการอัปเดตข้อมูล
       const user = await User.findById(memberId);
       if (!user) {
         throw new Error('ไม่พบผู้ใช้');
