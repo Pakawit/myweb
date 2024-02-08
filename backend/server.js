@@ -48,6 +48,11 @@ io.on("connection", (socket) => {
     io.emit("new-user", members);
   });
 
+  socket.on("new-select", async ({ memberId }) => {
+    const member = await User.findById(memberId);
+    io.emit("new-select", member);
+  });
+
   socket.on("join-room", async (newRoom, previousRoom) => {
     socket.join(newRoom);
     socket.leave(previousRoom);
@@ -65,11 +70,11 @@ io.on("connection", (socket) => {
       user[fieldName] = value;
       await user.save();
       console.log(`แก้ไข ${fieldName} เป็น ${value} สำเร็จแล้ว`);
+      io.emit("new-select", await User.findById(memberId));
     } catch (error) {
       console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
     }
   });
-  
 
   socket.on("message-room", async (room, content, sender, time, date) => {
     const newMessage = await Message.create({
@@ -81,7 +86,6 @@ io.on("connection", (socket) => {
     });
     let roomMessages = await getLastMessagesFromRoom(room);
     roomMessages = sortRoomMessagesByDate(roomMessages);
-    // sending message to room
     io.to(room).emit("room-messages", roomMessages);
     socket.broadcast.emit("notifications", room);
   });

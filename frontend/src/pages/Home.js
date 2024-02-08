@@ -12,6 +12,7 @@ function Home() {
     socket,
     setMembers,
     members,
+    setMember,
     setCurrentRoom,
     setPrivateMemberMsg,
     privateMemberMsg,
@@ -51,7 +52,7 @@ function Home() {
   }
 
   function handleSetMember(member) {
-    setPrivateMemberMsg(member);
+    setMember(member);
     navigate("/personal");
   }
 
