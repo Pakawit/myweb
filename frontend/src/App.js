@@ -6,8 +6,12 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
 import Personal from "./pages/Personal";
+import Medicine from "./pages/Medicine";
+import Estimate from "./pages/Estimate";
 import { useState } from "react";
 import { AppContext, socket } from "./context/appContext";
+
+
 
 function App() {
   const user = useSelector((state) => state.user);
@@ -16,7 +20,6 @@ function App() {
   const [members, setMembers] = useState([]);
   const [member, setMember] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [privateMemberMsg, setPrivateMemberMsg] = useState({});
   const [newMessages, setNewMessages] = useState({});
 
   return (
@@ -31,8 +34,6 @@ function App() {
         setMember,
         messages,
         setMessages,
-        privateMemberMsg,
-        setPrivateMemberMsg,
         rooms,
         setRooms,
         newMessages,
@@ -55,8 +56,16 @@ function App() {
                 path="/chat"
                 element={<Navigate to="/" replace />}
               />
-                            <Route
+              <Route
                 path="/personal"
+                element={<Navigate to="/" replace />}
+              />
+              <Route
+                path="/medicine"
+                element={<Navigate to="/" replace />}
+              />
+              <Route
+                path="/estimate"
                 element={<Navigate to="/" replace />}
               />
             </>
@@ -67,6 +76,8 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/personal" element={<Personal />} />
+              <Route path="/medicine" element={<Medicine />} />
+              <Route path="/estimate" element={<Estimate />} />
             </>
           )}
         </Routes>

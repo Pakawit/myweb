@@ -14,8 +14,6 @@ function Home() {
     members,
     setMember,
     setCurrentRoom,
-    setPrivateMemberMsg,
-    privateMemberMsg,
     currentRoom,
   } = useContext(AppContext);
   const dispatch = useDispatch();
@@ -33,7 +31,7 @@ function Home() {
     setMembers(payload);
   });
 
-  function joinRoom( room ) {
+  function joinRoom(room) {
     socket.emit("join-room", room, currentRoom);
     setCurrentRoom(room);
     // dispatch for notifications
@@ -44,18 +42,11 @@ function Home() {
     return id1 > id2 ? id1 + "-" + id2 : id2 + "-" + id1;
   }
 
-  function handlePrivateMemberMsg(member) {
-    setPrivateMemberMsg(member);
+  function handleMemberMsg(member) {
     const roomId = orderIds(user._id, member._id);
     joinRoom(roomId, false);
     navigate("/chat");
   }
-
-  function handleSetMember(member) {
-    setMember(member);
-    navigate("/personal");
-  }
-
 
   // Filter out members that are not the current user
   const otherMembers = members.filter(member => member._id !== user._id);
@@ -85,10 +76,19 @@ function Home() {
                   <td>{member.ms_medicine}</td>
                   <td>{member.status}</td>
                   <td>
-                    <Button variant="outline-success"onClick={() => handleSetMember(member)}>ข้อมูลส่วนบุคคล</Button>{' '}
-                    <Button variant="outline-success">รายละเอียดการกินยา</Button>{' '}
-                    <Button variant="outline-success">การประเมินอาการ HFS</Button>{' '}
-                    <Button variant="outline-success" active={privateMemberMsg?._id === member?._id} onClick={() => handlePrivateMemberMsg(member)}>แชท</Button>
+                    <Button variant="outline-success" onClick={() => {
+                        setMember(member);
+                        navigate("/personal");
+                    }}>ข้อมูลส่วนบุคคล</Button>{' '}
+                    <Button variant="outline-success" onClick={() => {
+                        setMember(member);
+                        navigate("/medicine");
+                    }}>รายละเอียดการกินยา</Button>{' '}
+                    <Button variant="outline-success" onClick={() => {
+                        setMember(member);
+                        navigate("/estimate");
+                    }}>การประเมินอาการ HFS</Button>{' '}
+                    <Button variant="outline-success" onClick={() => handleMemberMsg(member)}>แชท</Button>
                   </td>
                 </tr>
               ))}

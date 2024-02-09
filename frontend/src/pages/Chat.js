@@ -11,7 +11,6 @@ function Chat() {
   const { socket, currentRoom, setMessages, messages } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
-
   function validateImg(e) {
     const file = e.target.files[0];
     if (file.size >= 3048576) {
@@ -95,6 +94,7 @@ function Chat() {
         <Col>
         <>
       <div className="messages-output">
+        <h1>{}</h1>
         {user &&
           messages.map(({ _id: date, messagesByDate }, idx) => (
             <div key={idx}>
