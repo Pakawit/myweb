@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Form, Button,Container,Row,Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-import "./Chat.css";
+import "./style.css";
 import { useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 

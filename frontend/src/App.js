@@ -6,8 +6,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
 import Personal from "./pages/Personal";
-import Medicine from "./pages/Medicine";
-import Estimate from "./pages/Estimate";
+import Medication from "./pages/Medication";
+import Estimation from "./pages/Estimation";
 import { useState } from "react";
 import { AppContext, socket } from "./context/appContext";
 
@@ -61,11 +61,11 @@ function App() {
                 element={<Navigate to="/" replace />}
               />
               <Route
-                path="/medicine"
+                path="/medication"
                 element={<Navigate to="/" replace />}
               />
               <Route
-                path="/estimate"
+                path="/estimation"
                 element={<Navigate to="/" replace />}
               />
             </>
@@ -76,8 +76,8 @@ function App() {
               <Route path="/home" element={<Home />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/personal" element={<Personal />} />
-              <Route path="/medicine" element={<Medicine />} />
-              <Route path="/estimate" element={<Estimate />} />
+              <Route path="/medication" element={<Medication />} />
+              <Route path="/estimation" element={<Estimation />} />
             </>
           )}
         </Routes>

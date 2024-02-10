@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import { addNotifications, resetNotifications } from "../features/userSlice";
 import { useNavigate } from 'react-router-dom';
+import "./style.css"
 
 function Home() {
   const user = useSelector((state) => state.user);
@@ -59,34 +60,34 @@ function Home() {
           <Table>
             <thead>
               <tr>
-                <th>ชื่อ-สกุล</th>
-                <th>เบอร์โทรศัพท์</th>
-                <th>อายุ</th>
-                <th>ขาดยา</th>
-                <th>สถานะการกินยา</th>
-                <th></th>
+                <th className="table-center">ชื่อ-สกุล</th>
+                <th className="table-center">เบอร์โทรศัพท์</th>
+                <th className="table-center">อายุ</th>
+                <th className="table-center">ขาดยา</th>
+                <th className="table-center">สถานะการกินยา</th>
+                <th>{}</th>
               </tr>
             </thead>
             <tbody>
               {otherMembers.map((member, index) => (
                 <tr key={index}>
-                  <td>{member.name}</td>
-                  <td>{member.phone}</td>
-                  <td>{member.age}</td>
-                  <td>{member.ms_medicine}</td>
-                  <td>{member.status}</td>
-                  <td>
+                  <td className="table-center">{member.name}</td>
+                  <td className="table-center">{member.phone}</td>
+                  <td className="table-center">{member.age}</td>
+                  <td className="table-center">{member.ms_medicine}</td>
+                  <td className="table-center">{member.status}</td>
+                  <td className="table-center">
                     <Button variant="outline-success" onClick={() => {
                         setMember(member);
                         navigate("/personal");
                     }}>ข้อมูลส่วนบุคคล</Button>{' '}
                     <Button variant="outline-success" onClick={() => {
                         setMember(member);
-                        navigate("/medicine");
+                        navigate("/medication");
                     }}>รายละเอียดการกินยา</Button>{' '}
                     <Button variant="outline-success" onClick={() => {
                         setMember(member);
-                        navigate("/estimate");
+                        navigate("/estimation");
                     }}>การประเมินอาการ HFS</Button>{' '}
                     <Button variant="outline-success" onClick={() => handleMemberMsg(member)}>แชท</Button>
                   </td>
