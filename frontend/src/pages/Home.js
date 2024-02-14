@@ -4,8 +4,8 @@ import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import { addNotifications, resetNotifications } from "../features/userSlice";
-import { useNavigate } from 'react-router-dom';
-import "./style.css"
+import { useNavigate } from "react-router-dom";
+import "./style.css";
 
 function Home() {
   const user = useSelector((state) => state.user);
@@ -25,7 +25,7 @@ function Home() {
   });
 
   useEffect(() => {
-      socket.emit("new-user");
+    socket.emit("new-user");
   }, [user, socket]);
 
   socket.off("new-user").on("new-user", (payload) => {
@@ -43,14 +43,8 @@ function Home() {
     return id1 > id2 ? id1 + "-" + id2 : id2 + "-" + id1;
   }
 
-  function handleMemberMsg(member) {
-    const roomId = orderIds(user._id, member._id);
-    joinRoom(roomId, false);
-    navigate("/chat");
-  }
-
   // Filter out members that are not the current user
-  const otherMembers = members.filter(member => member._id !== user._id);
+  const otherMembers = members.filter((member) => member._id !== user._id);
 
   return (
     <Container>
@@ -75,21 +69,46 @@ function Home() {
                   <td className="table-center">{member.phone}</td>
                   <td className="table-center">{member.age}</td>
                   <td className="table-center">{member.ms_medicine}</td>
-                  <td className="table-center">{member.status}</td>
+                  <td className="table-center">{0}</td>
                   <td className="table-center">
-                    <Button variant="outline-success" onClick={() => {
+                    <Button
+                      variant="outline-success"
+                      onClick={() => {
                         setMember(member);
                         navigate("/personal");
-                    }}>ข้อมูลส่วนบุคคล</Button>{' '}
-                    <Button variant="outline-success" onClick={() => {
+                      }}
+                    >
+                      ข้อมูลส่วนบุคคล
+                    </Button>{" "}
+                    <Button
+                      variant="outline-success"
+                      onClick={() => {
+                        joinRoom(orderIds(user._id, member._id));
                         setMember(member);
                         navigate("/medication");
-                    }}>รายละเอียดการกินยา</Button>{' '}
-                    <Button variant="outline-success" onClick={() => {
+                      }}
+                    >
+                      รายละเอียดการกินยา
+                    </Button>{" "}
+                    <Button
+                      variant="outline-success"
+                      onClick={() => {
                         setMember(member);
                         navigate("/estimation");
-                    }}>การประเมินอาการ HFS</Button>{' '}
-                    <Button variant="outline-success" onClick={() => handleMemberMsg(member)}>แชท</Button>
+                      }}
+                    >
+                      การประเมินอาการ HFS
+                    </Button>{" "}
+                    <Button
+                      variant="outline-success"
+                      onClick={() => {
+                        joinRoom(orderIds(user._id, member._id));
+                        setMember(member);
+                        navigate("/chat");
+                      }}
+                    >
+                      แชท
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -98,7 +117,7 @@ function Home() {
         </Col>
       </Row>
     </Container>
-  )
+  );
 }
 
 export default Home;

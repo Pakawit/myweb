@@ -3,6 +3,7 @@ const app = express();
 const userRoutes = require("./routes/userRoutes");
 const User = require("./models/User");
 const Message = require("./models/Message");
+const Medication = require("./models/Medication");
 const cors = require("cors");
 
 app.use(express.urlencoded({ extended: true }));
@@ -26,6 +27,7 @@ async function getLastMessagesFromRoom(room) {
     { $match: { to: room } },
     { $group: { _id: "$date", messagesByDate: { $push: "$$ROOT" } } },
   ]);
+  console.log(roomMessages);
   return roomMessages;
 }
 
@@ -48,32 +50,11 @@ io.on("connection", (socket) => {
     io.emit("new-user", members);
   });
 
-  socket.on("new-select", async ({ memberId }) => {
-    const member = await User.findById(memberId);
-    io.emit("new-select", member);
-  });
-
-  socket.on("join-room", async (newRoom, previousRoom) => {
+  socket.on("join-room", async (newRoom) => {
     socket.join(newRoom);
-    socket.leave(previousRoom);
     let roomMessages = await getLastMessagesFromRoom(newRoom);
     roomMessages = sortRoomMessagesByDate(roomMessages);
     socket.emit("room-messages", roomMessages);
-  });
-
-  socket.on("edit-field", async ({ memberId, fieldName, value }) => {
-    try {
-      const user = await User.findById(memberId);
-      if (!user) {
-        throw new Error('ไม่พบผู้ใช้');
-      }
-      user[fieldName] = value;
-      await user.save();
-      console.log(`แก้ไข ${fieldName} เป็น ${value} สำเร็จแล้ว`);
-      io.emit("new-select", await User.findById(memberId));
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
-    }
   });
 
   socket.on("message-room", async (room, content, sender, time, date) => {
@@ -88,6 +69,43 @@ io.on("connection", (socket) => {
     roomMessages = sortRoomMessagesByDate(roomMessages);
     io.to(room).emit("room-messages", roomMessages);
     socket.broadcast.emit("notifications", room);
+  });
+
+  socket.on("new-select", async ({ memberId }) => {
+    const member = await User.findById(memberId);
+    io.emit("new-select", member);
+  });
+
+  socket.on("edit-field", async ({ memberId, fieldName, value }) => {
+    try {
+      const user = await User.findById(memberId);
+      if (!user) {
+        throw new Error("ไม่พบผู้ใช้");
+      }
+      user[fieldName] = value;
+      await user.save();
+      console.log(`แก้ไข ${fieldName} เป็น ${value} สำเร็จแล้ว`);
+      io.emit("new-select", await User.findById(memberId));
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
+    }
+  });
+
+  socket.on("new-medication", async ({ room }) => {
+    const roomMedications = await Medication.find({ to: room });
+    io.to(room).emit("room-medications", roomMedications);
+  });
+
+  socket.on("add-medication", async (room, sender, time, date) => {
+    const newMedication = await Medication.create({
+      status: 0,
+      from: sender,
+      time,
+      date,
+      to: room,
+    });
+    const roomMedications = await Medication.find({ to: room });
+    io.to(room).emit("room-medications", roomMedications);
   });
 
   app.delete("/logout", async (req, res) => {
