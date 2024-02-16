@@ -12,7 +12,7 @@ function Navigation() {
   const [logoutUser] = useLogoutUserMutation();
   const notifications = useSelector((state) => state.user.newMessages);
   const dispatch = useDispatch();
-  const { socket, currentRoom, messages ,setCurrentRoom,setMember } = useContext(AppContext);
+  const { socket, contact, messages ,setContact,setMember } = useContext(AppContext);
   const [showBadge, setShowBadge] = useState(false);
   const navigate = useNavigate();
 
@@ -21,16 +21,16 @@ function Navigation() {
   }, [socket, notifications, messages ]);
 
   function back() {
-    dispatch(resetNotifications(currentRoom));
-    setCurrentRoom([]);
+    dispatch(resetNotifications(contact));
+    setContact([]);
     setMember([]);
     navigate('/');
   }
 
   async function handleLogout(e) {
     e.preventDefault();
-    dispatch(resetNotifications(currentRoom));
-    setCurrentRoom([]);
+    dispatch(resetNotifications(contact));
+    setContact([]);
     setMember([]);
     await logoutUser(user);
   }

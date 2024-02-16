@@ -49,7 +49,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    status : {
+    laststatus : {
       type: Number,
       default: 0,
     },

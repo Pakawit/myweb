@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useSelector } from "react-redux";
@@ -7,9 +7,9 @@ import {useNavigate} from 'react-router-dom'
 
 function Medication() {
   const user = useSelector((state) => state.user);
-  const { socket, currentRoom, member  } = useContext(AppContext);
+  const { socket, contact, member, medications, setMedications  } = useContext(AppContext);
   const navigate = useNavigate();
-  const [medications, setMedications] = useState([]);
+
 
 
   function getFormattedDate() {
@@ -30,7 +30,7 @@ function Medication() {
     const time = today.getHours() + ":" + minutes;
     const todayDate = getFormattedDate();
 
-    socket.emit("add-medication", currentRoom, user, time, todayDate);
+    socket.emit("add-medication", contact, user, time, todayDate);
   }
 
   socket.on("room-medications", (roomMedications) => {
@@ -43,7 +43,7 @@ function Medication() {
       navigate('/');
     }
     // Emit the 'new-select' event to fetch the initial member data
-    socket.emit("new-medication", { room: currentRoom });
+    socket.emit("new-medication", { room: contact });
 
     // Listen for changes in member data from the server
     socket.on("new-medication", (payload) => { 
@@ -55,7 +55,7 @@ function Medication() {
     return () => {
       socket.off("new-medication");
     };
-  }, [socket, user, member._id, setMedications, navigate,currentRoom]); 
+  }, [socket, user, member._id, setMedications, navigate,contact]); 
 
 
   return (

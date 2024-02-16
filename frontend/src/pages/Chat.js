@@ -8,7 +8,7 @@ import { AppContext } from "../context/appContext";
 function Chat() {
   const [message, setMessage] = useState("");
   const user = useSelector((state) => state.user);
-  const { socket, currentRoom, setMessages, messages } = useContext(AppContext);
+  const { socket, contact, setMessages, messages } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
   function validateImg(e) {
@@ -71,7 +71,7 @@ function Chat() {
       const today = new Date();
       const minutes = today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
       const time = today.getHours() + ":" + minutes;
-      const roomId = currentRoom;
+      const roomId = contact;
       
       if (image) {
         const url = await uploadImage();
@@ -105,7 +105,7 @@ function Chat() {
                 ({ content, time, from: sender }, msgIdx) => (
                   <div
                     className={
-                      sender?.name === user?.name
+                      sender === user?._id
                         ? "incoming-message"
                         : "message"
                     }
@@ -118,7 +118,7 @@ function Chat() {
                         </p>
                       </div>
                       {content.startsWith("http") ? (
-                        <img src={content} alt="Uploaded" style={{ maxWidth: "500px" }} />
+                        <img src={content} alt="Uploaded" style={{ maxWidth: "350px" ,maxHeight: "500px" }} />
                       ) : (
                         <p className="message-content">{content}</p>
                       )}

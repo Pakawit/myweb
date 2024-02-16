@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const MedicationSchema = new mongoose.Schema({
   status: Number,
-  from: Object,
+  from: String,
   socketid: String,
   time: String,
   date: String,

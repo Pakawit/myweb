@@ -27,7 +27,7 @@ async function getLastMessagesFromRoom(room) {
     { $match: { to: room } },
     { $group: { _id: "$date", messagesByDate: { $push: "$$ROOT" } } },
   ]);
-  console.log(roomMessages);
+  //console.log(roomMessages);
   return roomMessages;
 }
 
@@ -60,7 +60,7 @@ io.on("connection", (socket) => {
   socket.on("message-room", async (room, content, sender, time, date) => {
     const newMessage = await Message.create({
       content,
-      from: sender,
+      from: sender._id,
       time,
       date,
       to: room,
@@ -92,6 +92,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("new-medication", async ({ room }) => {
+    socket.join(room);
     const roomMedications = await Medication.find({ to: room });
     io.to(room).emit("room-medications", roomMedications);
   });
@@ -99,7 +100,7 @@ io.on("connection", (socket) => {
   socket.on("add-medication", async (room, sender, time, date) => {
     const newMedication = await Medication.create({
       status: 0,
-      from: sender,
+      from: sender._id,
       time,
       date,
       to: room,

@@ -14,14 +14,14 @@ function Home() {
     setMembers,
     members,
     setMember,
-    setCurrentRoom,
-    currentRoom,
+    setContact,
+    contact,
   } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   socket.off("notifications").on("notifications", (room) => {
-    if (currentRoom !== room) dispatch(addNotifications(room));
+    if (contact !== room) dispatch(addNotifications(room));
   });
 
   useEffect(() => {
@@ -33,8 +33,8 @@ function Home() {
   });
 
   function joinRoom(room) {
-    socket.emit("join-room", room, currentRoom);
-    setCurrentRoom(room);
+    socket.emit("join-room", room, contact);
+    setContact(room);
     // dispatch for notifications
     dispatch(resetNotifications(room));
   }
@@ -83,7 +83,7 @@ function Home() {
                     <Button
                       variant="outline-success"
                       onClick={() => {
-                        joinRoom(orderIds(user._id, member._id));
+                        setContact(orderIds(user._id, member._id));
                         setMember(member);
                         navigate("/medication");
                       }}
@@ -93,6 +93,7 @@ function Home() {
                     <Button
                       variant="outline-success"
                       onClick={() => {
+                        setContact(orderIds(user._id, member._id));
                         setMember(member);
                         navigate("/estimation");
                       }}
