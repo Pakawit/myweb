@@ -60,7 +60,7 @@ io.on("connection", (socket) => {
   socket.on("message-room", async (room, content, sender, time, date) => {
     const newMessage = await Message.create({
       content,
-      from: sender._id,
+      from: sender,
       time,
       date,
       to: room,
@@ -93,19 +93,19 @@ io.on("connection", (socket) => {
 
   socket.on("new-medication", async ({ room }) => {
     socket.join(room);
-    const roomMedications = await Medication.find({ to: room });
+    const roomMedications = await Medication.find({ from: room });
     io.to(room).emit("room-medications", roomMedications);
   });
 
   socket.on("add-medication", async (room, sender, time, date) => {
     const newMedication = await Medication.create({
       status: 0,
-      from: sender._id,
+      from: sender,
       time,
       date,
       to: room,
     });
-    const roomMedications = await Medication.find({ to: room });
+    const roomMedications = await Medication.find({ from: room });
     io.to(room).emit("room-medications", roomMedications);
   });
 

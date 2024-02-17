@@ -9,14 +9,8 @@ import "./style.css";
 
 function Home() {
   const user = useSelector((state) => state.user);
-  const {
-    socket,
-    setMembers,
-    members,
-    setMember,
-    setContact,
-    contact,
-  } = useContext(AppContext);
+  const { socket, setMembers, members, setMember, setContact, contact } =
+    useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -83,7 +77,7 @@ function Home() {
                     <Button
                       variant="outline-success"
                       onClick={() => {
-                        setContact(orderIds(user._id, member._id));
+                        setContact(member._id);
                         setMember(member);
                         navigate("/medication");
                       }}
