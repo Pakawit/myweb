@@ -1,24 +1,19 @@
-import React, { useContext, useState} from "react";
+import React, {useState} from "react";
 import { Button, Form, Container, Row, Col, Spinner } from "react-bootstrap";
 import { useLoginUserMutation } from "../services/appApi";
 import { Link, useNavigate } from "react-router-dom";
-import { AppContext } from "../context/appContext";
 
 
 function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loginUser, { isLoading, error }] = useLoginUserMutation();
-  const { socket } = useContext(AppContext);
   const navigate = useNavigate();
 
   function handleLogin(e) {
     e.preventDefault();
     loginUser({ name, password }).then(({ data }) => {
       if (data) {
-        // socket work
-        socket.emit("new-user");
-        // navigate to the Home
         navigate("/Home");
       }
     });

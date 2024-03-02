@@ -2,57 +2,39 @@ import React, { useContext, useState, useEffect } from "react";
 import { Container, Row, Col, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
-import { useSelector } from "react-redux";
-import {useNavigate} from 'react-router-dom'
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { updateUsers } from "../features/usersSlice";
 
 function Personal() {
   const user = useSelector((state) => state.user);
-  const { member, setMember, socket } = useContext(AppContext);
+  const { member, setMember } = useContext(AppContext);
   const [editedFields, setEditedFields] = useState({});
-  const [formData, setFormData] = useState({});
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if(!member._id){
-      navigate('/');
+    if (!member._id) {
+      navigate("/");
     }
-    // Emit the 'new-select' event to fetch the initial member data
-    socket.emit("new-select", { memberId: member._id });
+  }, [user, member._id, setMember, navigate]);
 
-    // Listen for changes in member data from the server
-    socket.on("new-select", (payload) => {
-      setMember(payload);
-    });
-
-    // Clean up socket event listener when component unmounts
-    return () => {
-      socket.off("new-select");
-    };
-  }, [socket, user, member._id, setMember, navigate]); // Include only necessary dependencies
-
-  const handleEdit = (fieldName, value) => {
+  const handleEdit = (fieldName) => {
     setEditedFields({ ...editedFields, [fieldName]: true });
-    setFormData({ ...formData, [fieldName]: value });
-  };
-
-  const handleInputChange = (fieldName, value) => {
-    setFormData({ ...formData, [fieldName]: value });
   };
 
   const handleSave = async (fieldName) => {
-    // Emit the 'edit-field' event to update the member data
-    socket.emit("edit-field", {
-      memberId: member._id,
-      fieldName,
-      value: formData[fieldName],
-    });
-
-    // Reset editedFields state and fetch updated member data
+    axios
+      .put("http://localhost:5001/update", { _id: member._id, ...member })
+      .then((res) => {
+        dispatch(updateUsers(res.data))
+      })
+      .catch((err) => console.log(err));
     setEditedFields({ ...editedFields, [fieldName]: false });
-    socket.emit("new-select", { memberId: member._id });
   };
 
-  const renderEditButton = (fieldName, value) => {
+  const renderEditButton = (fieldName) => {
     if (editedFields[fieldName]) {
       return (
         <Button variant="success" onClick={() => handleSave(fieldName)}>
@@ -63,7 +45,7 @@ function Personal() {
       return (
         <Button
           variant="outline-secondary"
-          onClick={() => handleEdit(fieldName, value)}
+          onClick={() => handleEdit(fieldName)}
         >
           <i className="bi bi-box-arrow-in-down-left"></i>
         </Button>
@@ -79,8 +61,10 @@ function Personal() {
           {editedFields[fieldName] ? (
             <input
               type="text"
-              value={formData[fieldName] || value}
-              onChange={(e) => handleInputChange(fieldName, e.target.value)}
+              value={value}
+              onChange={(e) =>
+                setMember({ ...member, [fieldName]: e.target.value })
+              }
             />
           ) : (
             value
@@ -97,7 +81,7 @@ function Personal() {
     <Container>
       <Navigation />
       <Row>
-      <h1>ข้อมูลส่วนบุคคล</h1>
+        <h1>ข้อมูลส่วนบุคคล</h1>
         <Col>
           {renderDataRow("ชื่อ-สกุล", member.name, "name")}
           {renderDataRow("เบอร์โทรศัพท์", member.phone, "phone")}
@@ -113,7 +97,11 @@ function Personal() {
             member.taking_capecitabine,
             "taking_capecitabine"
           )}
-          {renderDataRow("ยาที่ใช้ร่วม", member.other_medicine, "other_medicine")}
+          {renderDataRow(
+            "ยาที่ใช้ร่วม",
+            member.other_medicine,
+            "other_medicine"
+          )}
           {renderDataRow("ขาดยา", member.ms_medicine, "ms_medicine")}
           {renderDataRow(
             "เลขโรงพยาบาล",

@@ -1,14 +1,16 @@
 import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { addMedication, setMedication } from "../features/medicationSlice";
 
 function Medication() {
-  const user = useSelector((state) => state.user);
-  const { socket, contact, member, medications, setMedications } =
-    useContext(AppContext);
+  const { member } = useContext(AppContext);
+  const medication = useSelector((state) => state.medication);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   function getFormattedDate() {
@@ -21,37 +23,36 @@ function Medication() {
     return month + "/" + day + "/" + year;
   }
 
-  socket.on("room-medications", (roomMedications) => {
-    setMedications(roomMedications);
-  });
 
   useEffect(() => {
     if (!member._id) {
       navigate("/");
     }
-    // Emit the 'new-select' event to fetch the initial member data
-    socket.emit("new-medication", { room: contact });
-
-    // Listen for changes in member data from the server
-    socket.on("new-medication", (payload) => {
-      setMedications([payload]);
-    });
-
-    // Clean up socket event listener when component unmounts
-    return () => {
-      socket.off("new-medication");
+    const fetchData = async () => {
+      try {
+        const res = await axios.post("http://localhost:5001/getmedication",{_id: member._id});
+        dispatch(setMedication(res.data));
+      } catch (err) {
+        console.log(err);
+      }
     };
-  }, [socket, user, member._id, setMedications, navigate, contact]);
+    fetchData();
+  });
 
   async function handleSubmit(e) {
     e.preventDefault();
     const today = new Date();
-    const minutes =
-      today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
+    const minutes = today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
     const time = today.getHours() + ":" + minutes;
     const todayDate = getFormattedDate();
+    const status = 1 ;
 
-    socket.emit("add-medication", contact, user._id, time, todayDate);
+     axios.post("http://localhost:5001/createmedication", {status: status ,time: time, date: todayDate ,from: member._id})
+      .then((res) => {
+        dispatch(addMedication(res.data))
+      })
+      .catch((err) => console.log(err));
+
   }
 
   return (
@@ -76,7 +77,7 @@ function Medication() {
               </tr>
             </thead>
             <tbody>
-              {medications.map((medication, index) => (
+              {medication && medication.map((medication, index) => (
                 <tr key={index}>
                   <td className="table-center" style={{ width: "33%" }}>
                     {medication.date}

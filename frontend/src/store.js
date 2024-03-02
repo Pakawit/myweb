@@ -1,34 +1,36 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userSlice from "./features/userSlice";
-import appApi from "./services/appApi";
+import userReducer from "./features/userSlice";
+import usersReducer from "./features/usersSlice";
+import medicationReducer from "./features/medicationSlice";
+import messageReducer from "./features/messageSlice";
+import appApi from "./services/appApi"; 
 
-// persist our store
 import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
 import { persistReducer } from "redux-persist";
 
-// reducers
-const reducer = combineReducers({
-  user: userSlice,
-  [appApi.reducerPath]: appApi.reducer,
+const rootReducer = combineReducers({
+    user: userReducer,
+    users: usersReducer,
+    medication: medicationReducer,
+    message: messageReducer,
+    [appApi.reducerPath]: appApi.reducer, 
 });
 
 const persistConfig = {
-  key: "root",
-  storage,
-  blacklist: [appApi.reducerPath],
+    key: "root",
+    storage,
+    blacklist: [appApi.reducerPath], 
 };
 
-// persist our store
-const persistedReducer = persistReducer(persistConfig, reducer);
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// creating the store
 const store = configureStore({
-  reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false, 
-    }).concat(appApi.middleware),
+    reducer: persistedReducer,
+    middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({
+            serializableCheck: false,
+        }).concat(appApi.middleware), 
 });
 
 export default store;

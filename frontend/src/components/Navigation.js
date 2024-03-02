@@ -1,56 +1,53 @@
-import "./Navigation.css"; 
-import React, { useEffect, useContext, useState } from "react";
+import "./Navigation.css";
+import React, { useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Container, Nav, Navbar } from "react-bootstrap";
-import { useLogoutUserMutation } from "../services/appApi";
-import { resetNotifications } from "../features/userSlice";
 import { AppContext } from "../context/appContext";
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
+import { useLogoutUserMutation } from "../services/appApi";
+import { deleteUsers } from "../features/usersSlice";
+import { deleteMedication } from "../features/medicationSlice";
+import { deleteMessage } from "../features/messageSlice";
 
 function Navigation() {
   const user = useSelector((state) => state.user);
   const [logoutUser] = useLogoutUserMutation();
-  const notifications = useSelector((state) => state.user.newMessages);
   const dispatch = useDispatch();
-  const { socket, contact, messages ,setContact,setMember } = useContext(AppContext);
-  const [showBadge, setShowBadge] = useState(false);
+  const { setMember } = useContext(AppContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setShowBadge(Object.keys(notifications).length > 0);
-  }, [socket, notifications, messages ]);
-
-  function back() {
-    dispatch(resetNotifications(contact));
-    setContact([]);
-    setMember([]);
-    navigate('/');
+  async function back() {
+    await setMember([]);
+    await dispatch(deleteMedication());
+    await dispatch(deleteMessage());    
+    await navigate("/");
   }
 
   async function handleLogout(e) {
     e.preventDefault();
-    dispatch(resetNotifications(contact));
-    setContact([]);
-    setMember([]);
-    await logoutUser(user);
+    await dispatch(deleteUsers());
+    await setMember([]);
+    await dispatch(deleteMedication());
+    await dispatch(deleteMessage());  
+    await logoutUser(user);  
   }
+  
 
   return (
     <div>
-      <Navbar  >
+      <Navbar>
         <Container>
           <Nav.Link onClick={back}>
             <i className="bi bi-chevron-left"></i>
           </Nav.Link>
-              <Nav className="ms-autoNav">
-              <Nav.Link className="nav-link-with-badge ">
-                <i className="bi bi-bell"></i>
-                {showBadge && <span className="notification-count">{Object.keys(notifications).length}</span>}
-              </Nav.Link>
-              <Nav.Link onClick={handleLogout}>
-                <i className="bi bi-box-arrow-in-right"></i>
-              </Nav.Link>
-            </Nav>
+          <Nav className="ms-autoNav">
+            <Nav.Link className="nav-link-with-badge ">
+              <i className="bi bi-bell"></i>
+            </Nav.Link>
+            <Nav.Link onClick={handleLogout}>
+              <i className="bi bi-box-arrow-in-right"></i>
+            </Nav.Link>
+          </Nav>
         </Container>
       </Navbar>
     </div>

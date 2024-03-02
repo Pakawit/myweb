@@ -9,7 +9,7 @@ import Personal from "./pages/Personal";
 import Medication from "./pages/Medication";
 import Estimation from "./pages/Estimation";
 import { useState } from "react";
-import { AppContext, socket } from "./context/appContext";
+import { AppContext } from "./context/appContext";
 
 
 
@@ -20,12 +20,10 @@ function App() {
   const [member, setMember] = useState([]);
   const [messages, setMessages] = useState([]);
   const [newMessages, setNewMessages] = useState({});
-  const [medications, setMedications] = useState([]);
 
   return (
     <AppContext.Provider
       value={{
-        socket,
         contact,
         setContact,
         members,
@@ -35,9 +33,7 @@ function App() {
         messages,
         setMessages,
         newMessages,
-        setNewMessages,
-        medications, 
-        setMedications
+        setNewMessages
       }}
     >
       <BrowserRouter>

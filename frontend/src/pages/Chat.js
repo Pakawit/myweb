@@ -2,19 +2,39 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { Form, Button, Container, Row, Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import "./style.css";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { showMessage, addMessage } from "../features/messageSlice";
 
 function Chat() {
-  const [message, setMessage] = useState("");
+  const messages = useSelector((state) => state.message);
   const user = useSelector((state) => state.user);
-  const { socket, contact, setMessages, messages } = useContext(AppContext);
+  const [message, setMessage] = useState("");
+  const { member } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  socket.off("room-messages").on("room-messages", (roomMessages) => {
-    setMessages(roomMessages);
-  });
+  useEffect(() => {
+    if (!member._id) {
+      navigate("/");
+    }
+    const fetchData = async () => {
+      try {
+        const res = await axios.post("http://localhost:5001/getmessage", {
+          from: user._id,
+          to: member._id,
+        });
+        dispatch(showMessage(res.data));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchData();
+  },[messages,dispatch,navigate,user,member]);
 
   function validateImg(e) {
     const file = e.target.files[0];
@@ -56,11 +76,9 @@ function Chat() {
   function getFormattedDate() {
     const date = new Date();
     const year = date.getFullYear();
-    let month = (1 + date.getMonth()).toString();
-    month = month.length > 1 ? month : "0" + month;
-    let day = date.getDate().toString();
-    day = day.length > 1 ? day : "0" + day;
-    return month + "/" + day + "/" + year;
+    let month = (1 + date.getMonth()).toString().padStart(2, "0");
+    let day = date.getDate().toString().padStart(2, "0");
+    return `${month}/${day}/${year}`;
   }
 
   const todayDate = getFormattedDate();
@@ -72,20 +90,32 @@ function Chat() {
       if (!message && !image) {
         return;
       }
+
       const today = new Date();
-      const minutes =
-        today.getMinutes() < 10 ? "0" + today.getMinutes() : today.getMinutes();
-      const time = today.getHours() + ":" + minutes;
-      const roomId = contact;
+      const minutes = today.getMinutes().toString().padStart(2, "0");
+      const time = `${today.getHours()}:${minutes}`;
+      let content = "";
 
       if (image) {
         const url = await uploadImage();
-        socket.emit("message-room", roomId, url, user._id, time, todayDate);
+        content = url;
         setImage(null);
       } else {
-        socket.emit("message-room", roomId, message, user._id, time, todayDate);
+        content = message;
         setMessage("");
       }
+
+      axios.post("http://localhost:5001/createmessage", {
+          content: content,
+          time: time,
+          date: todayDate,
+          from: user._id,
+          to: member._id,
+        })
+        .then((res) => {
+          dispatch(addMessage(res.data));
+        })
+        .catch((err) => console.log(err));
     } catch (error) {
       console.error("Error handling form submission:", error);
     }
@@ -97,49 +127,9 @@ function Chat() {
       <Row>
         <Col>
           <>
-            <div className="messages-output">
-              <h1>{}</h1>
-              {user &&
-                messages.map(({ _id: date, messagesByDate }, idx) => (
-                  <div key={idx}>
-                    <p className="alert alert-info text-center message-date-indicator">
-                      {date}
-                    </p>
-                    {messagesByDate?.map(
-                      ({ content, time, from: sender }, msgIdx) => (
-                        <div
-                          className={
-                            sender === user?._id
-                              ? "incoming-message"
-                              : "message"
-                          }
-                          key={msgIdx}
-                        >
-                          <div className="message-inner">
-                            <div className="d-flex align-items-center mb-3">
-                              <p className="message-sender">
-                                {sender._id === user?._id ? "You" : sender.name}
-                              </p>
-                            </div>
-                            {content.startsWith("http") ? (
-                              <img
-                                src={content}
-                                alt="Uploaded"
-                                style={{
-                                  maxWidth: "350px",
-                                  maxHeight: "500px",
-                                }}
-                              />
-                            ) : (
-                              <p className="message-content">{content}</p>
-                            )}
-                            <p className="message-timestamp-left">{time}</p>
-                          </div>
-                        </div>
-                      )
-                    )}
-                  </div>
-                ))}
+            <div className="messages-output" >
+           
+
               <div ref={messageEndRef} />
             </div>
             <div>

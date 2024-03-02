@@ -13,10 +13,6 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "Can't be blank"],
     },
-    newMessages: {
-      type: Object,
-      default: {},
-    },
     isAdmin: {
       type: Boolean,
       default: false,

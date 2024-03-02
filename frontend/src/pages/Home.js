@@ -3,42 +3,29 @@ import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
-import { addNotifications, resetNotifications } from "../features/userSlice";
 import { useNavigate } from "react-router-dom";
 import "./style.css";
+import axios from "axios";
+import { setUsers } from "../features/usersSlice";
 
 function Home() {
   const user = useSelector((state) => state.user);
-  const { socket, setMembers, members, setMember, setContact, contact } =
-    useContext(AppContext);
+  const users = useSelector((state) => state.users);
+  const { setMember } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  socket.off("notifications").on("notifications", (room) => {
-    if (contact !== room) dispatch(addNotifications(room));
-  });
-
   useEffect(() => {
-    socket.emit("new-user");
-  }, [user, socket]);
-
-  socket.off("new-user").on("new-user", (payload) => {
-    setMembers(payload);
-  });
-
-  function joinRoom(room) {
-    socket.emit("join-room", room, contact);
-    setContact(room);
-    // dispatch for notifications
-    dispatch(resetNotifications(room));
-  }
-
-  function orderIds(id1, id2) {
-    return id1 > id2 ? id1 + "-" + id2 : id2 + "-" + id1;
-  }
-
-  // Filter out members that are not the current user
-  const otherMembers = members.filter((member) => member._id !== user._id);
+    const fetchData = async () => {
+      try {
+        const res = await axios.get("http://localhost:5001/getusers");
+        dispatch(setUsers(res.data));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchData();
+  }, []); // แก้ไขตรงนี้
 
   return (
     <Container>
@@ -57,56 +44,57 @@ function Home() {
               </tr>
             </thead>
             <tbody>
-              {otherMembers.map((member, index) => (
-                <tr key={index}>
-                  <td className="table-center">{member.name}</td>
-                  <td className="table-center">{member.phone}</td>
-                  <td className="table-center">{member.age}</td>
-                  <td className="table-center">{member.ms_medicine}</td>
-                  <td className="table-center">{0}</td>
-                  <td className="table-center">
-                    <Button
-                      variant="outline-success"
-                      onClick={() => {
-                        setMember(member);
-                        navigate("/personal");
-                      }}
-                    >
-                      ข้อมูลส่วนบุคคล
-                    </Button>{" "}
-                    <Button
-                      variant="outline-success"
-                      onClick={() => {
-                        setContact(member._id);
-                        setMember(member);
-                        navigate("/medication");
-                      }}
-                    >
-                      รายละเอียดการกินยา
-                    </Button>{" "}
-                    <Button
-                      variant="outline-success"
-                      onClick={() => {
-                        setContact(orderIds(user._id, member._id));
-                        setMember(member);
-                        navigate("/estimation");
-                      }}
-                    >
-                      การประเมินอาการ HFS
-                    </Button>{" "}
-                    <Button
-                      variant="outline-success"
-                      onClick={() => {
-                        joinRoom(orderIds(user._id, member._id));
-                        setMember(member);
-                        navigate("/chat");
-                      }}
-                    >
-                      แชท
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              {users &&
+                users.map(
+                  (userData, index) =>
+                    userData._id !== user._id && (
+                      <tr key={index}>
+                        <td className="table-center">{userData.name}</td>
+                        <td className="table-center">{userData.phone}</td>
+                        <td className="table-center">{userData.age}</td>
+                        <td className="table-center">{userData.ms_medicine}</td>
+                        <td className="table-center">{0}</td>
+                        <td className="table-center">
+                          <Button
+                            variant="outline-success"
+                            onClick={() => {
+                              setMember(userData);
+                              navigate("/personal");
+                            }}
+                          >
+                            ข้อมูลส่วนบุคคล
+                          </Button>{" "}
+                          <Button
+                            variant="outline-success"
+                            onClick={() => {
+                              setMember(userData);
+                              navigate("/medication");
+                            }}
+                          >
+                            รายละเอียดการกินยา
+                          </Button>{" "}
+                          <Button
+                            variant="outline-success"
+                            onClick={() => {
+                              setMember(userData);
+                              navigate("/estimation");
+                            }}
+                          >
+                            การประเมินอาการ HFS
+                          </Button>{" "}
+                          <Button
+                            variant="outline-success"
+                            onClick={() => {
+                              setMember(userData);
+                              navigate("/chat");
+                            }}
+                          >
+                            แชท
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                )}
             </tbody>
           </Table>
         </Col>
