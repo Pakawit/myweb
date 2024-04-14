@@ -3,6 +3,7 @@ import userReducer from "./features/userSlice";
 import usersReducer from "./features/usersSlice";
 import medicationReducer from "./features/medicationSlice";
 import messageReducer from "./features/messageSlice";
+import estimationReducer from "./features/estimationSlice";
 import appApi from "./services/appApi"; 
 
 import storage from "redux-persist/lib/storage";
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
     users: usersReducer,
     medication: medicationReducer,
     message: messageReducer,
+    estimation: estimationReducer,
     [appApi.reducerPath]: appApi.reducer, 
 });
 

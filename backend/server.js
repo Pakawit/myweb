@@ -3,6 +3,7 @@ const app = express();
 const User = require("./models/User");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
+const Estimation = require("./models/Estimation");
 const cors = require("cors");
 
 app.use(express.urlencoded({ extended: true }));
@@ -92,6 +93,59 @@ app.post("/getmedication", (req, res) => {
 app.post("/createmedication", (req, res) => {
   Medication.create(req.body)
     .then((medication) => res.json(medication))
+    .catch((err) => res.json(err));
+});
+
+app.post("/getestimation", (req, res) => {
+  const { _id } = req.body; 
+  Estimation.find({ to: _id , check: false }) 
+    .then((estimation) => res.json(estimation)) 
+    .catch((err) => res.json(err));
+});
+
+app.put("/editestimation", async (req, res) => {
+  try {
+    const editestimation = await Estimation.findByIdAndUpdate(
+      req.body._id,
+      {
+        hfsLevel: req.body.hfsLevel,
+        check: req.body.check,
+      },
+      { new: true }
+    );
+    res.json(editestimation);
+  } catch (err) {
+    res.json(err);
+  }
+});
+
+/// upload photo
+const multer = require('multer');
+const fs = require('fs');
+const upload = multer();
+
+// เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
+app.post('/uploadphoto', upload.single('photo'), async (req, res) => {
+  try {
+      const { _id } = req.body;
+      const estimation = await Estimation.findById(_id);
+
+      const base64Image = req.file.buffer.toString('base64');
+
+      estimation.photos.push(base64Image);
+      await estimation.save();
+
+      res.status(200).json({ message: 'Photo uploaded successfully' });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
+//////////////////////////////////////
+
+app.post("/createstimation", (req, res) => {
+  Estimation.create(req.body)
+    .then((estimation) => res.json(estimation))
     .catch((err) => res.json(err));
 });
 

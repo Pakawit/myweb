@@ -11,7 +11,7 @@ export const messageSlice = createSlice({
       state.push(action.payload);
     },
     deleteMessage: (state, action) => {
-      return "";
+      return null;
     },
   },
 });

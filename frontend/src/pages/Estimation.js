@@ -1,10 +1,71 @@
-import React , {useState} from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button, Dropdown } from "react-bootstrap";
 import Navigation from "../components/Navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { AppContext } from "../context/appContext";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { setEstimation } from "../features/estimationSlice";
 
 function Estimation() {
-  const [hfsLevel, setHfslevel] = useState(0);
+  const [hfsLevel, setHfsLevel] = useState(0);
+  // const [selectedFile, setSelectedFile] = useState(null);
+  const { member } = useContext(AppContext);
+  const estimation = useSelector((state) => state.estimation);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (!member._id) {
+      navigate("/");
+    }
+    const fetchData = async () => {
+      try {
+        const res = await axios.post("http://localhost:5001/getestimation", {
+          _id: member._id
+        });
+        dispatch(setEstimation(res.data));
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    fetchData();
+  });
+
+  async function handleSubmit(_id) {
+    try {
+      const res = await axios.put("http://localhost:5001/editestimation", {
+        _id: _id,
+        hfsLevel: hfsLevel,
+        check: true
+      });
+      console.log(res);
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  // async function handleUploadPhoto(_id) {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('photo', selectedFile);
+  //     formData.append('_id', _id);
+
+  //     const res = await axios.post("http://localhost:5001/uploadphoto", formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data'
+  //       }
+  //     });
+  //     console.log(res);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }
+
+  // function handleFileChange(event) {
+  //   setSelectedFile(event.target.files[0]);
+  // }
+  
   return (
     <Container>
       <Navigation />
@@ -23,30 +84,41 @@ function Estimation() {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="table-center">{"1/01/2544"}</td>
-                <td className="table-center">{"11.11"}</td>
-                <td className="table-center">{}</td>
-                <td className="table-center">{0}</td>
+            {estimation && estimation.map((est, index) => (
+              <tr key={est._id}>
+                <td className="table-center">{est.date}</td>
+                <td className="table-center">{est.time}</td>
+                <td className="table-center">
+                  {est.photos && est.photos.map((photo, photoIndex) => (
+                    <img key={photoIndex} src={`data:image/jpeg;base64,${photo}`} alt={`รูปภาพ ${photoIndex}`} style={{ width: '100px', height: '100px', marginRight: '10px' }} />
+                  ))}
+                </td>
+                <td className="table-center">{est.painLevel}</td>
                 <td className="table-center">
                   <Dropdown>
-                    <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
+                    <Dropdown.Toggle
+                      variant="outline-success"
+                      id="dropdown-basic"
+                    >
                       ระดับที่ {hfsLevel}
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
-                      <Dropdown.Item onClick={() => setHfslevel(0)}>ระดับที่ 0</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setHfslevel(1)}>ระดับที่ 1</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setHfslevel(2)}>ระดับที่ 2</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setHfslevel(3)}>ระดับที่ 3</Dropdown.Item>
-                      <Dropdown.Item onClick={() => setHfslevel(4)}>ระดับที่ 4</Dropdown.Item>
+                      {[0,1,2,3,4].map(level => (
+                        <Dropdown.Item key={level} onClick={() => setHfsLevel(level)}>
+                          ระดับที่ {level}
+                        </Dropdown.Item>
+                      ))}
                     </Dropdown.Menu>
                   </Dropdown>
                 </td>
                 <td>
-                  <Button variant="outline-success">แจ้งผู้ป่วย</Button>
+                  <Button variant="outline-success" onClick={() => handleSubmit(est._id)}>แจ้งผู้ป่วย</Button>
+                  {/* <input type="file" onChange={handleFileChange} />
+                  <Button variant="outline-primary" onClick={() => handleUploadPhoto(est._id)}>อัปโหลดรูปภาพ</Button> */}
                 </td>
               </tr>
+            ))}
             </tbody>
           </Table>
         </Col>

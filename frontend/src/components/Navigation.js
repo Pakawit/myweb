@@ -8,6 +8,7 @@ import { useLogoutUserMutation } from "../services/appApi";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
+import { deleteEstimation } from "../features/estimationSlice"
 
 function Navigation() {
   const user = useSelector((state) => state.user);
@@ -19,7 +20,8 @@ function Navigation() {
   async function back() {
     await setMember([]);
     await dispatch(deleteMedication());
-    await dispatch(deleteMessage());    
+    await dispatch(deleteMessage()); 
+    await dispatch(deleteEstimation());      
     await navigate("/");
   }
 
@@ -29,6 +31,7 @@ function Navigation() {
     await setMember([]);
     await dispatch(deleteMedication());
     await dispatch(deleteMessage());  
+    await dispatch(deleteEstimation());      
     await logoutUser(user);  
   }
   
