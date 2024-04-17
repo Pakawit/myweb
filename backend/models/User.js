@@ -19,11 +19,11 @@ const UserSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      default: "0000000000",
+      default: "",
     },
     other_numbers: {
       type: String,
-      default: "0000000000",
+      default: "",
     },
     age: {
       type: Number,

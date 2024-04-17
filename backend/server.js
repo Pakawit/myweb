@@ -10,35 +10,34 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
-
-app.post('/user', async(req, res)=> {
+app.post("/user", async (req, res) => {
   try {
-    const {name, password} = req.body;
+    const { name, password } = req.body;
     console.log(req.body);
-    const user = await User.create({name, password});
+    const user = await User.create({ name, password });
     res.status(201).json(user);
   } catch (e) {
     let msg;
-    if(e.code == 11000){
-      msg = "User already exists"
+    if (e.code == 11000) {
+      msg = "User already exists";
     } else {
       msg = e.message;
     }
     console.log(e);
-    res.status(400).json(msg)
+    res.status(400).json(msg);
   }
-})
+});
 
-app.post('/user/login', async(req, res)=> {
+app.post("/user/login", async (req, res) => {
   try {
-    const {name, password} = req.body;
+    const { name, password } = req.body;
     const user = await User.findByCredentials(name, password);
     await user.save();
     res.status(200).json(user);
   } catch (e) {
-      res.status(400).json(e.message)
+    res.status(400).json(e.message);
   }
-})
+});
 
 app.delete("/logout", async (req, res) => {
   try {
@@ -83,12 +82,11 @@ app.put("/update", async (req, res) => {
 });
 
 app.post("/getmedication", (req, res) => {
-  const { _id } = req.body; 
-  Medication.find({ from: _id }) 
-    .then((medications) => res.json(medications)) 
+  const { _id } = req.body;
+  Medication.find({ from: _id })
+    .then((medications) => res.json(medications))
     .catch((err) => res.json(err));
 });
-
 
 app.post("/createmedication", (req, res) => {
   Medication.create(req.body)
@@ -97,9 +95,9 @@ app.post("/createmedication", (req, res) => {
 });
 
 app.post("/getestimation", (req, res) => {
-  const { _id } = req.body; 
-  Estimation.find({ to: _id , check: false }) 
-    .then((estimation) => res.json(estimation)) 
+  const { _id } = req.body;
+  Estimation.find({ to: _id, check: false })
+    .then((estimation) => res.json(estimation))
     .catch((err) => res.json(err));
 });
 
@@ -120,25 +118,25 @@ app.put("/editestimation", async (req, res) => {
 });
 
 /// upload photo
-const multer = require('multer');
-const fs = require('fs');
+const multer = require("multer");
+const fs = require("fs");
 const upload = multer();
 
 // เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
-app.post('/uploadphoto', upload.single('photo'), async (req, res) => {
+app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
   try {
-      const { _id } = req.body;
-      const estimation = await Estimation.findById(_id);
+    const { _id } = req.body;
+    const estimation = await Estimation.findById(_id);
 
-      const base64Image = req.file.buffer.toString('base64');
+    const base64Image = req.file.buffer.toString("base64");
 
-      estimation.photos.push(base64Image);
-      await estimation.save();
+    estimation.photos.push(base64Image);
+    await estimation.save();
 
-      res.status(200).json({ message: 'Photo uploaded successfully' });
+    res.status(200).json({ message: "Photo uploaded successfully" });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal server error' });
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 //////////////////////////////////////
@@ -150,9 +148,9 @@ app.post("/createstimation", (req, res) => {
 });
 
 app.post("/getmessage", (req, res) => {
-  const { from , to } = req.body; 
-  Message.find({ from: from , to: to }) 
-    .then((message) => res.json(message)) 
+  const { from, to } = req.body;
+  Message.find({ from: from, to: to })
+    .then((message) => res.json(message))
     .catch((err) => res.json(err));
 });
 
@@ -166,7 +164,6 @@ require("./connection");
 
 const server = require("http").createServer(app);
 const PORT = 5001;
-
 
 server.listen(PORT, () => {
   console.log("listening to port", PORT);

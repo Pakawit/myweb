@@ -1,5 +1,13 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Dropdown,
+  Modal,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -14,6 +22,8 @@ function Estimation() {
   const estimation = useSelector((state) => state.estimation);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     if (!member._id) {
@@ -22,7 +32,7 @@ function Estimation() {
     const fetchData = async () => {
       try {
         const res = await axios.post("http://localhost:5001/getestimation", {
-          _id: member._id
+          _id: member._id,
         });
         dispatch(setEstimation(res.data));
       } catch (err) {
@@ -37,7 +47,7 @@ function Estimation() {
       const res = await axios.put("http://localhost:5001/editestimation", {
         _id: _id,
         hfsLevel: hfsLevel,
-        check: true
+        check: true,
       });
       console.log(res);
     } catch (err) {
@@ -65,7 +75,17 @@ function Estimation() {
   // function handleFileChange(event) {
   //   setSelectedFile(event.target.files[0]);
   // }
-  
+
+  const handleShowModal = (image) => {
+    setSelectedImage(image);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedImage(null);
+  };
+
   return (
     <Container>
       <Navigation />
@@ -84,45 +104,83 @@ function Estimation() {
               </tr>
             </thead>
             <tbody>
-            {estimation && estimation.map((est, index) => (
-              <tr key={est._id}>
-                <td className="table-center">{est.date}</td>
-                <td className="table-center">{est.time}</td>
-                <td className="table-center">
-                  {est.photos && est.photos.map((photo, photoIndex) => (
-                    <img key={photoIndex} src={`data:image/jpeg;base64,${photo}`} alt={`รูปภาพ ${photoIndex}`} style={{ width: '100px', height: '100px', marginRight: '10px' }} />
-                  ))}
-                </td>
-                <td className="table-center">{est.painLevel}</td>
-                <td className="table-center">
-                  <Dropdown>
-                    <Dropdown.Toggle
-                      variant="outline-success"
-                      id="dropdown-basic"
-                    >
-                      ระดับที่ {hfsLevel}
-                    </Dropdown.Toggle>
+              {estimation &&
+                estimation.map((est, index) => (
+                  <tr key={est._id}>
+                    <td className="table-center">{est.date}</td>
+                    <td className="table-center">{est.time}</td>
+                    <td className="table-center">
+                      {est.photos &&
+                        est.photos.map((photo, photoIndex) => (
+                          <img
+                            key={photoIndex}
+                            src={`data:image/jpeg;base64,${photo}`}
+                            alt={`รูปภาพ ${photoIndex}`}
+                            style={{
+                              width: "100px",
+                              height: "100px",
+                              marginRight: "10px",
+                              cursor: "pointer",
+                            }}
+                            onClick={() => handleShowModal(photo)}
+                          />
+                        ))}
+                    </td>
+                    <td className="table-center">{est.painLevel}</td>
+                    <td className="table-center">
+                      <Dropdown>
+                        <Dropdown.Toggle
+                          variant="outline-success"
+                          id="dropdown-basic"
+                        >
+                          ระดับที่ {hfsLevel}
+                        </Dropdown.Toggle>
 
-                    <Dropdown.Menu>
-                      {[0,1,2,3,4].map(level => (
-                        <Dropdown.Item key={level} onClick={() => setHfsLevel(level)}>
-                          ระดับที่ {level}
-                        </Dropdown.Item>
-                      ))}
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </td>
-                <td>
-                  <Button variant="outline-success" onClick={() => handleSubmit(est._id)}>แจ้งผู้ป่วย</Button>
-                  {/* <input type="file" onChange={handleFileChange} />
+                        <Dropdown.Menu>
+                          {[0, 1, 2, 3, 4].map((level) => (
+                            <Dropdown.Item
+                              key={level}
+                              onClick={() => setHfsLevel(level)}
+                            >
+                              ระดับที่ {level}
+                            </Dropdown.Item>
+                          ))}
+                        </Dropdown.Menu>
+                      </Dropdown>
+                    </td>
+                    <td>
+                      <Button
+                        variant="outline-success"
+                        onClick={() => handleSubmit(est._id)}
+                      >
+                        แจ้งผู้ป่วย
+                      </Button>
+                      {/* <input type="file" onChange={handleFileChange} />
                   <Button variant="outline-primary" onClick={() => handleUploadPhoto(est._id)}>อัปโหลดรูปภาพ</Button> */}
-                </td>
-              </tr>
-            ))}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </Table>
         </Col>
       </Row>
+      {/* Modal for Image Pop-up */}
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Body>
+          {selectedImage && (
+            <img
+              src={`data:image/jpeg;base64,${selectedImage}`}
+              alt="รูปภาพ"
+              style={{ width: "100%", height: "auto" }}
+            />
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }

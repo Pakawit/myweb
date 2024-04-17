@@ -25,7 +25,7 @@ function Home() {
       }
     };
     fetchData();
-  }, []); // แก้ไขตรงนี้
+  }, [dispatch]);
 
   return (
     <Container>
@@ -46,14 +46,22 @@ function Home() {
             <tbody>
               {users &&
                 users.map(
-                  (userData, index) =>
-                    userData._id !== user._id && (
-                      <tr key={index}>
+                  (userData) =>
+                    userData && userData._id && userData._id !== user._id && (
+                      <tr key={userData._id}>
                         <td className="table-center">{userData.name}</td>
                         <td className="table-center">{userData.phone}</td>
                         <td className="table-center">{userData.age}</td>
                         <td className="table-center">{userData.ms_medicine}</td>
-                        <td className="table-center">{0}</td>
+                        <td className="table-center">
+                          <Button
+                            className={userData.laststatus === 0 ? "btn-danger" : userData.laststatus === 1 ? "btn-warning" : "btn-success"}
+                            disabled={userData.laststatus !== 2}
+                          >
+                            {userData.laststatus === 0 ? "ยังไม่ได้กินยา" : userData.laststatus === 1 ? "ยังไม่ได้กินยา" : "กินยาแล้ว"}
+                          </Button>
+                        </td>
+
                         <td className="table-center">
                           <Button
                             variant="outline-success"
