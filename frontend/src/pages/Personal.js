@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Container, Row, Col, Button, Modal } from "react-bootstrap"; 
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,7 +10,9 @@ import { updateUsers } from "../features/usersSlice";
 function Personal() {
   const user = useSelector((state) => state.user);
   const { member, setMember } = useContext(AppContext);
-  const [editedFields, setEditedFields] = useState({});
+  const [showModal, setShowModal] = useState(false); 
+  const [editedField, setEditedField] = useState(""); 
+  const [editedValue, setEditedValue] = useState(""); // Store the edited value
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -20,58 +22,42 @@ function Personal() {
     }
   }, [user, member._id, setMember, navigate]);
 
-  const handleEdit = (fieldName) => {
-    setEditedFields({ ...editedFields, [fieldName]: true });
+  const handleEdit = (fieldName, fieldValue) => {
+    setEditedField(fieldName); 
+    setEditedValue(fieldValue); // Set the edited value when clicking edit
+    setShowModal(true); 
   };
 
-  const handleSave = async (fieldName) => {
+  const handleSave = async () => {
     axios
-      .put("http://localhost:5001/update", { _id: member._id, ...member })
+      .put("http://localhost:5001/update", { _id: member._id, [editedField]: editedValue }) // Use editedValue instead of member[editedField]
       .then((res) => {
-        dispatch(updateUsers(res.data))
+        dispatch(updateUsers(res.data));
+        setMember(prevMember => ({
+          ...prevMember,
+          [editedField]: editedValue // Update the member state after saving
+        }));
+        setShowModal(false); 
       })
       .catch((err) => console.log(err));
-    setEditedFields({ ...editedFields, [fieldName]: false });
   };
 
-  const renderEditButton = (fieldName) => {
-    if (editedFields[fieldName]) {
-      return (
-        <Button variant="success" onClick={() => handleSave(fieldName)}>
-          บันทึก
-        </Button>
-      );
-    } else {
-      return (
-        <Button
-          variant="outline-secondary"
-          onClick={() => handleEdit(fieldName)}
-        >
-          <i className="bi bi-box-arrow-in-down-left"></i>
-        </Button>
-      );
-    }
+  const handleClose = () => {
+    setShowModal(false); 
   };
 
   const renderDataRow = (label, value, fieldName) => {
     return (
       <Row className="border border-dark p-2 mb-2">
         <Col className="col-5 d-flex justify-content-center">{label}</Col>
-        <Col className="col-6 d-flex justify-content-center">
-          {editedFields[fieldName] ? (
-            <input
-              type="text"
-              value={value}
-              onChange={(e) =>
-                setMember({ ...member, [fieldName]: e.target.value })
-              }
-            />
-          ) : (
-            value
-          )}
-        </Col>
+        <Col className="col-6 d-flex justify-content-center">{value}</Col>
         <Col className="col-1 d-flex justify-content-center">
-          {renderEditButton(fieldName, value)}
+          <Button
+            variant="outline-secondary"
+            onClick={() => handleEdit(fieldName, value)} // Pass the current field value to handleEdit
+          >
+            <i className="bi bi-box-arrow-in-down-left"></i>
+          </Button>
         </Col>
       </Row>
     );
@@ -110,6 +96,28 @@ function Personal() {
           )}
         </Col>
       </Row>
+
+    
+      <Modal show={showModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>แก้ไขข้อมูลส่วนบุคคล - {editedField}</Modal.Title> 
+        </Modal.Header>
+        <Modal.Body>
+          <input
+            type="text"
+            value={editedValue} // Use editedValue instead of member[editedField]
+            onChange={(e) => setEditedValue(e.target.value)} // Update editedValue when changing input
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+          <Button variant="success" onClick={handleSave}>
+            Save 
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }

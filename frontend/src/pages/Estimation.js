@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { setEstimation } from "../features/estimationSlice";
 
+
 function Estimation() {
   const [hfsLevel, setHfsLevel] = useState(0);
   // const [selectedFile, setSelectedFile] = useState(null);
@@ -164,22 +165,22 @@ function Estimation() {
           </Table>
         </Col>
       </Row>
-      {/* Modal for Image Pop-up */}
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Body>
+      <Modal show={showModal} onHide={handleCloseModal} centered >
+      <Modal.Header closeButton></Modal.Header>
+        <Modal.Body >
           {selectedImage && (
             <img
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="รูปภาพ"
-              style={{ width: "100%", height: "auto" }}
+              style={{                 width: "100%",
+                height: "auto",
+                maxWidth: "100%",
+                maxHeight: "80vh",
+                margin: "auto",
+                display: "block",}}
             />
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Close
-          </Button>
-        </Modal.Footer>
       </Modal>
     </Container>
   );

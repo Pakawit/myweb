@@ -34,7 +34,7 @@ function Chat() {
       }
     };
     fetchData();
-  },[messages,dispatch,navigate,user,member]);
+  },[dispatch, member._id, navigate, user._id]);
 
   function validateImg(e) {
     const file = e.target.files[0];
@@ -78,7 +78,7 @@ function Chat() {
     const year = date.getFullYear();
     let month = (1 + date.getMonth()).toString().padStart(2, "0");
     let day = date.getDate().toString().padStart(2, "0");
-    return `${month}/${day}/${year}`;
+    return `${day}/${month}/${year}`;
   }
 
   const todayDate = getFormattedDate();
@@ -127,9 +127,15 @@ function Chat() {
       <Row>
         <Col>
           <>
-            <div className="messages-output" >
-           
-
+            <div className="messages-output">
+              {messages && messages.map((message, index) => (
+                <div key={index} className={message.from === user._id ? "incoming-message" : "outgoing-message"}>
+                  <div className="message-inner">
+                    <div>{message.content}</div>
+                    <div className="message-timestamp-left">{message.date} {message.time}</div>
+                  </div>
+                </div>
+              ))}
               <div ref={messageEndRef} />
             </div>
             <div>

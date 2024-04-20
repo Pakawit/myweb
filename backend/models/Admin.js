@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-const UserSchema = new mongoose.Schema(
+const AdminSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -12,48 +12,12 @@ const UserSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Can't be blank"],
-    },
-    phone: {
-      type: String,
-      default: "",
-    },
-    other_numbers: {
-      type: String,
-      default: "",
-    },
-    age: {
-      type: Number,
-      default: 0,
-    },
-    diagnosis: {
-      type: String,
-      default: "",
-    },
-    hospital_number: {
-      type: String,
-      default: "",
-    },
-    ms_medicine : {
-      type: Number,
-      default: 0,
-    },
-    other_medicine : {
-      type: String,
-      default: "",
-    },
-    laststatus : {
-      type: Number,
-      default: 0,
-    },
-    taking_capecitabine : {
-      type: String,
-      default: "",
-    },
+    }
   },
   { timestamps: true, minimize: false }
 );
 
-UserSchema.pre("save", function (next) {
+AdminSchema.pre("save", function (next) {
   const user = this;
   
   // ตรวจสอบว่ามีการเปลี่ยนแปลงรหัสผ่านหรือไม่
@@ -73,15 +37,15 @@ UserSchema.pre("save", function (next) {
 });
 
 
-UserSchema.methods.toJSON = function () {
+AdminSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
   delete userObject.password;
   return userObject;
 };
 
-UserSchema.statics.findByCredentials = async function (name, password) {
-  const user = await User.findOne({ name });
+AdminSchema.statics.findByCredentials = async function (name, password) {
+  const user = await Admin.findOne({ name });
   if (!user) throw new Error("invalid username or password");
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -90,6 +54,6 @@ UserSchema.statics.findByCredentials = async function (name, password) {
   return user;
 };
 
-const User = mongoose.model("User", UserSchema);
+const Admin = mongoose.model("Admin", AdminSchema);
 
-module.exports = User;
+module.exports = Admin;

@@ -93,7 +93,9 @@ function Medication() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="3">ไม่มีข้อมูลการกินยา</td>
+                  <td className="table-center" style={{ width: "33%" }}></td>
+                  <td className="table-center" style={{ width: "33%" }}>ไม่มีข้อมูลการกินยา</td>
+                  <td className="table-center" style={{ width: "33%" }}></td>
                 </tr>
               )}
             </tbody>

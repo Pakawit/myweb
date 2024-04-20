@@ -56,7 +56,7 @@ function Home() {
                         <td className="table-center">
                           <Button
                             className={userData.laststatus === 0 ? "btn-danger" : userData.laststatus === 1 ? "btn-warning" : "btn-success"}
-                            disabled={userData.laststatus !== 2}
+                            disabled
                           >
                             {userData.laststatus === 0 ? "ยังไม่ได้กินยา" : userData.laststatus === 1 ? "ยังไม่ได้กินยา" : "กินยาแล้ว"}
                           </Button>

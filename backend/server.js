@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const User = require("./models/User");
+const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
@@ -10,6 +11,49 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
+///////////Admin
+app.post("/admin", async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    console.log(req.body);
+    const user = await Admin.create({ name, password });
+    res.status(201).json(user);
+  } catch (e) {
+    let msg;
+    if (e.code == 11000) {
+      msg = "User already exists";
+    } else {
+      msg = e.message;
+    }
+    console.log(e);
+    res.status(400).json(msg);
+  }
+});
+
+app.post("/admin/login", async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    const user = await Admin.findByCredentials(name, password);
+    await user.save();
+    res.status(200).json(user);
+  } catch (e) {
+    res.status(400).json(e.message);
+  }
+});
+
+app.delete("/adminlogout", async (req, res) => {
+  try {
+    const { _id } = req.body;
+    const user = await Admin.findById(_id);
+    await user.save();
+    res.status(200).send();
+  } catch (e) {
+    console.log(e);
+    res.status(400).send();
+  }
+});
+///////////////////////////////////////////
+//////////////////////////user
 app.post("/user", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -51,7 +95,9 @@ app.delete("/logout", async (req, res) => {
   }
 });
 
+///////////////////////////////////////////
 app.get("/getusers", (req, res) => {
+  const { _id } = req.body;
   User.find()
     .then((users) => res.json(users))
     .catch((err) => res.json(err));
@@ -96,7 +142,7 @@ app.post("/createmedication", (req, res) => {
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
-  Estimation.find({ to: _id, check: false })
+  Estimation.find({ from: _id, check: false })
     .then((estimation) => res.json(estimation))
     .catch((err) => res.json(err));
 });
@@ -139,6 +185,7 @@ app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 //////////////////////////////////////
 
 app.post("/createstimation", (req, res) => {
@@ -149,9 +196,14 @@ app.post("/createstimation", (req, res) => {
 
 app.post("/getmessage", (req, res) => {
   const { from, to } = req.body;
-  Message.find({ from: from, to: to })
-    .then((message) => res.json(message))
-    .catch((err) => res.json(err));
+  Message.find({
+    $or: [
+      { from: from, to: to },
+      { from: to, to: from }
+    ]
+  })
+  .then((message) => res.json(message))
+  .catch((err) => res.json(err));
 });
 
 app.post("/createmessage", (req, res) => {
