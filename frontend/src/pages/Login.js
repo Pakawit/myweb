@@ -49,11 +49,11 @@ function Login() {
             <Button variant="primary" type="submit">
               {isLoading ? <Spinner animation="grow" /> : "Login"}
             </Button>
-            <div className="py-4">
+            {/* <div className="py-4">
               <p className="text-center">
                 Don't have an account ? <Link to="/signup">Signup</Link>
               </p>
-            </div>
+            </div> */}
           </Form>
         </Col>
       </Row>

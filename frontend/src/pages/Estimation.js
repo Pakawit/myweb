@@ -138,7 +138,7 @@ function Estimation() {
                         </Dropdown.Toggle>
 
                         <Dropdown.Menu>
-                          {[0, 1, 2, 3, 4].map((level) => (
+                          {[0, 1, 2, 3].map((level) => (
                             <Dropdown.Item
                               key={level}
                               onClick={() => setHfsLevel(level)}
