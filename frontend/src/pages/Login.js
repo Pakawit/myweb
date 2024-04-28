@@ -1,22 +1,32 @@
-import React, {useState} from "react";
-import { Button, Form, Container, Row, Col, Spinner } from "react-bootstrap";
-import { useLoginUserMutation } from "../services/appApi";
-import { Link, useNavigate } from "react-router-dom";
-
+import React, { useState } from "react";
+import { Button, Form, Container, Row, Col } from "react-bootstrap";
+import axios from "axios"; 
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { setUser } from "../features/userSlice";
 
 function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [loginUser, { isLoading, error }] = useLoginUserMutation();
+  const [error, setError] = useState(null); 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
-    loginUser({ name, password }).then(({ data }) => {
-      if (data) {
+
+    try {
+      const res = await axios.post("http://localhost:5001/admin/login", {
+        name,
+        password,
+      });
+      if (res.data) {
+        dispatch(setUser(res.data));
         navigate("/Home");
       }
-    });
+    } catch (error) {
+      setError(error.response.data); 
+    }
   }
 
   return (
@@ -25,7 +35,7 @@ function Login() {
         <Col className="d-flex align-items-center justify-content-center flex-direction-column">
           <Form onSubmit={handleLogin}>
             <Form.Group className="mb-3" controlId="formBasicEmail">
-              {error && <p className="alert alert-danger">{error.data}</p>}
+              {error && <p className="alert alert-danger">{error}</p>}
               <Form.Label>User Name</Form.Label>
               <Form.Control
                 type="text"
@@ -47,13 +57,8 @@ function Login() {
               />
             </Form.Group>
             <Button variant="primary" type="submit">
-              {isLoading ? <Spinner animation="grow" /> : "Login"}
+              Login
             </Button>
-            {/* <div className="py-4">
-              <p className="text-center">
-                Don't have an account ? <Link to="/signup">Signup</Link>
-              </p>
-            </div> */}
           </Form>
         </Col>
       </Row>

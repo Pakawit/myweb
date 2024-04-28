@@ -1,18 +1,16 @@
 import "./Navigation.css";
 import React, { useContext } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Container, Nav, Navbar } from "react-bootstrap";
 import { AppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
-import { useLogoutUserMutation } from "../services/appApi";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
-import { deleteEstimation } from "../features/estimationSlice"
+import { deleteEstimation } from "../features/estimationSlice";
+import { deleteUser } from "../features/userSlice";
 
 function Navigation() {
-  const user = useSelector((state) => state.user);
-  const [logoutUser] = useLogoutUserMutation();
   const dispatch = useDispatch();
   const { setMember } = useContext(AppContext);
   const navigate = useNavigate();
@@ -20,8 +18,8 @@ function Navigation() {
   async function back() {
     await setMember([]);
     await dispatch(deleteMedication());
-    await dispatch(deleteMessage()); 
-    await dispatch(deleteEstimation());      
+    await dispatch(deleteMessage());
+    await dispatch(deleteEstimation());
     await navigate("/");
   }
 
@@ -30,11 +28,10 @@ function Navigation() {
     await dispatch(deleteUsers());
     await setMember([]);
     await dispatch(deleteMedication());
-    await dispatch(deleteMessage());  
-    await dispatch(deleteEstimation());      
-    await logoutUser(user);  
+    await dispatch(deleteMessage());
+    await dispatch(deleteEstimation());
+    await dispatch(deleteUser());
   }
-  
 
   return (
     <div>

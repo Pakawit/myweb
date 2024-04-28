@@ -6,7 +6,6 @@ import usersReducer from "./features/usersSlice";
 import medicationReducer from "./features/medicationSlice";
 import messageReducer from "./features/messageSlice";
 import estimationReducer from "./features/estimationSlice";
-import appApi from "./services/appApi";
 
 const rootReducer = combineReducers({
   user: userReducer,
@@ -14,23 +13,18 @@ const rootReducer = combineReducers({
   medication: medicationReducer,
   message: messageReducer,
   estimation: estimationReducer,
-  [appApi.reducerPath]: appApi.reducer,
 });
 
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: [appApi.reducerPath],
+  blacklist: [], // No need to blacklist anything if appApi is removed
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const store = configureStore({
   reducer: persistedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }).concat(appApi.middleware),
 });
 
 export default store;

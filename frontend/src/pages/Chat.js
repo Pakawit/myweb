@@ -45,25 +45,25 @@ function Chat() {
     }
   }
 
-  async function uploadImage() {
-    const data = new FormData();
-    data.append("file", image);
-    data.append("upload_preset", "x3tgzzl8");
-    try {
-      let res = await fetch(
-        "https://api.cloudinary.com/v1_1/dje07eo2t/image/upload",
-        {
-          method: "post",
-          body: data,
-        }
-      );
-      const urlData = await res.json();
-      return urlData.url;
-    } catch (error) {
-      console.log(error);
-      throw new Error("Error uploading image");
-    }
-  }
+  // async function uploadImage() {
+  //   const data = new FormData();
+  //   data.append("file", image);
+  //   data.append("upload_preset", "x3tgzzl8");
+  //   try {
+  //     let res = await fetch(
+  //       "https://api.cloudinary.com/v1_1/dje07eo2t/image/upload",
+  //       {
+  //         method: "post",
+  //         body: data,
+  //       }
+  //     );
+  //     const urlData = await res.json();
+  //     return urlData.url;
+  //   } catch (error) {
+  //     console.log(error);
+  //     throw new Error("Error uploading image");
+  //   }
+  // }
 
   function scrollToBottom() {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -97,9 +97,9 @@ function Chat() {
       let content = "";
 
       if (image) {
-        const url = await uploadImage();
-        content = url;
-        setImage(null);
+        // const url = await uploadImage();
+        // content = url;
+        // setImage(null);
       } else {
         content = message;
         setMessage("");

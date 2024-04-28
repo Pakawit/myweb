@@ -3,7 +3,6 @@ import { useSelector } from "react-redux";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"; // Import Navigate
 import Home from "./pages/Home";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import Chat from "./pages/Chat";
 import Personal from "./pages/Personal";
 import Medication from "./pages/Medication";
@@ -42,7 +41,6 @@ function App() {
           {!user ? (
             <>
               <Route path="/" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
               {/* Redirect to Login if user tries to access Home or Chat */}
               <Route
                 path="/home"

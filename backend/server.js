@@ -41,7 +41,7 @@ app.post("/admin/login", async (req, res) => {
   }
 });
 
-app.delete("/adminlogout", async (req, res) => {
+app.delete("/admin/logout", async (req, res) => {
   try {
     const { _id } = req.body;
     const user = await Admin.findById(_id);
@@ -169,22 +169,22 @@ const fs = require("fs");
 const upload = multer();
 
 // เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
-app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
-  try {
-    const { _id } = req.body;
-    const estimation = await Estimation.findById(_id);
+// app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
+//   try {
+//     const { _id } = req.body;
+//     const estimation = await Estimation.findById(_id);
 
-    const base64Image = req.file.buffer.toString("base64");
+//     const base64Image = req.file.buffer.toString("base64");
 
-    estimation.photos.push(base64Image);
-    await estimation.save();
+//     estimation.photos.push(base64Image);
+//     await estimation.save();
 
-    res.status(200).json({ message: "Photo uploaded successfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+//     res.status(200).json({ message: "Photo uploaded successfully" });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 
 //////////////////////////////////////
 

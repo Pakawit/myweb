@@ -18,6 +18,7 @@ import { setEstimation } from "../features/estimationSlice";
 
 function Estimation() {
   const [hfsLevel, setHfsLevel] = useState(0);
+  const user = useSelector((state) => state.user);
   // const [selectedFile, setSelectedFile] = useState(null);
   const { member } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation);
@@ -41,7 +42,7 @@ function Estimation() {
       }
     };
     fetchData();
-  });
+  },[dispatch, member._id, navigate, user._id]);
 
   async function handleSubmit(_id) {
     try {
