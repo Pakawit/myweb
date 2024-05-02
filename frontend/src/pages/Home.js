@@ -56,6 +56,7 @@ function Home() {
                         <td className="table-center">{userData.age}</td>
                         <td className="table-center">{userData.ms_medicine}</td>
                         <td className="table-center">
+                          {/* แสดงสถานะการกินยา */}
                           <Button
                             className={
                               userData.laststatus === 0
@@ -73,7 +74,7 @@ function Home() {
                               : "กินยาแล้ว"}
                           </Button>
                         </td>
-
+                        {/* ปุ่มที่กดไปหน้าต่างๆ */}
                         <td className="table-center">
                           <Button
                             variant="outline-success"

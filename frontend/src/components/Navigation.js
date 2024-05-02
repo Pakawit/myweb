@@ -1,7 +1,7 @@
 import "./Navigation.css";
 import React, { useContext } from "react";
 import { useDispatch } from "react-redux";
-import { Container, Nav, Navbar } from "react-bootstrap";
+import { Button, Container, Nav, Navbar } from "react-bootstrap";
 import { AppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 import { deleteUsers } from "../features/usersSlice";
@@ -37,16 +37,12 @@ function Navigation() {
     <div>
       <Navbar>
         <Container>
-          <Nav.Link onClick={back}>
-            <i className="bi bi-chevron-left"></i>
-          </Nav.Link>
+          
+            <Button variant="outline-dark" onClick={back}><i className="bi bi-chevron-left"></i></Button>
           <Nav className="ms-autoNav">
-            <Nav.Link className="nav-link-with-badge ">
-              <i className="bi bi-bell"></i>
-            </Nav.Link>
-            <Nav.Link onClick={handleLogout}>
-              <i className="bi bi-box-arrow-in-right"></i>
-            </Nav.Link>
+              <Button variant="outline-dark" className="mx-1"><i className="bi bi-bell" ></i></Button>
+            
+              <Button variant="outline-dark" onClick={handleLogout} ><i className="bi bi-box-arrow-in-right"></i></Button>
           </Nav>
         </Container>
       </Navbar>

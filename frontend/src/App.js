@@ -30,7 +30,7 @@ function App() {
             </>
           )}
         </Routes>
-      </BrowserRouter>z
+      </BrowserRouter>
     </AppContext.Provider>
   );
 }

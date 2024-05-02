@@ -41,14 +41,13 @@ function Estimation() {
       }
     };
     fetchData();
-  }, [dispatch, member._id, navigate, user._id]);
+  });
 
   async function handleSubmit(_id) {
     try {
       const res = await axios.put("http://localhost:5001/editestimation", {
         _id: _id,
         hfsLevel: hfsLevel,
-        check: true,
       });
       console.log(res);
     } catch (err) {
