@@ -142,7 +142,7 @@ app.post("/createmedication", (req, res) => {
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
-  Estimation.find({ from: _id, check: false })
+  Estimation.find({ from: _id, hfsLevel: { $eq: null } })
     .then((estimation) => res.json(estimation))
     .catch((err) => res.json(err));
 });
@@ -163,28 +163,28 @@ app.put("/editestimation", async (req, res) => {
   }
 });
 
-/// upload photo
+// upload photo
 const multer = require("multer");
 const fs = require("fs");
 const upload = multer();
 
-// เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
-// app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
-//   try {
-//     const { _id } = req.body;
-//     const estimation = await Estimation.findById(_id);
+//เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
+app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
+  try {
+    const { _id } = req.body;
+    const estimation = await Estimation.findById(_id);
 
-//     const base64Image = req.file.buffer.toString("base64");
+    const base64Image = req.file.buffer.toString("base64");
 
-//     estimation.photos.push(base64Image);
-//     await estimation.save();
+    estimation.photos.push(base64Image);
+    await estimation.save();
 
-//     res.status(200).json({ message: "Photo uploaded successfully" });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// });
+    res.status(200).json({ message: "Photo uploaded successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 //////////////////////////////////////
 
@@ -199,11 +199,11 @@ app.post("/getmessage", (req, res) => {
   Message.find({
     $or: [
       { from: from, to: to },
-      { from: to, to: from }
-    ]
+      { from: to, to: from },
+    ],
   })
-  .then((message) => res.json(message))
-  .catch((err) => res.json(err));
+    .then((message) => res.json(message))
+    .catch((err) => res.json(err));
 });
 
 app.post("/createmessage", (req, res) => {

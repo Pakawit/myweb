@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { setEstimation } from "../features/estimationSlice";
 
-
 function Estimation() {
   const [hfsLevel, setHfsLevel] = useState(0);
   const user = useSelector((state) => state.user);
@@ -42,7 +41,7 @@ function Estimation() {
       }
     };
     fetchData();
-  },[dispatch, member._id, navigate, user._id]);
+  }, [dispatch, member._id, navigate, user._id]);
 
   async function handleSubmit(_id) {
     try {
@@ -166,19 +165,21 @@ function Estimation() {
           </Table>
         </Col>
       </Row>
-      <Modal show={showModal} onHide={handleCloseModal} centered >
-      <Modal.Header closeButton></Modal.Header>
-        <Modal.Body >
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton></Modal.Header>
+        <Modal.Body>
           {selectedImage && (
             <img
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="รูปภาพ"
-              style={{                 width: "100%",
+              style={{
+                width: "100%",
                 height: "auto",
                 maxWidth: "100%",
                 maxHeight: "80vh",
                 margin: "auto",
-                display: "block",}}
+                display: "block",
+              }}
             />
           )}
         </Modal.Body>

@@ -12,7 +12,7 @@ export const usersSlice = createSlice({
     },
     updateUsers: (state, action) => {
       const index = state.findIndex(x => x._id === action.payload._id);
-      state[index] = { ...action.payload }; // สร้าง object ใหม่และกำหนดค่าของ object ใหม่ด้วยข้อมูลจาก action.payload
+      state[index] = { ...action.payload }; 
     },
   },
 });

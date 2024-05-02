@@ -35,10 +35,9 @@ function Medication() {
   // Pagination
   const indexOfLastMedication = currentPage * medicationsPerPage;
   const indexOfFirstMedication = indexOfLastMedication - medicationsPerPage;
-  const currentMedications = medication && medication.slice(
-    indexOfFirstMedication,
-    indexOfLastMedication
-  );
+  const currentMedications =
+    medication &&
+    medication.slice(indexOfFirstMedication, indexOfLastMedication);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -65,7 +64,8 @@ function Medication() {
               </tr>
             </thead>
             <tbody>
-              {medication && medication.length > 0 ? (
+              {medication &&
+                medication.length > 0 &&
                 currentMedications.map((medication, index) => (
                   <tr key={index}>
                     <td className="table-center" style={{ width: "33%" }}>
@@ -90,12 +90,16 @@ function Medication() {
                       )}
                     </td>
                   </tr>
-                ))
-              ) : (
+                ))}
+              {medication && medication.length === 0 && (
                 <tr>
-                  <td className="table-center" style={{ width: "33%" }}></td>
-                  <td className="table-center" style={{ width: "33%" }}>ไม่มีข้อมูลการกินยา</td>
-                  <td className="table-center" style={{ width: "33%" }}></td>
+                  <td
+                    colSpan={3}
+                    className="table-center"
+                    style={{ width: "100%" }}
+                  >
+                    ไม่มีข้อมูลการกินยา
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -107,7 +111,11 @@ function Medication() {
           <nav aria-label="Page navigation">
             <ul className="pagination justify-content-end">
               {Array.from(
-                { length: Math.ceil((medication && medication.length) / medicationsPerPage) },
+                {
+                  length: Math.ceil(
+                    (medication && medication.length) / medicationsPerPage
+                  ),
+                },
                 (_, i) => (
                   <li
                     key={i}

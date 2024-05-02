@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, Form, Container, Row, Col } from "react-bootstrap";
-import axios from "axios"; 
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../features/userSlice";
@@ -8,7 +8,7 @@ import { setUser } from "../features/userSlice";
 function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [error, setError] = useState(null); 
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -22,10 +22,10 @@ function Login() {
       });
       if (res.data) {
         dispatch(setUser(res.data));
-        navigate("/Home");
+        navigate("/");
       }
     } catch (error) {
-      setError(error.response.data); 
+      setError(error.response.data);
     }
   }
 

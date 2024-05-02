@@ -47,7 +47,9 @@ function Home() {
               {users &&
                 users.map(
                   (userData) =>
-                    userData && userData._id && userData._id !== user._id && (
+                    userData &&
+                    userData._id &&
+                    userData._id !== user._id && (
                       <tr key={userData._id}>
                         <td className="table-center">{userData.name}</td>
                         <td className="table-center">{userData.phone}</td>
@@ -55,10 +57,20 @@ function Home() {
                         <td className="table-center">{userData.ms_medicine}</td>
                         <td className="table-center">
                           <Button
-                            className={userData.laststatus === 0 ? "btn-danger" : userData.laststatus === 1 ? "btn-warning" : "btn-success"}
+                            className={
+                              userData.laststatus === 0
+                                ? "btn-danger"
+                                : userData.laststatus === 1
+                                ? "btn-warning"
+                                : "btn-success"
+                            }
                             disabled
                           >
-                            {userData.laststatus === 0 ? "ยังไม่ได้กินยา" : userData.laststatus === 1 ? "ยังไม่ได้กินยา" : "กินยาแล้ว"}
+                            {userData.laststatus === 0
+                              ? "ยังไม่ได้กินยา"
+                              : userData.laststatus === 1
+                              ? "ยังไม่ได้กินยา"
+                              : "กินยาแล้ว"}
                           </Button>
                         </td>
 

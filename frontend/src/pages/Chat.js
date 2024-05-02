@@ -34,7 +34,7 @@ function Chat() {
       }
     };
     fetchData();
-  },[dispatch, member._id, navigate, user._id]);
+  }, [dispatch, member._id, navigate, user._id]);
 
   function validateImg(e) {
     const file = e.target.files[0];
@@ -105,7 +105,8 @@ function Chat() {
         setMessage("");
       }
 
-      axios.post("http://localhost:5001/createmessage", {
+      axios
+        .post("http://localhost:5001/createmessage", {
           content: content,
           time: time,
           date: todayDate,
@@ -128,14 +129,24 @@ function Chat() {
         <Col>
           <>
             <div className="messages-output">
-              {messages && messages.map((message, index) => (
-                <div key={index} className={message.from === user._id ? "incoming-message" : "outgoing-message"}>
-                  <div className="message-inner">
-                    <div>{message.content}</div>
-                    <div className="message-timestamp-left">{message.date} {message.time}</div>
+              {messages &&
+                messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={
+                      message.from === user._id
+                        ? "incoming-message"
+                        : "outgoing-message"
+                    }
+                  >
+                    <div className="message-inner">
+                      <div>{message.content}</div>
+                      <div className="message-timestamp-left">
+                        {message.date} {message.time}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
               <div ref={messageEndRef} />
             </div>
             <div>
