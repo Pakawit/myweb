@@ -1,13 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Table,
-  Button,
-  Dropdown,
-  Modal,
-} from "react-bootstrap";
+import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -17,9 +9,7 @@ import { setEstimation } from "../features/estimationSlice";
 
 function Estimation() {
   const [hfsLevel, setHfsLevel] = useState(0);
-  const user = useSelector((state) => state.user);
-  // const [selectedFile, setSelectedFile] = useState(null);
-  const { member } = useContext(AppContext);
+  const { member , API_BASE_URL } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -32,7 +22,7 @@ function Estimation() {
     }
     const fetchData = async () => {
       try {
-        const res = await axios.post("http://localhost:5001/getestimation", {
+        const res = await axios.post(`${API_BASE_URL}/getestimation`, {
           _id: member._id,
         });
         dispatch(setEstimation(res.data));
@@ -45,7 +35,7 @@ function Estimation() {
 
   async function handleSubmit(_id) {
     try {
-      const res = await axios.put("http://localhost:5001/editestimation", {
+      const res = await axios.put(`${API_BASE_URL}/editestimation`, {
         _id: _id,
         hfsLevel: hfsLevel,
       });
@@ -55,6 +45,7 @@ function Estimation() {
     }
   }
 
+  // const [selectedFile, setSelectedFile] = useState(null);
   // async function handleUploadPhoto(_id) {
   //   try {
   //     const formData = new FormData();

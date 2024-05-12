@@ -13,9 +13,10 @@ import Estimation from "./pages/Estimation";
 function App() {
   const user = useSelector((state) => state.user);
   const [member, setMember] = useState([]);
+  const API_BASE_URL = "http://localhost:5001";
 
   return (
-    <AppContext.Provider value={{ member, setMember }}>
+    <AppContext.Provider value={{ member, setMember, API_BASE_URL}}>
       <BrowserRouter>
         <Routes>
           {!user ? (

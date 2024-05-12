@@ -1,5 +1,5 @@
-import React, { useContext, useState, useEffect } from "react";
-import { Container, Row, Col, Button, Modal } from "react-bootstrap"; 
+import React, { useContext, useEffect, useState } from "react";
+import { Container, Button, Form, Row, Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,115 +9,212 @@ import { updateUsers } from "../features/usersSlice";
 
 function Personal() {
   const user = useSelector((state) => state.user);
-  const { member, setMember } = useContext(AppContext);
-  const [showModal, setShowModal] = useState(false); 
-  const [editedField, setEditedField] = useState(""); 
-  const [editedValue, setEditedValue] = useState(""); // Store the edited value
+  const { member, setMember, API_BASE_URL } = useContext(AppContext);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     if (!member._id) {
       navigate("/");
     }
-  }, [user, member._id, setMember, navigate]);
+  }, [user, member, setMember, navigate]);
 
-  const handleEdit = (fieldName, fieldValue) => {
-    setEditedField(fieldName); 
-    setEditedValue(fieldValue); // Set the edited value when clicking edit
-    setShowModal(true); 
+  const handleChange = (name, value) => {
+    setMember((prevMember) => ({
+      ...prevMember,
+      [name]: value,
+    }));
   };
 
-  const handleSave = async () => {
-    axios
-      .put("http://localhost:5001/update", { _id: member._id, [editedField]: editedValue }) // Use editedValue instead of member[editedField]
-      .then((res) => {
-        dispatch(updateUsers(res.data));
-        setMember(prevMember => ({
-          ...prevMember,
-          [editedField]: editedValue // Update the member state after saving
-        }));
-        setShowModal(false); 
-      })
-      .catch((err) => console.log(err));
+  const handleSubmit = async () => {
+    if (editMode) {
+      axios
+        .put(`${API_BASE_URL}/update`, member)
+        .then((res) => {
+          dispatch(updateUsers(res.data));
+          setEditMode(false);
+        })
+        .catch((err) => console.log(err));
+    }
   };
 
-  const handleClose = () => {
-    setShowModal(false); 
-  };
-
-  const renderDataRow = (label, value, fieldName) => {
-    return (
-      <Row className="border border-dark p-2 mb-2">
-        <Col className="col-5 d-flex justify-content-center">{label}</Col>
-        <Col className="col-6 d-flex justify-content-center">{value}</Col>
-        <Col className="col-1 d-flex justify-content-center">
-          <Button
-            variant="outline-secondary"
-            onClick={() => handleEdit(fieldName, value)} // Pass the current field value to handleEdit
-          >
-            <i className="bi bi-box-arrow-in-down-left"></i>
-          </Button>
-        </Col>
-      </Row>
-    );
+  const handleEditClick = () => {
+    setEditMode(true);
   };
 
   return (
     <Container>
       <Navigation />
-      <Row>
-        <h1>ข้อมูลส่วนบุคคล</h1>
-        <Col>
-          {renderDataRow("ชื่อ-สกุล", member.name, "name")}
-          {renderDataRow("เบอร์โทรศัพท์", member.phone, "phone")}
-          {renderDataRow(
-            "เบอร์โทรศัพท์ผู้ติดต่อ",
-            member.other_numbers,
-            "other_numbers"
-          )}
-          {renderDataRow("อายุ", member.age, "age")}
-          {renderDataRow("การวินิจฉัยโรคหลัก", member.diagnosis, "diagnosis")}
-          {renderDataRow(
-            "การรับประทานยา Capecitabine",
-            member.taking_capecitabine,
-            "taking_capecitabine"
-          )}
-          {renderDataRow(
-            "ยาที่ใช้ร่วม",
-            member.other_medicine,
-            "other_medicine"
-          )}
-          {renderDataRow("ขาดยา", member.ms_medicine, "ms_medicine")}
-          {renderDataRow(
-            "เลขโรงพยาบาล",
-            member.hospital_number,
-            "hospital_number"
-          )}
-        </Col>
-      </Row>
+      <h1>ข้อมูลส่วนบุคคล</h1>
+      <Form onSubmit={handleSubmit}>
+        
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            ชื่อ-สกุล
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="name"
+              value={member.name}
+              onChange={(e) => handleChange("name", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
 
-    
-      <Modal show={showModal} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>แก้ไขข้อมูลส่วนบุคคล - {editedField}</Modal.Title> 
-        </Modal.Header>
-        <Modal.Body>
-          <input
-            type="text"
-            value={editedValue} // Use editedValue instead of member[editedField]
-            onChange={(e) => setEditedValue(e.target.value)} // Update editedValue when changing input
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Button variant="success" onClick={handleSave}>
-            Save 
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เบอร์โทรศัพท์
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="phone"
+              value={member.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เบอร์โทรศัพท์ผู้ติดต่อ
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="other_numbers"
+              value={member.other_numbers}
+              onChange={(e) => handleChange("other_numbers", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            อายุ
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="number"
+              name="age"
+              value={member.age}
+              onChange={(e) => handleChange("age", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            การวินิจฉัยโรคหลัก
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              as="textarea"
+              name="diagnosis"
+              value={member.diagnosis}
+              onChange={(e) => handleChange("diagnosis", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            การรับประทานยา Capecitabine
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              as="textarea"
+              name="taking_capecitabine"
+              value={member.taking_capecitabine}
+              onChange={(e) =>
+                handleChange("taking_capecitabine", e.target.value)
+              }
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            ยาที่ใช้ร่วม
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              as="textarea"
+              name="other_medicine"
+              value={member.other_medicine}
+              onChange={(e) => handleChange("other_medicine", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            ขาดยา
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="ms_medicine"
+              value={member.ms_medicine}
+              onChange={(e) => handleChange("ms_medicine", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เลขโรงพยาบาล
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="hospital_number"
+              value={member.hospital_number}
+              onChange={(e) => handleChange("hospital_number", e.target.value)}
+              disabled={!editMode}
+            />
+          </Col>
+        </Form.Group>
+
+        <Form.Group as={Row} className="mb-3">
+          <Col
+            sm={{ span: 6, offset: 6 }}
+            className="d-flex justify-content-end"
+          >
+            {editMode ? (
+              <Button
+                variant="outline-success"
+                type="button"
+                onClick={handleSubmit}
+              >
+                บันทึก
+              </Button>
+            ) : (
+              <Button
+                variant="outline-dark"
+                type="button"
+                onClick={handleEditClick}
+              >
+                แก้ไข
+              </Button>
+            )}
+          </Col>
+        </Form.Group>
+
+      </Form>
     </Container>
   );
 }

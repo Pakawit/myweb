@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -8,9 +8,7 @@ import axios from "axios";
 import { setMedication } from "../features/medicationSlice";
 
 function Medication() {
-  const { member } = useContext(AppContext);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [medicationsPerPage] = useState(10); // Number of medications per page
+  const { member, API_BASE_URL } = useContext(AppContext);
   const medication = useSelector((state) => state.medication);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -21,7 +19,7 @@ function Medication() {
     }
     const fetchData = async () => {
       try {
-        const res = await axios.post("http://localhost:5001/getmedication", {
+        const res = await axios.post(`${API_BASE_URL}/getmedication`, {
           _id: member._id,
         });
         dispatch(setMedication(res.data));
@@ -30,16 +28,7 @@ function Medication() {
       }
     };
     fetchData();
-  }, [dispatch, member._id, navigate]);
-
-  // Pagination
-  const indexOfLastMedication = currentPage * medicationsPerPage;
-  const indexOfFirstMedication = indexOfLastMedication - medicationsPerPage;
-  const currentMedications =
-    medication &&
-    medication.slice(indexOfFirstMedication, indexOfLastMedication);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  }, [dispatch, member._id, navigate ,API_BASE_URL]);
 
   return (
     <Container>
@@ -66,7 +55,7 @@ function Medication() {
             <tbody>
               {medication &&
                 medication.length > 0 &&
-                currentMedications.map((medication, index) => (
+                medication.map((medication, index) => (
                   <tr key={index}>
                     <td className="table-center" style={{ width: "33%" }}>
                       {medication.date}
@@ -104,36 +93,6 @@ function Medication() {
               )}
             </tbody>
           </Table>
-        </Col>
-      </Row>
-      <Row>
-        <Col className="text-right">
-          <nav aria-label="Page navigation">
-            <ul className="pagination justify-content-end">
-              {Array.from(
-                {
-                  length: Math.ceil(
-                    (medication && medication.length) / medicationsPerPage
-                  ),
-                },
-                (_, i) => (
-                  <li
-                    key={i}
-                    className={`page-item ${
-                      currentPage === i + 1 ? "active" : ""
-                    }`}
-                  >
-                    <button
-                      className="page-link"
-                      onClick={() => paginate(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  </li>
-                )
-              )}
-            </ul>
-          </nav>
         </Col>
       </Row>
     </Container>

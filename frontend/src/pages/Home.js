@@ -11,21 +11,21 @@ import { setUsers } from "../features/usersSlice";
 function Home() {
   const user = useSelector((state) => state.user);
   const users = useSelector((state) => state.users);
-  const { setMember } = useContext(AppContext);
+  const { setMember, API_BASE_URL } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/getusers");
+        const res = await axios.get(`${API_BASE_URL}/getusers`);
         dispatch(setUsers(res.data));
       } catch (err) {
         console.log(err);
       }
     };
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, API_BASE_URL]);
 
   return (
     <Container>

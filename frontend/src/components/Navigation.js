@@ -16,11 +16,11 @@ function Navigation() {
   const navigate = useNavigate();
 
   async function back() {
+    await navigate("/");
     await setMember([]);
     await dispatch(deleteMedication());
     await dispatch(deleteMessage());
     await dispatch(deleteEstimation());
-    await navigate("/");
   }
 
   async function handleLogout(e) {
@@ -37,11 +37,9 @@ function Navigation() {
     <div>
       <Navbar>
         <Container>
-          
             <Button variant="outline-dark" onClick={back}><i className="bi bi-chevron-left"></i></Button>
           <Nav className="ms-autoNav">
               <Button variant="outline-dark" className="mx-1"><i className="bi bi-bell" ></i></Button>
-            
               <Button variant="outline-dark" onClick={handleLogout} ><i className="bi bi-box-arrow-in-right"></i></Button>
           </Nav>
         </Container>

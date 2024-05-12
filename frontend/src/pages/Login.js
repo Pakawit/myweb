@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState ,useContext } from "react";
 import { Button, Form, Container, Row, Col } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setUser } from "../features/userSlice";
+import { AppContext } from "../context/appContext";
 
 function Login() {
+  const { API_BASE_URL } = useContext(AppContext);
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState(null);
@@ -16,7 +18,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5001/admin/login", {
+      const res = await axios.post(`${API_BASE_URL}/admin/login`, {
         name,
         password,
       });

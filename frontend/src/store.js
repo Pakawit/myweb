@@ -18,7 +18,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: [], // No need to blacklist anything if appApi is removed
+  blacklist: [], 
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

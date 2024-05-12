@@ -53,7 +53,7 @@ app.delete("/admin/logout", async (req, res) => {
   }
 });
 ///////////////////////////////////////////
-//////////////////////////user
+////////////////////user
 app.post("/user", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -164,28 +164,33 @@ app.put("/editestimation", async (req, res) => {
   }
 });
 
-// upload photo
+//upload photo
 const multer = require("multer");
 const fs = require("fs");
 const upload = multer();
 
-//เพิ่มเส้นทาง API สำหรับอัปโหลดรูปภาพเพิ่มเข้าไปใน array
-// app.post("/uploadphoto", upload.single("photo"), async (req, res) => {
-//   try {
-//     const { _id } = req.body;
-//     const estimation = await Estimation.findById(_id);
 
-//     const base64Image = req.file.buffer.toString("base64");
+app.post("/chatphoto", upload.single("photo"), async (req, res) => {
+  try {
+    const { from, to, date, time } = req.body;
+    const image = req.file.buffer.toString("base64");
 
-//     estimation.photos.push(base64Image);
-//     await estimation.save();
+    // เพิ่มเข้าไปในฐานข้อมูล
+    const newMessage = await Message.create({
+      content: image, // เปลี่ยน key เป็น content ตามฐานข้อมูล
+      contentType: "image", // ระบุประเภทของข้อมูลเป็นรูปภาพ
+      from: from,
+      to: to,
+      date: date,
+      time: time,
+    });
+    res.json(newMessage);
+  } catch (error) {
+    console.error(error);
+    res.json(error);
+  }
+});
 
-//     res.status(200).json({ message: "Photo uploaded successfully" });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// });
 
 //////////////////////////////////////
 
