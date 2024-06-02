@@ -7,25 +7,75 @@ import { useNavigate } from "react-router-dom";
 import "./style.css";
 import axios from "axios";
 import { setUsers } from "../features/usersSlice";
+import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
+import { setMedication } from "../features/medicationSlice";
+import { setEstimation } from "../features/estimationSlice";
 
 function Home() {
-  const user = useSelector((state) => state.user);
-  const users = useSelector((state) => state.users);
-  const { setMember, API_BASE_URL } = useContext(AppContext);
+  const admin = useSelector((state) => state.admin);
+  const users = useSelector((state) => state.users) || [];
+  const medication = useSelector((state) => state.medication) || [];
+  const estimation = useSelector((state) => state.estimation) || [];
+  const { API_BASE_URL } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUsers = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/getusers`);
-        dispatch(setUsers(res.data));
-      } catch (err) {
-        console.log(err);
+        const response = await axios.get(`${API_BASE_URL}/getusers`);
+        if (response.data) {
+          dispatch(setUsers(response.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
       }
     };
-    fetchData();
-  }, [dispatch, API_BASE_URL]);
+
+    const fetchMedication = async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/getmedication`);
+        if (response.data) {
+          dispatch(setMedication(response.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch medication data:", error);
+      }
+    };
+
+    const fetchEstimations = async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/getestimation`);
+        if (response.data) {
+          dispatch(setEstimation(response.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch estimation data:", error);
+      }
+    };
+
+    dispatch(deleteselectuser());
+    fetchUsers();
+    fetchMedication();
+    fetchEstimations();
+  }, [API_BASE_URL, dispatch]);
+
+  // สร้างฟังก์ชันเพื่อหา medication.status ตัวสุดท้ายของแต่ละผู้ใช้
+  const getLastMedicationStatus = (userId) => {
+    const userMedications = medication.filter((med) => med.from === userId);
+    if (userMedications.length > 0) {
+      return userMedications[userMedications.length - 1].status;
+    }
+    return -1;
+  };
+
+  // สร้างฟังก์ชันเพื่อตรวจสอบว่าผู้ใช้มีการประเมินหรือไม่
+  const hasEstimation = (userId) => {
+    return estimation.some((est) => est.from === userId);
+  };
+
+  // เรียงลำดับผู้ใช้โดยใช้ medication.status ตัวสุดท้ายแทน laststatus
+  const sortedUsers = Array.isArray(users) ? users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)) : [];
 
   return (
     <Container>
@@ -44,69 +94,92 @@ function Home() {
               </tr>
             </thead>
             <tbody>
-              {users &&
-                users.map(
+              {Array.isArray(sortedUsers) &&
+                sortedUsers.map(
                   (userData) =>
                     userData &&
                     userData._id &&
-                    userData._id !== user._id && (
-                      <tr key={userData._id}>
+                    userData._id !== admin._id && (
+                      <tr
+                        key={userData._id}
+                        className={
+                          getLastMedicationStatus(userData._id) === 0
+                            ? "row-danger"
+                            : getLastMedicationStatus(userData._id) === 1
+                            ? "row-warning"
+                            : "row-success"
+                        }
+                      >
                         <td className="table-center">{userData.name}</td>
                         <td className="table-center">{userData.phone}</td>
                         <td className="table-center">{userData.age}</td>
                         <td className="table-center">{userData.ms_medicine}</td>
                         <td className="table-center">
-                          {/* แสดงสถานะการกินยา */}
                           <Button
                             className={
-                              userData.laststatus === 0
+                              getLastMedicationStatus(userData._id) === 0
                                 ? "btn-danger"
-                                : userData.laststatus === 1
+                                : getLastMedicationStatus(userData._id) === 1
                                 ? "btn-warning"
                                 : "btn-success"
                             }
                             disabled
                           >
-                            {userData.laststatus === 0
-                              ? "ยังไม่ได้กินยา"
-                              : userData.laststatus === 1
-                              ? "ยังไม่ได้กินยา"
-                              : "กินยาแล้ว"}
+                            {getLastMedicationStatus(userData._id) === 0
+                              ? "ไม่ได้กิน"
+                              : getLastMedicationStatus(userData._id) === 1
+                              ? "ล่าช้า"
+                              : "กินแล้ว"}
                           </Button>
                         </td>
-                        {/* ปุ่มที่กดไปหน้าต่างๆ */}
                         <td className="table-center">
                           <Button
                             variant="outline-success"
                             onClick={() => {
-                              setMember(userData);
+                              dispatch(setselectuser(userData));
                               navigate("/personal");
                             }}
                           >
                             ข้อมูลส่วนบุคคล
                           </Button>{" "}
                           <Button
-                            variant="outline-success"
+                            variant={
+                              getLastMedicationStatus(userData._id) === 0
+                                ? "outline-danger"
+                                : getLastMedicationStatus(userData._id) === 1
+                                ? "outline-warning"
+                                : "outline-success"
+                            }
                             onClick={() => {
-                              setMember(userData);
+                              dispatch(setselectuser(userData));
                               navigate("/medication");
                             }}
                           >
                             รายละเอียดการกินยา
                           </Button>{" "}
                           <Button
-                            variant="outline-success"
+                            variant={
+                              hasEstimation(userData._id)
+                                ? "outline-warning"
+                                : "outline-success"
+                            }
                             onClick={() => {
-                              setMember(userData);
+                              dispatch(setselectuser(userData));
                               navigate("/estimation");
                             }}
                           >
                             การประเมินอาการ HFS
                           </Button>{" "}
                           <Button
-                            variant="outline-success"
+                            variant={
+                              getLastMedicationStatus(userData._id) === 0
+                                ? "outline-danger"
+                                : getLastMedicationStatus(userData._id) === 1
+                                ? "outline-warning"
+                                : "outline-success"
+                            }
                             onClick={() => {
-                              setMember(userData);
+                              dispatch(setselectuser(userData));
                               navigate("/chat");
                             }}
                           >

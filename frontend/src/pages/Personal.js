@@ -1,24 +1,18 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Container, Button, Form, Row, Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { updateUsers } from "../features/usersSlice";
 
 function Personal() {
-  const user = useSelector((state) => state.user);
-  const { member, setMember, API_BASE_URL } = useContext(AppContext);
-  const navigate = useNavigate();
+  const selectuser = useSelector((state) => state.selectuser);
+  const { API_BASE_URL } = useContext(AppContext);
+  const [member, setMember] = useState(selectuser);
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    if (!member._id) {
-      navigate("/");
-    }
-  }, [user, member, setMember, navigate]);
 
   const handleChange = (name, value) => {
     setMember((prevMember) => ({

@@ -4,44 +4,40 @@ import Navigation from "../components/Navigation";
 import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { showMessage, addMessage } from "../features/messageSlice";
 
 function Chat() {
   const messages = useSelector((state) => state.message);
-  const user = useSelector((state) => state.user);
+  const admin = useSelector((state) => state.admin);
+  const selectuser = useSelector((state) => state.selectuser);
   const [message, setMessage] = useState("");
-  const { member, API_BASE_URL } = useContext(AppContext);
+  const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!member._id) {
-      navigate("/");
-    }
-    const fetchData = async () => {
+    const fetchChat = async () => {
       try {
-        const res = await axios.post(`${API_BASE_URL}/getmessage`, {
-          from: user._id,
-          to: member._id,
+        const response = await axios.post(`${API_BASE_URL}/getmessage`, {
+          from: admin._id,
+          to: selectuser._id,
         });
-        dispatch(showMessage(res.data));
-      } catch (err) {
-        console.log(err);
+        if (response.data) {
+          dispatch(showMessage(response.data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch message data:", error);
       }
     };
-    fetchData();
-  }, [dispatch, member._id, navigate, user._id, API_BASE_URL]);
+  
+    fetchChat();
+  }, [admin._id, selectuser._id, API_BASE_URL, dispatch]);
+  
 
   function validateImg(e) {
     const file = e.target.files[0];
-    if (!file) {
-      // ถ้าไม่มีไฟล์ถูกเลือก
-      return alert("Please select an image file.");
-    }
   
     if (file.size >= 3048576) {
       return alert("Max file size is 3mb");
@@ -88,8 +84,8 @@ function Chat() {
         try {
           const formData = new FormData();
           formData.append("photo", image);
-          formData.append("from", user._id);
-          formData.append("to", member._id);
+          formData.append("from", admin._id);
+          formData.append("to", selectuser._id);
           formData.append("date", todayDate);
           formData.append("time", time);
   
@@ -117,8 +113,8 @@ function Chat() {
             content: content,
             time: time,
             date: todayDate,
-            from: user._id,
-            to: member._id,
+            from: admin._id,
+            to: selectuser._id,
             contentType: "text",
           })
           .then((res) => {
@@ -144,7 +140,7 @@ function Chat() {
         <div
           key={index}
           className={
-            message.from === user._id
+            message.from === admin._id
               ? "incoming-message"
               : "outgoing-message"
           }

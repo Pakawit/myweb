@@ -1,46 +1,67 @@
 import "./Navigation.css";
-import React, { useContext } from "react";
-import { useDispatch } from "react-redux";
-import { Button, Container, Nav, Navbar } from "react-bootstrap";
-import { AppContext } from "../context/appContext";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Button, Container, Nav, Navbar, Dropdown } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import { deleteEstimation } from "../features/estimationSlice";
-import { deleteUser } from "../features/userSlice";
+import { deleteAdmin } from "../features/adminSlice";
+import { removeNotification } from '../features/notificationsSlice';
 
 function Navigation() {
+  const notifications = useSelector(state => state.notifications);
   const dispatch = useDispatch();
-  const { setMember } = useContext(AppContext);
   const navigate = useNavigate();
 
   async function back() {
     await navigate("/");
-    await setMember([]);
-    await dispatch(deleteMedication());
-    await dispatch(deleteMessage());
-    await dispatch(deleteEstimation());
   }
 
   async function handleLogout(e) {
     e.preventDefault();
     await dispatch(deleteUsers());
-    await setMember([]);
     await dispatch(deleteMedication());
     await dispatch(deleteMessage());
     await dispatch(deleteEstimation());
-    await dispatch(deleteUser());
+    await dispatch(deleteAdmin());
   }
 
   return (
     <div>
       <Navbar>
         <Container>
-            <Button variant="outline-dark" onClick={back}><i className="bi bi-chevron-left"></i></Button>
+          <Button variant="outline-dark" onClick={back}>
+            <i className="bi bi-chevron-left"></i>
+          </Button>
           <Nav className="ms-autoNav">
-              <Button variant="outline-dark" className="mx-1"><i className="bi bi-bell" ></i></Button>
-              <Button variant="outline-dark" onClick={handleLogout} ><i className="bi bi-box-arrow-in-right"></i></Button>
+            <Dropdown alignRight>
+              <Dropdown.Toggle variant="outline-dark" className="mx-1">
+                <i className="bi bi-bell"></i>
+              </Dropdown.Toggle>
+              <Dropdown.Menu>
+                {notifications.length === 0 ? (
+                  <Dropdown.Item>No notifications</Dropdown.Item>
+                ) : (
+                  notifications.map(notification => (
+                    <Dropdown.Item key={notification.id}>
+                      {notification.message}
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => dispatch(removeNotification(notification.id))}
+                      >
+                        Dismiss
+                      </Button>
+                    </Dropdown.Item>
+                  ))
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
+            <Button variant="outline-dark" onClick={handleLogout}>
+              <i className="bi bi-box-arrow-in-right"></i>
+            </Button>
           </Nav>
         </Container>
       </Navbar>

@@ -3,7 +3,7 @@ import { Button, Form, Container, Row, Col } from "react-bootstrap";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setUser } from "../features/userSlice";
+import { setAdmin } from "../features/adminSlice";
 import { AppContext } from "../context/appContext";
 
 function Login() {
@@ -23,7 +23,7 @@ function Login() {
         password,
       });
       if (res.data) {
-        dispatch(setUser(res.data));
+        dispatch(setAdmin(res.data));
         navigate("/");
       }
     } catch (error) {

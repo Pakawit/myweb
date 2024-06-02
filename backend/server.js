@@ -6,6 +6,10 @@ const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
 const cors = require("cors");
+const fs = require('fs'); 
+const path = require('path'); 
+const multer = require("multer");
+const upload = multer();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -16,12 +20,12 @@ app.post("/admin", async (req, res) => {
   try {
     const { name, password } = req.body;
     console.log(req.body);
-    const user = await Admin.create({ name, password });
-    res.status(201).json(user);
+    const admin = await Admin.create({ name, password });
+    res.status(201).json(admin);
   } catch (e) {
     let msg;
     if (e.code == 11000) {
-      msg = "User already exists";
+      msg = "admin already exists";
     } else {
       msg = e.message;
     }
@@ -33,9 +37,9 @@ app.post("/admin", async (req, res) => {
 app.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
-    const user = await Admin.findByCredentials(name, password);
-    await user.save();
-    res.status(200).json(user);
+    const admin = await Admin.findByCredentials(name, password);
+    await admin.save();
+    res.status(200).json(admin);
   } catch (e) {
     res.status(400).json(e.message);
   }
@@ -44,8 +48,8 @@ app.post("/admin/login", async (req, res) => {
 app.delete("/admin/logout", async (req, res) => {
   try {
     const { _id } = req.body;
-    const user = await Admin.findById(_id);
-    await user.save();
+    const admin = await Admin.findById(_id);
+    await admin.save();
     res.status(200).send();
   } catch (e) {
     console.log(e);
@@ -97,9 +101,21 @@ app.delete("/logout", async (req, res) => {
 
 ///////////////////////////////////////////
 app.get("/getusers", (req, res) => {
-  const { _id } = req.body;
   User.find()
-    .then((users) => res.json(users))
+    .then((users) => {
+
+      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json' , 'users.json');
+
+      fs.writeFile(filePath, JSON.stringify(users), (err) => {
+        if (err) {
+          console.error('Error writing JSON file:', err);
+          res.status(500).json({ error: 'Error writing JSON file' });
+        } else {
+          console.log('JSON file updated successfully');
+          res.json(users); 
+        }
+      });
+    })
     .catch((err) => res.json(err));
 });
 
@@ -128,9 +144,21 @@ app.put("/update", async (req, res) => {
 });
 
 app.post("/getmedication", (req, res) => {
-  const { _id } = req.body;
-  Medication.find({ from: _id })
-    .then((medications) => res.json(medications))
+  Medication.find()
+    .then((medications) => {
+
+      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json' , 'medications.json');
+
+      fs.writeFile(filePath, JSON.stringify(medications), (err) => {
+        if (err) {
+          console.error('Error writing JSON file:', err);
+          res.status(500).json({ error: 'Error writing JSON file' });
+        } else {
+          console.log('JSON file updated successfully');
+          res.json(medications); 
+        }
+      });
+    })
     .catch((err) => res.json(err));
 });
 
@@ -142,10 +170,27 @@ app.post("/createmedication", (req, res) => {
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
-  Estimation.find({ from: _id, hfsLevel: 0 })
-    .then((estimation) => res.json(estimation))
-    .catch((err) => res.json(err));
+  Estimation.find({ hfsLevel: 0 })
+    .then((estimations) => {
+      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json', 'estimations.json');
+
+
+      fs.writeFile(filePath, JSON.stringify(estimations), (err) => {
+        if (err) {
+          console.error('Error writing JSON file:', err);
+          return res.status(500).json({ error: 'Error writing JSON file' });
+        } else {
+          console.log('JSON file updated successfully');
+          res.json(estimations);
+        }
+      });
+    })
+    .catch((err) => {
+      console.error('Error fetching estimations:', err);
+      res.status(500).json({ error: 'Error fetching estimations' });
+    });
 });
+
 
 
 app.put("/editestimation", async (req, res) => {
@@ -165,11 +210,6 @@ app.put("/editestimation", async (req, res) => {
 });
 
 //upload photo
-const multer = require("multer");
-const fs = require("fs");
-const upload = multer();
-
-
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
     const { from, to, date, time } = req.body;
@@ -191,7 +231,6 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   }
 });
 
-
 //////////////////////////////////////
 
 app.post("/createstimation", (req, res) => {
@@ -208,7 +247,19 @@ app.post("/getmessage", (req, res) => {
       { from: to, to: from },
     ],
   })
-    .then((message) => res.json(message))
+    .then((messages) => {
+      const filePath = path.join(__dirname, '..', 'frontend', 'src','json' , 'messages.json');
+
+      fs.writeFile(filePath, JSON.stringify(messages), (err) => {
+        if (err) {
+          console.error('Error writing JSON file:', err);
+          res.status(500).json({ error: 'Error writing JSON file' });
+        } else {
+          console.log('JSON file updated successfully');
+          res.json(messages);
+        }
+      });
+    })
     .catch((err) => res.json(err));
 });
 

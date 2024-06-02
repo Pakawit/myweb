@@ -1,7 +1,6 @@
 import "./App.css";
 import { useSelector } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
 import { AppContext } from "./context/appContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -11,15 +10,14 @@ import Medication from "./pages/Medication";
 import Estimation from "./pages/Estimation";
 
 function App() {
-  const user = useSelector((state) => state.user);
-  const [member, setMember] = useState([]);
+  const admin = useSelector((state) => state.admin);
   const API_BASE_URL = "http://localhost:5001";
 
   return (
-    <AppContext.Provider value={{ member, setMember, API_BASE_URL}}>
+    <AppContext.Provider value={{API_BASE_URL}}>
       <BrowserRouter>
         <Routes>
-          {!user ? (
+          {!admin ? (
             <Route path="/*" element={<Login />} />
           ) : (
             <>
