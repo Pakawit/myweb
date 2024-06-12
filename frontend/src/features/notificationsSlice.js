@@ -1,17 +1,40 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import Data from "../json/notification.json";
+
+const initialState = Data;
+
+export const removeNotificationThunk = createAsyncThunk(
+  "notifications/removeNotificationThunk",
+  async (userId, { dispatch }) => {
+    const response = await fetch("http://localhost:5001/removeNotification", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    });
+    if (response.ok) {
+      dispatch(removeNotification(userId));
+    }
+  }
+);
 
 const notificationsSlice = createSlice({
-  name: 'notifications',
-  initialState: [],
+  name: "notifications",
+  initialState,
   reducers: {
-    addNotification: (state, action) => {
-      state.push({ id: Date.now(), message: action.payload });
+    addNotification: () => {
+      return initialState;
     },
     removeNotification: (state, action) => {
-      return state.filter(notification => notification.id !== action.payload);
+      return state.filter((n) => n.userId !== action.payload);
+    },
+    extraReducers: (builder) => {
+      builder.addCase(removeNotificationThunk.fulfilled, (state, action) => {});
     },
   },
 });
 
-export const { addNotification, removeNotification } = notificationsSlice.actions;
+export const { addNotification, removeNotification } =
+  notificationsSlice.actions;
 export default notificationsSlice.reducer;

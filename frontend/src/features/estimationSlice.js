@@ -1,12 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 import Data from '../json/estimations.json'
 
+const initialState = Data;
+
 export const estimationSlice = createSlice({
   name: "estimation",
-  initialState: Data,
+  initialState,
   reducers: {
-    setEstimation: (state, action) => {
-      return action.payload;
+    setEstimation: () => {
+      return initialState;
     },
     addEstimation: (state, action) => {
       state.push(action.payload);

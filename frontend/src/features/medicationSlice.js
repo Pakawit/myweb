@@ -1,12 +1,14 @@
 import { createSlice } from "@reduxjs/toolkit";
 import Data from '../json/medications.json'
 
+const initialState = Data;
+
 export const medicationSlice = createSlice({
   name: "medication",
-  initialState: Data,  
+  initialState,  
   reducers: {
-    setMedication: (state, action) => {
-      return action.payload;
+    setMedication: () => {
+      return initialState;
     },
     addMedication: (state, action) => {
       state.push(action.payload);

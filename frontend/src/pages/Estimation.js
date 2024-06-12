@@ -1,36 +1,44 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Dropdown,
+  Modal,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { setEstimation } from "../features/estimationSlice";
+//import { setEstimation } from "../features/estimationSlice";
 
 function Estimation() {
   const [hfsLevel, setHfsLevel] = useState(0);
   const { API_BASE_URL } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation);
   const selectuser = useSelector((state) => state.selectuser);
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  useEffect(() => {
-    const fetchEstimation = async () => {
-      try {
-        const response = await axios.post(`${API_BASE_URL}/getestimation`, {
-          _id: selectuser._id,
-        });
-        if (response.data) {
-          dispatch(setEstimation(response.data));
-        }
-      } catch (error) {
-        console.error("Failed to fetch estimation data:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchEstimation = async () => {
+  //     try {
+  //       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
+  //         _id: selectuser._id,
+  //       });
+  //       if (response.data) {
+  //         dispatch(setEstimation(response.data));
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch estimation data:", error);
+  //     }
+  //   };
 
-    fetchEstimation();
-  }, [selectuser._id, API_BASE_URL, dispatch]);
+  //   fetchEstimation();
+  // }, [selectuser._id, API_BASE_URL, dispatch]);
 
   async function handleSubmit(_id) {
     try {

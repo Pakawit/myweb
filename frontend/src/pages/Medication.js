@@ -3,29 +3,29 @@ import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
-import axios from "axios";
-import { setMedication } from "../features/medicationSlice";
+//import axios from "axios";
+//import { setMedication } from "../features/medicationSlice";
 
 function Medication() {
   const { API_BASE_URL } = useContext(AppContext);
   const medication = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
 
-  useEffect(() => {
-    const fetchMedication = async () => {
-      try {
-        const response = await axios.post(`${API_BASE_URL}/getmedication`);
-        if (response.data) {
-          dispatch(setMedication(response.data));
-        }
-      } catch (error) {
-        console.error("Failed to fetch medication data:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchMedication = async () => {
+  //     try {
+  //       const response = await axios.post(`${API_BASE_URL}/getmedication`);
+  //       if (response.data) {
+  //         dispatch(setMedication(response.data));
+  //       }
+  //     } catch (error) {
+  //       console.error("Failed to fetch medication data:", error);
+  //     }
+  //   };
 
-    fetchMedication();
-  }, [selectuser._id, API_BASE_URL, dispatch]);
+  //   fetchMedication();
+  // }, [selectuser._id, API_BASE_URL, dispatch]);
 
   return (
     <Container>

@@ -10,6 +10,8 @@ import { setUsers } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { setMedication } from "../features/medicationSlice";
 import { setEstimation } from "../features/estimationSlice";
+import { showMessage } from "../features/messageSlice";
+import { addNotification } from "../features/notificationsSlice";
 
 function Home() {
   const admin = useSelector((state) => state.admin);
@@ -23,10 +25,8 @@ function Home() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/getusers`);
-        if (response.data) {
-          dispatch(setUsers(response.data));
-        }
+        await axios.get(`${API_BASE_URL}/getusers`);
+        dispatch(setUsers());
       } catch (error) {
         console.error("Failed to fetch users:", error);
       }
@@ -34,10 +34,8 @@ function Home() {
 
     const fetchMedication = async () => {
       try {
-        const response = await axios.post(`${API_BASE_URL}/getmedication`);
-        if (response.data) {
-          dispatch(setMedication(response.data));
-        }
+        await axios.post(`${API_BASE_URL}/getmedication`);
+        dispatch(setMedication());
       } catch (error) {
         console.error("Failed to fetch medication data:", error);
       }
@@ -45,22 +43,30 @@ function Home() {
 
     const fetchEstimations = async () => {
       try {
-        const response = await axios.post(`${API_BASE_URL}/getestimation`);
-        if (response.data) {
-          dispatch(setEstimation(response.data));
-        }
+        await axios.post(`${API_BASE_URL}/getestimation`);
+        dispatch(setEstimation());
+      } catch (error) {
+        console.error("Failed to fetch estimation data:", error);
+      }
+    };
+
+    const fetchMessages = async () => {
+      try {
+        await axios.post(`${API_BASE_URL}/getmessage`);
+        dispatch(showMessage());
       } catch (error) {
         console.error("Failed to fetch estimation data:", error);
       }
     };
 
     dispatch(deleteselectuser());
+    dispatch(addNotification());
     fetchUsers();
     fetchMedication();
     fetchEstimations();
+    fetchMessages();
   }, [API_BASE_URL, dispatch]);
 
-  // สร้างฟังก์ชันเพื่อหา medication.status ตัวสุดท้ายของแต่ละผู้ใช้
   const getLastMedicationStatus = (userId) => {
     const userMedications = medication.filter((med) => med.from === userId);
     if (userMedications.length > 0) {
@@ -69,13 +75,18 @@ function Home() {
     return -1;
   };
 
-  // สร้างฟังก์ชันเพื่อตรวจสอบว่าผู้ใช้มีการประเมินหรือไม่
   const hasEstimation = (userId) => {
     return estimation.some((est) => est.from === userId);
   };
 
-  // เรียงลำดับผู้ใช้โดยใช้ medication.status ตัวสุดท้ายแทน laststatus
-  const sortedUsers = Array.isArray(users) ? users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)) : [];
+  const sortedUsers = Array.isArray(users)
+    ? users
+        .slice()
+        .sort(
+          (a, b) =>
+            getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)
+        )
+    : [];
 
   return (
     <Container>

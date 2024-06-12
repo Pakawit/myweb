@@ -1,19 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
-import Data from '../json/users.json'
+import Data from "../json/users.json";
+
+const initialState = Data;
 
 export const usersSlice = createSlice({
   name: "users",
-  initialState: Data,
+  initialState,
   reducers: {
-    setUsers: (state, action) => {
-      return action.payload;
+
+    setUsers: () => {
+      return initialState;
     },
-    deleteUsers: (state, action) => {
+
+    deleteUsers: () => {
       return [];
     },
+
     updateUsers: (state, action) => {
-      const index = state.findIndex(x => x._id === action.payload._id);
-      state[index] = { ...action.payload }; 
+      const index = state.findIndex((user) => user._id === action.payload._id);
+      if (index !== -1) {
+        state[index] = { ...state[index], ...action.payload };
+      }
     },
   },
 });

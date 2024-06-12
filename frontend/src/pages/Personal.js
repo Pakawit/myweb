@@ -13,7 +13,6 @@ function Personal() {
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
 
-
   const handleChange = (name, value) => {
     setMember((prevMember) => ({
       ...prevMember,
@@ -42,7 +41,6 @@ function Personal() {
       <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
       <Form onSubmit={handleSubmit}>
-        
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             ชื่อ-สกุล
@@ -207,7 +205,6 @@ function Personal() {
             )}
           </Col>
         </Form.Group>
-
       </Form>
     </Container>
   );

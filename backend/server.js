@@ -6,8 +6,8 @@ const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
 const cors = require("cors");
-const fs = require('fs'); 
-const path = require('path'); 
+const fs = require("fs");
+const path = require("path");
 const multer = require("multer");
 const upload = multer();
 
@@ -15,7 +15,93 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
+const NOTIFICATION_FILE_PATH = path.join(
+  __dirname,
+  "..",
+  "frontend",
+  "src",
+  "json",
+  "notification.json"
+);
+
+const readNotifications = () => {
+  return new Promise((resolve, reject) => {
+    fs.readFile(NOTIFICATION_FILE_PATH, (err, data) => {
+      if (err && err.code !== "ENOENT") {
+        return reject("Error reading notification file:", err);
+      }
+
+      let notifications = [];
+      if (!err) {
+        try {
+          notifications = JSON.parse(data);
+        } catch (parseErr) {
+          return reject("Error parsing notification file:", parseErr);
+        }
+      }
+
+      resolve(notifications);
+    });
+  });
+};
+
+const writeNotifications = (notifications) => {
+  return new Promise((resolve, reject) => {
+    fs.writeFile(
+      NOTIFICATION_FILE_PATH,
+      JSON.stringify(notifications, null, 2),
+      (err) => {
+        if (err) {
+          return reject("Error writing notification file:", err);
+        }
+        resolve();
+      }
+    );
+  });
+};
+
+const updateNotificationFile = async (userId) => {
+  try {
+    let notifications = await readNotifications();
+
+    // ตรวจสอบว่า userId มีอยู่ในรายการแจ้งเตือนแล้วหรือไม่
+    let notification = notifications.find((n) => n.userId === userId);
+    if (!notification) {
+      notifications.push({ userId });
+    }
+
+    await writeNotifications(notifications);
+    console.log("Notification file updated successfully");
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+app.post("/removeNotification", (req, res) => {
+  const { userId } = req.body;
+  fs.readFile(NOTIFICATION_FILE_PATH, (err, data) => {
+    if (err) {
+      return res.status(500).json({ error: "Error reading notification file" });
+    }
+    let notifications = JSON.parse(data);
+    notifications = notifications.filter((n) => n.userId !== userId);
+    fs.writeFile(
+      NOTIFICATION_FILE_PATH,
+      JSON.stringify(notifications),
+      (err) => {
+        if (err) {
+          return res
+            .status(500)
+            .json({ error: "Error writing notification file" });
+        }
+        res.status(200).json({ success: true });
+      }
+    );
+  });
+});
+
 ///////////Admin
+
 app.post("/admin", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -56,8 +142,9 @@ app.delete("/admin/logout", async (req, res) => {
     res.status(400).send();
   }
 });
-///////////////////////////////////////////
-////////////////////user
+
+//////////////////user
+
 app.post("/user", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -99,20 +186,27 @@ app.delete("/logout", async (req, res) => {
   }
 });
 
-///////////////////////////////////////////
+///////////// users
+
 app.get("/getusers", (req, res) => {
   User.find()
     .then((users) => {
-
-      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json' , 'users.json');
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "frontend",
+        "src",
+        "json",
+        "users.json"
+      );
 
       fs.writeFile(filePath, JSON.stringify(users), (err) => {
         if (err) {
-          console.error('Error writing JSON file:', err);
-          res.status(500).json({ error: 'Error writing JSON file' });
+          console.error("Error writing JSON file:", err);
+          res.status(500).json({ error: "Error writing JSON file" });
         } else {
-          console.log('JSON file updated successfully');
-          res.json(users); 
+          console.log("JSON file updated successfully");
+          res.json(users);
         }
       });
     })
@@ -143,19 +237,27 @@ app.put("/update", async (req, res) => {
   }
 });
 
+///////////// medication
+
 app.post("/getmedication", (req, res) => {
   Medication.find()
     .then((medications) => {
-
-      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json' , 'medications.json');
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "frontend",
+        "src",
+        "json",
+        "medications.json"
+      );
 
       fs.writeFile(filePath, JSON.stringify(medications), (err) => {
         if (err) {
-          console.error('Error writing JSON file:', err);
-          res.status(500).json({ error: 'Error writing JSON file' });
+          console.error("Error writing JSON file:", err);
+          res.status(500).json({ error: "Error writing JSON file" });
         } else {
-          console.log('JSON file updated successfully');
-          res.json(medications); 
+          console.log("JSON file updated successfully");
+          res.json(medications);
         }
       });
     })
@@ -168,30 +270,35 @@ app.post("/createmedication", (req, res) => {
     .catch((err) => res.json(err));
 });
 
+///////////// estimation
+
 app.post("/getestimation", (req, res) => {
-  const { _id } = req.body;
   Estimation.find({ hfsLevel: 0 })
     .then((estimations) => {
-      const filePath = path.join(__dirname, '..', 'frontend', 'src', 'json', 'estimations.json');
-
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "frontend",
+        "src",
+        "json",
+        "estimations.json"
+      );
 
       fs.writeFile(filePath, JSON.stringify(estimations), (err) => {
         if (err) {
-          console.error('Error writing JSON file:', err);
-          return res.status(500).json({ error: 'Error writing JSON file' });
+          console.error("Error writing JSON file:", err);
+          return res.status(500).json({ error: "Error writing JSON file" });
         } else {
-          console.log('JSON file updated successfully');
+          console.log("JSON file updated successfully");
           res.json(estimations);
         }
       });
     })
     .catch((err) => {
-      console.error('Error fetching estimations:', err);
-      res.status(500).json({ error: 'Error fetching estimations' });
+      console.error("Error fetching estimations:", err);
+      res.status(500).json({ error: "Error fetching estimations" });
     });
 });
-
-
 
 app.put("/editestimation", async (req, res) => {
   try {
@@ -209,53 +316,32 @@ app.put("/editestimation", async (req, res) => {
   }
 });
 
-//upload photo
-app.post("/chatphoto", upload.single("photo"), async (req, res) => {
-  try {
-    const { from, to, date, time } = req.body;
-    const image = req.file.buffer.toString("base64");
-
-    // เพิ่มเข้าไปในฐานข้อมูล
-    const newMessage = await Message.create({
-      content: image, // เปลี่ยน key เป็น content ตามฐานข้อมูล
-      contentType: "image", // ระบุประเภทของข้อมูลเป็นรูปภาพ
-      from: from,
-      to: to,
-      date: date,
-      time: time,
-    });
-    res.json(newMessage);
-  } catch (error) {
-    console.error(error);
-    res.json(error);
-  }
-});
-
-//////////////////////////////////////
-
 app.post("/createstimation", (req, res) => {
   Estimation.create(req.body)
     .then((estimation) => res.json(estimation))
     .catch((err) => res.json(err));
 });
 
+///////////// chat
+
 app.post("/getmessage", (req, res) => {
-  const { from, to } = req.body;
-  Message.find({
-    $or: [
-      { from: from, to: to },
-      { from: to, to: from },
-    ],
-  })
+  Message.find()
     .then((messages) => {
-      const filePath = path.join(__dirname, '..', 'frontend', 'src','json' , 'messages.json');
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "frontend",
+        "src",
+        "json",
+        "messages.json"
+      );
 
       fs.writeFile(filePath, JSON.stringify(messages), (err) => {
         if (err) {
-          console.error('Error writing JSON file:', err);
-          res.status(500).json({ error: 'Error writing JSON file' });
+          console.error("Error writing JSON file:", err);
+          res.status(500).json({ error: "Error writing JSON file" });
         } else {
-          console.log('JSON file updated successfully');
+          console.log("JSON file updated successfully");
           res.json(messages);
         }
       });
@@ -263,10 +349,58 @@ app.post("/getmessage", (req, res) => {
     .catch((err) => res.json(err));
 });
 
-app.post("/createmessage", (req, res) => {
-  Message.create(req.body)
-    .then((message) => res.json(message))
-    .catch((err) => res.json(err));
+app.post("/createmessage", async (req, res) => {
+  try {
+    const { from, to, date, time , content } = req.body;
+    const newMessage = await Message.create({
+      content: content,
+      contentType: "text",
+      from,
+      to,
+      date,
+      time,
+    });
+    const user = await User.findById(req.body.from);
+    if (user) {
+      await updateNotificationFile(req.body.from);
+    } else {
+      console.warn(`User with ID ${req.body.from} not found`);
+    }
+
+    res.json(newMessage);
+  } catch (err) {
+    console.error("Error creating message:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//upload photo
+app.post("/chatphoto", upload.single("photo"), async (req, res) => {
+  try {
+    const { from, to, date, time } = req.body;
+    const image = req.file.buffer.toString("base64");
+
+    const newMessage = await Message.create({
+      content: image,
+      contentType: "image",
+      from,
+      to,
+      date,
+      time,
+    });
+
+    const user = await User.findById(req.body.from);
+    if (user) {
+      await updateNotificationFile(req.body.from);
+    } else {
+      console.warn(`User with ID ${req.body.from} not found`);
+    }
+
+    res.json(newMessage);
+  } catch (error) {
+    console.error("Error processing chat photo:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 });
 
 require("./connection");
