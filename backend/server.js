@@ -6,6 +6,8 @@ const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
 const cors = require("cors");
+const multer = require("multer");
+const upload = multer();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -16,12 +18,12 @@ app.post("/admin", async (req, res) => {
   try {
     const { name, password } = req.body;
     console.log(req.body);
-    const user = await Admin.create({ name, password });
-    res.status(201).json(user);
+    const admin = await Admin.create({ name, password });
+    res.status(201).json(admin);
   } catch (e) {
     let msg;
     if (e.code == 11000) {
-      msg = "User already exists";
+      msg = "admin already exists";
     } else {
       msg = e.message;
     }
@@ -33,9 +35,9 @@ app.post("/admin", async (req, res) => {
 app.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
-    const user = await Admin.findByCredentials(name, password);
-    await user.save();
-    res.status(200).json(user);
+    const admin = await Admin.findByCredentials(name, password);
+    await admin.save();
+    res.status(200).json(admin);
   } catch (e) {
     res.status(400).json(e.message);
   }
@@ -44,8 +46,8 @@ app.post("/admin/login", async (req, res) => {
 app.delete("/admin/logout", async (req, res) => {
   try {
     const { _id } = req.body;
-    const user = await Admin.findById(_id);
-    await user.save();
+    const admin = await Admin.findById(_id);
+    await admin.save();
     res.status(200).send();
   } catch (e) {
     console.log(e);
@@ -56,9 +58,9 @@ app.delete("/admin/logout", async (req, res) => {
 ////////////////////user
 app.post("/user", async (req, res) => {
   try {
-    const { name, password } = req.body;
+    const { name,phone, password } = req.body;
     console.log(req.body);
-    const user = await User.create({ name, password });
+    const user = await User.create({ name,phone, password });
     res.status(201).json(user);
   } catch (e) {
     let msg;
@@ -76,12 +78,25 @@ app.post("/user/login", async (req, res) => {
   try {
     const { name, password } = req.body;
     const user = await User.findByCredentials(name, password);
-    await user.save();
-    res.status(200).json(user);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // Check if it's the first login
+    const isFirstLogin = user.FirstLogin;
+
+    // Update FirstLogin status to false after first login
+    if (isFirstLogin) {
+      user.FirstLogin = false;
+      await user.save();
+    }
+
+    res.status(200).json({ isFirstLogin, user });
   } catch (e) {
     res.status(400).json(e.message);
   }
 });
+
 
 app.delete("/logout", async (req, res) => {
   try {
@@ -97,9 +112,10 @@ app.delete("/logout", async (req, res) => {
 
 ///////////////////////////////////////////
 app.get("/getusers", (req, res) => {
-  const { _id } = req.body;
   User.find()
-    .then((users) => res.json(users))
+    .then((users) => {
+      res.json(users); 
+    })
     .catch((err) => res.json(err));
 });
 
@@ -128,9 +144,10 @@ app.put("/update", async (req, res) => {
 });
 
 app.post("/getmedication", (req, res) => {
-  const { _id } = req.body;
-  Medication.find({ from: _id })
-    .then((medications) => res.json(medications))
+  Medication.find()
+    .then((medications) => {
+      res.json(medications); 
+    })
     .catch((err) => res.json(err));
 });
 
@@ -142,11 +159,15 @@ app.post("/createmedication", (req, res) => {
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
-  Estimation.find({ from: _id, hfsLevel: 0 })
-    .then((estimation) => res.json(estimation))
-    .catch((err) => res.json(err));
+  Estimation.find({ hfsLevel: 0 })
+    .then((estimations) => {
+      res.json(estimations);
+    })
+    .catch((err) => {
+      console.error('Error fetching estimations:', err);
+      res.status(500).json({ error: 'Error fetching estimations' });
+    });
 });
-
 
 app.put("/editestimation", async (req, res) => {
   try {
@@ -165,11 +186,6 @@ app.put("/editestimation", async (req, res) => {
 });
 
 //upload photo
-const multer = require("multer");
-const fs = require("fs");
-const upload = multer();
-
-
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
     const { from, to, date, time } = req.body;
@@ -191,7 +207,6 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   }
 });
 
-
 //////////////////////////////////////
 
 app.post("/createstimation", (req, res) => {
@@ -208,8 +223,10 @@ app.post("/getmessage", (req, res) => {
       { from: to, to: from },
     ],
   })
-    .then((message) => res.json(message))
-    .catch((err) => res.json(err));
+    .then((messages) => {
+      res.json(messages);
+    })
+    .catch((err) => res.status(500).json({ error: 'Error fetching messages' }));
 });
 
 app.post("/createmessage", (req, res) => {
