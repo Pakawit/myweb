@@ -10,7 +10,7 @@ export const fetchMessagesThunk = createAsyncThunk(
   "message/fetchMessages",
   async (_, { rejectWithValue }) => {
     try {
-      await axios.post("http://localhost:5001/getmessage");
+      await axios.post("http://localhost:5001/getmessages");
     } catch (error) {
       return rejectWithValue(error.response.data);
     }

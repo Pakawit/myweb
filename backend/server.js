@@ -324,7 +324,7 @@ app.post("/createstimation", (req, res) => {
 
 ///////////// chat
 
-app.post("/getmessage", (req, res) => {
+app.post("/getmessages", (req, res) => {
   Message.find()
     .then((messages) => {
       const filePath = path.join(
@@ -349,6 +349,21 @@ app.post("/getmessage", (req, res) => {
     .catch((err) => res.json(err));
 });
 
+app.post("/getmessage", (req, res) => {
+  const { from, to } = req.body;
+  Message.find({
+    $or: [
+      { from: from, to: to },
+      { from: to, to: from },
+    ],
+  })
+    .then((messages) => {
+      res.json(messages);
+    })
+    .catch((err) => res.status(500).json({ error: 'Error fetching messages' }));
+});
+
+
 app.post("/createmessage", async (req, res) => {
   try {
     const { from, to, date, time , content } = req.body;
@@ -360,12 +375,12 @@ app.post("/createmessage", async (req, res) => {
       date,
       time,
     });
+
     const user = await User.findById(req.body.from);
+    
     if (user) {
       await updateNotificationFile(req.body.from);
-    } else {
-      console.warn(`User with ID ${req.body.from} not found`);
-    }
+    } 
 
     res.json(newMessage);
   } catch (err) {
@@ -390,10 +405,9 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
     });
 
     const user = await User.findById(req.body.from);
+
     if (user) {
       await updateNotificationFile(req.body.from);
-    } else {
-      console.warn(`User with ID ${req.body.from} not found`);
     }
 
     res.json(newMessage);
