@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Form, Button, Container, Row, Col } from "react-bootstrap";
+import { Form, Button, Container, Row, Col, Modal } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { addMessage } from "../features/messageSlice";
+import { addMessage, fetchMessagesThunk } from "../features/messageSlice";
 import { removeNotificationThunk } from "../features/notificationsSlice";
-import { fetchMessagesThunk } from "../features/messageSlice";
 
 function Chat() {
   const messages = useSelector((state) => state.message);
@@ -17,12 +16,14 @@ function Chat() {
   const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const dispatch = useDispatch();
 
-useEffect(() => {
-  dispatch(fetchMessagesThunk());
-  dispatch(removeNotificationThunk(selectuser._id));
-},[ dispatch, selectuser])
+  useEffect(() => {
+    dispatch(fetchMessagesThunk());
+    dispatch(removeNotificationThunk(selectuser._id));
+  }, [dispatch, selectuser]);
 
   function validateImg(e) {
     const file = e.target.files[0];
@@ -119,6 +120,16 @@ useEffect(() => {
       (msg.from === selectuser._id && msg.to === admin._id)
   );
 
+  const handleShowModal = (image) => {
+    setSelectedImage(image);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedImage(null);
+  };
+
   return (
     <Container>
       <Navigation />
@@ -142,6 +153,8 @@ useEffect(() => {
                           src={`data:image/jpeg;base64,${message.content}`}
                           alt=""
                           className="message-img"
+                          onClick={() => handleShowModal(message.content)}
+                          style={{ cursor: "pointer" }}
                         />
                       ) : (
                         <div>{message.content}</div>
@@ -196,6 +209,25 @@ useEffect(() => {
           </>
         </Col>
       </Row>
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton></Modal.Header>
+        <Modal.Body>
+          {selectedImage && (
+            <img
+              src={`data:image/jpeg;base64,${selectedImage}`}
+              alt="Detailed view"
+              style={{
+                width: "100%",
+                height: "auto",
+                maxWidth: "100%",
+                maxHeight: "80vh",
+                margin: "auto",
+                display: "block",
+              }}
+            />
+          )}
+        </Modal.Body>
+      </Modal>
     </Container>
   );
 }

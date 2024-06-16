@@ -7,7 +7,7 @@ import selectuserSlice from "./features/selectuserSlice";
 import medicationReducer from "./features/medicationSlice";
 import messageReducer from "./features/messageSlice";
 import estimationReducer from "./features/estimationSlice";
-import notificationsReducer from './features/notificationsSlice';
+import notificationsReducer from "./features/notificationsSlice";
 
 const rootReducer = combineReducers({
   admin: adminSlice,
@@ -32,7 +32,17 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    })
+    }),
+  devTools: process.env.NODE_ENV !== 'production' && {
+    serialize: {
+      options: {
+        maxDepth: 2, // กำหนดความลึกสูงสุดของ serialization
+      },
+    },
+    actionsDenylist: ['SOME_LARGE_ACTION_TYPE'], // หรือใช้ actionsAllowlist สำหรับรายการที่ต้องการแสดงเท่านั้น
+    stateSanitizer: (state) => state.largeProperty ? { ...state, largeProperty: '<<LARGE_STATE>>' } : state,
+    actionSanitizer: (action) => action.type === 'SOME_LARGE_ACTION_TYPE' ? { ...action, largeProperty: '<<LARGE_ACTION>>' } : action,
+  }
 });
 
 export default store;
