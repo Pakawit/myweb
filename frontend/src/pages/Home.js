@@ -1,16 +1,14 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { AppContext } from "../context/appContext";
 import { useNavigate } from "react-router-dom";
 import "./style.css";
-import axios from "axios";
-import { setUsers } from "../features/usersSlice";
+import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
-import { setMedication } from "../features/medicationSlice";
-import { setEstimation } from "../features/estimationSlice";
-import { showMessage } from "../features/messageSlice";
+import { fetchMedicationsThunk } from "../features/medicationSlice";
+import { fetchEstimationsThunk } from "../features/estimationSlice";
+import { fetchMessagesThunk } from "../features/messageSlice";
 import { addNotification } from "../features/notificationsSlice";
 
 function Home() {
@@ -18,54 +16,17 @@ function Home() {
   const users = useSelector((state) => state.users) || [];
   const medication = useSelector((state) => state.medication) || [];
   const estimation = useSelector((state) => state.estimation) || [];
-  const { API_BASE_URL } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        await axios.get(`${API_BASE_URL}/getusers`);
-        dispatch(setUsers());
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
-    };
-
-    const fetchMedication = async () => {
-      try {
-        await axios.post(`${API_BASE_URL}/getmedication`);
-        dispatch(setMedication());
-      } catch (error) {
-        console.error("Failed to fetch medication data:", error);
-      }
-    };
-
-    const fetchEstimations = async () => {
-      try {
-        await axios.post(`${API_BASE_URL}/getestimation`);
-        dispatch(setEstimation());
-      } catch (error) {
-        console.error("Failed to fetch estimation data:", error);
-      }
-    };
-
-    const fetchMessages = async () => {
-      try {
-        await axios.post(`${API_BASE_URL}/getmessage`);
-        dispatch(showMessage());
-      } catch (error) {
-        console.error("Failed to fetch estimation data:", error);
-      }
-    };
-
     dispatch(deleteselectuser());
     dispatch(addNotification());
-    fetchUsers();
-    fetchMedication();
-    fetchEstimations();
-    fetchMessages();
-  }, [API_BASE_URL, dispatch]);
+    dispatch(fetchUsersThunk());
+    dispatch(fetchMedicationsThunk());
+    dispatch(fetchEstimationsThunk());
+    dispatch(fetchMessagesThunk());
+  }, [dispatch]);
 
   const getLastMedicationStatus = (userId) => {
     const userMedications = medication.filter((med) => med.from === userId);

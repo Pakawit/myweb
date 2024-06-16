@@ -5,8 +5,9 @@ import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { showMessage, addMessage } from "../features/messageSlice";
+import { addMessage } from "../features/messageSlice";
 import { removeNotificationThunk } from "../features/notificationsSlice";
+import { fetchMessagesThunk } from "../features/messageSlice";
 
 function Chat() {
   const messages = useSelector((state) => state.message);
@@ -18,24 +19,10 @@ function Chat() {
   const [image, setImage] = useState(null);
   const dispatch = useDispatch();
 
-  // useEffect(() => {
-  //   const fetchChat = async () => {
-  //     try {
-  //       const response = await axios.post(`${API_BASE_URL}/getmessage`);
-  //       if (response.data) {
-  //         dispatch(showMessage(response.data));
-  //       }
-  //     } catch (error) {
-  //       console.error("Failed to fetch message data:", error);
-  //     }
-  //   };
-
-  //   fetchChat();
-  // }, [admin._id, selectuser._id, API_BASE_URL, dispatch]);
-
 useEffect(() => {
+  dispatch(fetchMessagesThunk());
   dispatch(removeNotificationThunk(selectuser._id));
-},[dispatch])
+},[ dispatch, selectuser])
 
   function validateImg(e) {
     const file = e.target.files[0];
