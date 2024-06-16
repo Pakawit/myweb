@@ -25,7 +25,7 @@ function Estimation() {
 
   useEffect(() => {
     dispatch(fetchEstimationsThunk());
-  },[ dispatch ])
+  }, [dispatch]);
 
   async function handleSubmit(_id) {
     try {
@@ -67,7 +67,7 @@ function Estimation() {
               </tr>
             </thead>
             <tbody>
-              {estimation &&
+              {estimation && estimation.filter((est) => est.from === selectuser._id).length > 0 ? (
                 estimation
                   .filter((est) => est.from === selectuser._id)
                   .map((est, index) => (
@@ -122,7 +122,14 @@ function Estimation() {
                         </Button>
                       </td>
                     </tr>
-                  ))}
+                  ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="table-center">
+                    ไม่มีข้อมูล
+                  </td>
+                </tr>
+              )}
             </tbody>
           </Table>
         </Col>
