@@ -1,9 +1,11 @@
 const express = require("express");
 const app = express();
+const mongoose = require("mongoose");
 const User = require("./models/User");
 const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
+const MedNoti = require("./models/MedNoti");
 const Estimation = require("./models/Estimation");
 const cors = require("cors");
 const multer = require("multer");
@@ -58,9 +60,9 @@ app.delete("/admin/logout", async (req, res) => {
 ////////////////////user
 app.post("/user", async (req, res) => {
   try {
-    const { name,phone, password } = req.body;
+    const { name, phone, password } = req.body;
     console.log(req.body);
-    const user = await User.create({ name,phone, password });
+    const user = await User.create({ name, phone, password });
     res.status(201).json(user);
   } catch (e) {
     let msg;
@@ -96,7 +98,6 @@ app.post("/user/login", async (req, res) => {
     res.status(400).json(e.message);
   }
 });
-
 
 app.delete("/logout", async (req, res) => {
   try {
@@ -234,6 +235,50 @@ app.post("/createmessage", (req, res) => {
     .then((message) => res.json(message))
     .catch((err) => res.json(err));
 });
+
+// Endpoint to get alarm times
+app.post("/mednoti", async (req, res) => {
+  try {
+    const { morningTime, eveningTime } = req.body;
+    const newMedNoti = await MedNoti.create({ morningTime, eveningTime });
+    res.status(201).json(newMedNoti);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Route to get MedNoti settings
+app.get("/getmednoti", async (req, res) => {
+  try {
+    const medNoti = await MedNoti.findOne();
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error fetching MedNoti settings:", err);
+    res.status(500).json({ error: "Error fetching MedNoti settings" });
+  }
+});
+
+// Route to update MedNoti settings
+app.put("/updatemednoti", async (req, res) => {
+  const { morningTime, eveningTime } = req.body;
+  try {
+    let medNoti = await MedNoti.findOne();
+    if (!medNoti) {
+      // If MedNoti document doesn't exist, create a new one
+      medNoti = await MedNoti.create({ morningTime, eveningTime });
+    } else {
+      // Update existing MedNoti document
+      medNoti.morningTime = morningTime;
+      medNoti.eveningTime = eveningTime;
+      await medNoti.save();
+    }
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error updating MedNoti settings:", err);
+    res.status(500).json({ error: "Error updating MedNoti settings" });
+  }
+});
+
 
 require("./connection");
 
