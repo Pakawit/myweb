@@ -1,7 +1,17 @@
 import "./Navigation.css";
-import React from "react";
+import React, { useContext, useState } from "react";
+import { AppContext } from "../context/appContext";
 import { useSelector, useDispatch } from "react-redux";
-import { Button, Container, Nav, Navbar, Dropdown, Badge } from "react-bootstrap";
+import {
+  Button,
+  Container,
+  Nav,
+  Navbar,
+  Dropdown,
+  Badge,
+  Modal,
+  Form,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
@@ -9,35 +19,79 @@ import { deleteMessage } from "../features/messageSlice";
 import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
+import axios from "axios";
 
 function Navigation() {
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
+  const { API_BASE_URL } = useContext(AppContext); // ใช้ AppContext จาก useContext
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  async function back() {
+  const [showModal, setShowModal] = useState(false);
+  const [morningReminderTime, setMorningReminderTime] = useState("");
+  const [eveningReminderTime, setEveningReminderTime] = useState("");
+
+  const fetchMedNotiSettings = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/getMedNoti`); // ใช้ API_BASE_URL ในการเรียก API
+      const { morningTime, eveningTime } = response.data;
+      setMorningReminderTime(morningTime);
+      setEveningReminderTime(eveningTime);
+    } catch (error) {
+      console.error("Error fetching MedNoti settings:", error);
+    }
+  };
+
+  const back = () => {
     navigate("/");
-  }
+  };
 
-  async function handleLogout(e) {
+  const handleLogout = async (e) => {
     e.preventDefault();
-    await dispatch(deleteUsers());
-    await dispatch(deleteMedication());
-    await dispatch(deleteMessage());
-    await dispatch(deleteEstimation());
-    await dispatch(deleteAdmin());
-  }
+    try {
+      await Promise.all([
+        dispatch(deleteUsers()),
+        dispatch(deleteMedication()),
+        dispatch(deleteMessage()),
+        dispatch(deleteEstimation()),
+        dispatch(deleteAdmin()),
+      ]);
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
-  async function handleNotificationClick(notification) {
+  const handleNotificationClick = async (notification) => {
     if (notification && notification.userId) {
       const user = users.find((user) => user._id === notification.userId);
       if (user) {
-        await dispatch(setselectuser(user));
-        navigate("/chat");
+        try {
+          await dispatch(setselectuser(user));
+          navigate("/chat");
+        } catch (error) {
+          console.error("Error handling notification click:", error);
+        }
       }
     }
-  }
+  };
+
+  const handleSaveReminder = async () => {
+    try {
+      await axios.put(`${API_BASE_URL}/updateMedNoti`, {
+        morningTime: morningReminderTime,
+        eveningTime: eveningReminderTime,
+      });
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error saving reminder settings:", error);
+    }
+  };
+
+  const handleShowModal = () => {
+    fetchMedNotiSettings();
+    setShowModal(true);
+  };
 
   return (
     <Navbar>
@@ -46,11 +100,18 @@ function Navigation() {
           <i className="bi bi-chevron-left"></i>
         </Button>
         <Nav className="ms-autoNav">
+          <Button variant="outline-dark" onClick={handleShowModal}>
+            <i className="bi bi-clock"></i>
+          </Button>
           <Dropdown style={{ marginLeft: "auto" }}>
-            <Dropdown.Toggle variant="outline-dark" className="mx-1" id="dropdown-basic">
+            <Dropdown.Toggle
+              variant="outline-dark"
+              className="mx-1"
+              id="dropdown-basic"
+            >
               <i className="bi bi-bell"></i>
               {notifications.length > 0 && (
-                <Badge pill bg="danger" style={{ marginLeft: '5px' }}>
+                <Badge pill bg="danger" style={{ marginLeft: "5px" }}>
                   {notifications.length}
                 </Badge>
               )}
@@ -60,7 +121,7 @@ function Navigation() {
                 <Dropdown.Item>No notifications</Dropdown.Item>
               ) : (
                 notifications.map((notification) => {
-                  if (!notification || !notification.userId) return null; // Skip invalid notifications
+                  if (!notification || !notification.userId) return null;
                   const user = users.find(
                     (user) => user._id === notification.userId
                   );
@@ -80,6 +141,40 @@ function Navigation() {
             <i className="bi bi-box-arrow-in-right"></i>
           </Button>
         </Nav>
+
+        <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>ตั้งค่าการแจ้งเตือนเวลาที่รับประทานยา</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group controlId="morningReminderTime">
+                <Form.Label>เวลาแจ้งเตือน (เช้า)</Form.Label>
+                <Form.Control
+                  type="time"
+                  value={morningReminderTime}
+                  onChange={(e) => setMorningReminderTime(e.target.value)}
+                />
+              </Form.Group>
+              <Form.Group controlId="eveningReminderTime" className="mt-3">
+                <Form.Label>เวลาแจ้งเตือน (เย็น)</Form.Label>
+                <Form.Control
+                  type="time"
+                  value={eveningReminderTime}
+                  onChange={(e) => setEveningReminderTime(e.target.value)}
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              ปิด
+            </Button>
+            <Button variant="primary" onClick={handleSaveReminder}>
+              บันทึก
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </Container>
     </Navbar>
   );

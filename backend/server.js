@@ -5,6 +5,7 @@ const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
+const MedNoti = require("./models/MedNoti");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
@@ -414,6 +415,49 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   } catch (error) {
     console.error("Error processing chat photo:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// MedNoti
+app.post("/mednoti", async (req, res) => {
+  try {
+    const { morningTime, eveningTime } = req.body;
+    const newMedNoti = await MedNoti.create({ morningTime, eveningTime });
+    res.status(201).json(newMedNoti);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Route to get MedNoti settings
+app.get("/getMedNoti", async (req, res) => {
+  try {
+    const medNoti = await MedNoti.findOne();
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error fetching MedNoti settings:", err);
+    res.status(500).json({ error: "Error fetching MedNoti settings" });
+  }
+});
+
+// Route to update MedNoti settings
+app.put("/updateMedNoti", async (req, res) => {
+  const { morningTime, eveningTime } = req.body;
+  try {
+    let medNoti = await MedNoti.findOne();
+    if (!medNoti) {
+      // If MedNoti document doesn't exist, create a new one
+      medNoti = await MedNoti.create({ morningTime, eveningTime });
+    } else {
+      // Update existing MedNoti document
+      medNoti.morningTime = morningTime;
+      medNoti.eveningTime = eveningTime;
+      await medNoti.save();
+    }
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error updating MedNoti settings:", err);
+    res.status(500).json({ error: "Error updating MedNoti settings" });
   }
 });
 
