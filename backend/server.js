@@ -430,7 +430,7 @@ app.post("/mednoti", async (req, res) => {
 });
 
 // Route to get MedNoti settings
-app.get("/getMedNoti", async (req, res) => {
+app.get("/getmednoti", async (req, res) => {
   try {
     const medNoti = await MedNoti.findOne();
     res.json(medNoti);
@@ -441,7 +441,7 @@ app.get("/getMedNoti", async (req, res) => {
 });
 
 // Route to update MedNoti settings
-app.put("/updateMedNoti", async (req, res) => {
+app.put("/updatemednoti", async (req, res) => {
   const { morningTime, eveningTime } = req.body;
   try {
     let medNoti = await MedNoti.findOne();

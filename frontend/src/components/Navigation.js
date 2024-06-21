@@ -34,12 +34,12 @@ function Navigation() {
 
   const fetchMedNotiSettings = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/getMedNoti`); // ใช้ API_BASE_URL ในการเรียก API
+      const response = await axios.get(`${API_BASE_URL}/getmednoti`); // ใช้ API_BASE_URL ในการเรียก API
       const { morningTime, eveningTime } = response.data;
       setMorningReminderTime(morningTime);
       setEveningReminderTime(eveningTime);
     } catch (error) {
-      console.error("Error fetching MedNoti settings:", error);
+      console.error("Error fetching mednoti settings:", error);
     }
   };
 
@@ -78,7 +78,7 @@ function Navigation() {
 
   const handleSaveReminder = async () => {
     try {
-      await axios.put(`${API_BASE_URL}/updateMedNoti`, {
+      await axios.put(`${API_BASE_URL}/updatemednoti`, {
         morningTime: morningReminderTime,
         eveningTime: eveningReminderTime,
       });
