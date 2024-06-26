@@ -24,7 +24,7 @@ export const messageSlice = createSlice({
     addMessage: (state, action) => {
       state.push(action.payload);
     },
-    deleteMessage: (state, action) => {
+    deleteMessage: () => {
       return [];
     },
   },

@@ -45,16 +45,10 @@ function Chat() {
 
   async function getCurrentTime() {
     const date = new Date();
-    const year = date.getFullYear();
-    const month = (1 + date.getMonth()).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const hour = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-
-    const todayDate = `${day}/${month}/${year}`;
-    const time = `${hour}:${minutes}`;
-
-    return { todayDate, time };
+    return {
+      todayDate: date.toLocaleDateString("en-GB"),
+      time: date.toTimeString().slice(0, 5),
+    };
   }
 
   async function handleSubmit(e) {

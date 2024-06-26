@@ -7,7 +7,7 @@ export const adminSlice = createSlice({
     setAdmin: (state, action) => {
       return action.payload;
     },
-    deleteAdmin: (state, action) => {
+    deleteAdmin: () => {
       return null;
     },
   },

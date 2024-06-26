@@ -7,7 +7,7 @@ export const selectuserSlice = createSlice({
     setselectuser: (state, action) => {
       return action.payload;
     },
-    deleteselectuser: (state, action) => {
+    deleteselectuser: () => {
       return null;
     },
   },

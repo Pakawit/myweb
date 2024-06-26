@@ -30,7 +30,7 @@ const notificationsSlice = createSlice({
       return state.filter((n) => n.userId !== action.payload);
     },
     extraReducers: (builder) => {
-      builder.addCase(removeNotificationThunk.fulfilled, (state, action) => {});
+      builder.addCase(removeNotificationThunk.fulfilled, () => {});
     },
   },
 });
