@@ -152,11 +152,40 @@ app.post("/getmedication", (req, res) => {
     .catch((err) => res.json(err));
 });
 
-app.post("/createmedication", (req, res) => {
-  Medication.create(req.body)
-    .then((medication) => res.json(medication))
-    .catch((err) => res.json(err));
+// Route to create a new medication entry
+app.post("/createmedication", async (req, res) => {
+  const { from, status, time, date } = req.body;
+  try {
+    const medication = new Medication({ from, status, time, date });
+    await medication.save();
+    res.status(201).json(medication);
+  } catch (err) {
+    console.error("Error creating medication entry:", err);
+    res.status(500).json({ error: "Error creating medication entry" });
+  }
 });
+
+// Route to update medication status
+app.put("/updatemedication", async (req, res) => {
+  const { from, status, time, date } = req.body;
+  try {
+    let medication = await Medication.findOne({ from, time, date });
+    if (!medication) {
+      // If medication document doesn't exist, create a new one
+      medication = new Medication({ from, status, time, date });
+      await medication.save();
+    } else {
+      // Update existing medication document
+      medication.status = status;
+      await medication.save();
+    }
+    res.json(medication);
+  } catch (err) {
+    console.error("Error updating medication status:", err);
+    res.status(500).json({ error: "Error updating medication status" });
+  }
+});
+
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
