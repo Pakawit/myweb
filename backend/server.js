@@ -1,9 +1,11 @@
 const express = require("express");
 const app = express();
+const mongoose = require("mongoose");
 const User = require("./models/User");
 const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
+const MedNoti = require("./models/MedNoti");
 const Estimation = require("./models/Estimation");
 const cors = require("cors");
 const multer = require("multer");
@@ -58,9 +60,9 @@ app.delete("/admin/logout", async (req, res) => {
 ////////////////////user
 app.post("/user", async (req, res) => {
   try {
-    const { name,phone, password } = req.body;
+    const { name, phone, password } = req.body;
     console.log(req.body);
-    const user = await User.create({ name,phone, password });
+    const user = await User.create({ name, phone, password });
     res.status(201).json(user);
   } catch (e) {
     let msg;
@@ -96,7 +98,6 @@ app.post("/user/login", async (req, res) => {
     res.status(400).json(e.message);
   }
 });
-
 
 app.delete("/logout", async (req, res) => {
   try {
@@ -151,11 +152,40 @@ app.post("/getmedication", (req, res) => {
     .catch((err) => res.json(err));
 });
 
-app.post("/createmedication", (req, res) => {
-  Medication.create(req.body)
-    .then((medication) => res.json(medication))
-    .catch((err) => res.json(err));
+// Route to create a new medication entry
+app.post("/createmedication", async (req, res) => {
+  const { from, status, time, date } = req.body;
+  try {
+    const medication = new Medication({ from, status, time, date });
+    await medication.save();
+    res.status(201).json(medication);
+  } catch (err) {
+    console.error("Error creating medication entry:", err);
+    res.status(500).json({ error: "Error creating medication entry" });
+  }
 });
+
+// Route to update medication status
+app.put("/updatemedication", async (req, res) => {
+  const { from, status, time, date } = req.body;
+  try {
+    let medication = await Medication.findOne({ from, time, date });
+    if (!medication) {
+      // If medication document doesn't exist, create a new one
+      medication = new Medication({ from, status, time, date });
+      await medication.save();
+    } else {
+      // Update existing medication document
+      medication.status = status;
+      await medication.save();
+    }
+    res.json(medication);
+  } catch (err) {
+    console.error("Error updating medication status:", err);
+    res.status(500).json({ error: "Error updating medication status" });
+  }
+});
+
 
 app.post("/getestimation", (req, res) => {
   const { _id } = req.body;
@@ -234,6 +264,50 @@ app.post("/createmessage", (req, res) => {
     .then((message) => res.json(message))
     .catch((err) => res.json(err));
 });
+
+// Endpoint to get alarm times
+app.post("/mednoti", async (req, res) => {
+  try {
+    const { morningTime, eveningTime } = req.body;
+    const newMedNoti = await MedNoti.create({ morningTime, eveningTime });
+    res.status(201).json(newMedNoti);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Route to get MedNoti settings
+app.get("/getmednoti", async (req, res) => {
+  try {
+    const medNoti = await MedNoti.findOne();
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error fetching MedNoti settings:", err);
+    res.status(500).json({ error: "Error fetching MedNoti settings" });
+  }
+});
+
+// Route to update MedNoti settings
+app.put("/updatemednoti", async (req, res) => {
+  const { morningTime, eveningTime } = req.body;
+  try {
+    let medNoti = await MedNoti.findOne();
+    if (!medNoti) {
+      // If MedNoti document doesn't exist, create a new one
+      medNoti = await MedNoti.create({ morningTime, eveningTime });
+    } else {
+      // Update existing MedNoti document
+      medNoti.morningTime = morningTime;
+      medNoti.eveningTime = eveningTime;
+      await medNoti.save();
+    }
+    res.json(medNoti);
+  } catch (err) {
+    console.error("Error updating MedNoti settings:", err);
+    res.status(500).json({ error: "Error updating MedNoti settings" });
+  }
+});
+
 
 require("./connection");
 
