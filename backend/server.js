@@ -148,9 +148,9 @@ app.delete("/admin/logout", async (req, res) => {
 
 app.post("/user", async (req, res) => {
   try {
-    const { name, password } = req.body;
+    const { name, phone, password } = req.body;
     console.log(req.body);
-    const user = await User.create({ name, password });
+    const user = await User.create({ name, phone, password });
     res.status(201).json(user);
   } catch (e) {
     let msg;
@@ -168,8 +168,20 @@ app.post("/user/login", async (req, res) => {
   try {
     const { name, password } = req.body;
     const user = await User.findByCredentials(name, password);
-    await user.save();
-    res.status(200).json(user);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid username or password" });
+    }
+
+    // Check if it's the first login
+    const isFirstLogin = user.FirstLogin;
+
+    // Update FirstLogin status to false after first login
+    if (isFirstLogin) {
+      user.FirstLogin = false;
+      await user.save();
+    }
+
+    res.status(200).json({ isFirstLogin, user });
   } catch (e) {
     res.status(400).json(e.message);
   }
