@@ -11,7 +11,7 @@ function Medication() {
 
   useEffect(() => {
     dispatch(fetchMedicationsThunk());
-  },[ dispatch ])
+  }, [dispatch]);
 
   return (
     <Container>
@@ -36,7 +36,9 @@ function Medication() {
               </tr>
             </thead>
             <tbody>
-              {medication && medication.length > 0 ? (
+              {medication &&
+              medication.filter((med) => med.from === selectuser._id).length >
+                0 ? (
                 medication
                   .filter((med) => med.from === selectuser._id)
                   .map((med, index) => (

@@ -16,15 +16,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 
-const NOTIFICATION_FILE_PATH = path.join(
-  __dirname,
-  "..",
-  "frontend",
-  "src",
-  "json",
-  "notification.json"
-);
+// File paths
+const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
+const NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "notification.json");
+const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
+const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
+const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
+const MESSAGES_FILE_PATH = path.join(BASE_PATH, "messages.json");
 
+// Notification helpers
 const readNotifications = () => {
   return new Promise((resolve, reject) => {
     fs.readFile(NOTIFICATION_FILE_PATH, (err, data) => {
@@ -192,16 +192,7 @@ app.delete("/logout", async (req, res) => {
 app.get("/getusers", (req, res) => {
   User.find()
     .then((users) => {
-      const filePath = path.join(
-        __dirname,
-        "..",
-        "frontend",
-        "src",
-        "json",
-        "users.json"
-      );
-
-      fs.writeFile(filePath, JSON.stringify(users), (err) => {
+      fs.writeFile(USERS_FILE_PATH, JSON.stringify(users), (err) => {
         if (err) {
           console.error("Error writing JSON file:", err);
           res.status(500).json({ error: "Error writing JSON file" });
@@ -243,16 +234,7 @@ app.put("/update", async (req, res) => {
 app.post("/getmedication", (req, res) => {
   Medication.find()
     .then((medications) => {
-      const filePath = path.join(
-        __dirname,
-        "..",
-        "frontend",
-        "src",
-        "json",
-        "medications.json"
-      );
-
-      fs.writeFile(filePath, JSON.stringify(medications), (err) => {
+      fs.writeFile(MEDICATIONS_FILE_PATH, JSON.stringify(medications), (err) => {
         if (err) {
           console.error("Error writing JSON file:", err);
           res.status(500).json({ error: "Error writing JSON file" });
@@ -267,8 +249,42 @@ app.post("/getmedication", (req, res) => {
 
 app.post("/createmedication", (req, res) => {
   Medication.create(req.body)
-    .then((medication) => res.json(medication))
+    .then((medication) => {
+      Medication.find()
+        .then((medications) => {
+          fs.writeFile(MEDICATIONS_FILE_PATH, JSON.stringify(medications), (err) => {
+            if (err) {
+              console.error("Error writing JSON file:", err);
+              res.status(500).json({ error: "Error writing JSON file" });
+            } else {
+              console.log("JSON file updated successfully");
+              res.json(medication);
+            }
+          });
+        })
+        .catch((err) => res.json(err));
+    })
     .catch((err) => res.json(err));
+});
+
+app.put("/updatemedication", async (req, res) => {
+  const { from, status, time, date } = req.body;
+  try {
+    let medication = await Medication.findOne({ from, time, date });
+    if (!medication) {
+      // If medication document doesn't exist, create a new one
+      medication = new Medication({ from, status, time, date });
+      await medication.save();
+    } else {
+      // Update existing medication document
+      medication.status = status;
+      await medication.save();
+    }
+    res.json(medication);
+  } catch (err) {
+    console.error("Error updating medication status:", err);
+    res.status(500).json({ error: "Error updating medication status" });
+  }
 });
 
 ///////////// estimation
@@ -276,16 +292,7 @@ app.post("/createmedication", (req, res) => {
 app.post("/getestimation", (req, res) => {
   Estimation.find({ hfsLevel: 0 })
     .then((estimations) => {
-      const filePath = path.join(
-        __dirname,
-        "..",
-        "frontend",
-        "src",
-        "json",
-        "estimations.json"
-      );
-
-      fs.writeFile(filePath, JSON.stringify(estimations), (err) => {
+      fs.writeFile(ESTIMATIONS_FILE_PATH, JSON.stringify(estimations), (err) => {
         if (err) {
           console.error("Error writing JSON file:", err);
           return res.status(500).json({ error: "Error writing JSON file" });
@@ -328,16 +335,7 @@ app.post("/createstimation", (req, res) => {
 app.post("/getmessages", (req, res) => {
   Message.find()
     .then((messages) => {
-      const filePath = path.join(
-        __dirname,
-        "..",
-        "frontend",
-        "src",
-        "json",
-        "messages.json"
-      );
-
-      fs.writeFile(filePath, JSON.stringify(messages), (err) => {
+      fs.writeFile(MESSAGES_FILE_PATH, JSON.stringify(messages), (err) => {
         if (err) {
           console.error("Error writing JSON file:", err);
           res.status(500).json({ error: "Error writing JSON file" });
@@ -429,7 +427,6 @@ app.post("/mednoti", async (req, res) => {
   }
 });
 
-// Route to get MedNoti settings
 app.get("/getmednoti", async (req, res) => {
   try {
     const medNoti = await MedNoti.findOne();
@@ -440,16 +437,13 @@ app.get("/getmednoti", async (req, res) => {
   }
 });
 
-// Route to update MedNoti settings
 app.put("/updatemednoti", async (req, res) => {
   const { morningTime, eveningTime } = req.body;
   try {
     let medNoti = await MedNoti.findOne();
     if (!medNoti) {
-      // If MedNoti document doesn't exist, create a new one
       medNoti = await MedNoti.create({ morningTime, eveningTime });
     } else {
-      // Update existing MedNoti document
       medNoti.morningTime = morningTime;
       medNoti.eveningTime = eveningTime;
       await medNoti.save();
