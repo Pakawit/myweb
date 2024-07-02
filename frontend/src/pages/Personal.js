@@ -4,7 +4,7 @@ import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { updateUsers , fetchUsersThunk } from "../features/usersSlice";
+import { setselectuser } from "../features/selectuserSlice";
 
 function Personal() {
   const selectuser = useSelector((state) => state.selectuser);
@@ -25,8 +25,7 @@ function Personal() {
       axios
         .put(`${API_BASE_URL}/update`, member)
         .then((res) => {
-          dispatch(updateUsers(res.data));
-          dispatch(fetchUsersThunk());
+          dispatch(setselectuser(res.data));
           setEditMode(false);
         })
         .catch((err) => console.log(err));

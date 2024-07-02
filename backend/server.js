@@ -220,6 +220,7 @@ app.get("/getusers", (req, res) => {
 
 app.put("/update", async (req, res) => {
   try {
+    // Update the user in the database
     const updatedUser = await User.findByIdAndUpdate(
       req.body._id,
       {
@@ -236,11 +237,26 @@ app.put("/update", async (req, res) => {
       },
       { new: true }
     );
-    res.json(updatedUser);
+
+    // Fetch all users from the database to update the JSON file
+    const users = await User.find();
+
+    // Write the updated users list to the JSON file
+    fs.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2), (err) => {
+      if (err) {
+        console.error("Error writing JSON file:", err);
+        res.status(500).json({ error: "Error writing JSON file" });
+      } else {
+        console.log("JSON file updated successfully");
+        res.json(updatedUser);
+      }
+    });
   } catch (err) {
-    res.json(err);
+    console.error("Error updating user:", err);
+    res.status(500).json({ error: "Error updating user" });
   }
 });
+
 
 ///////////// medication
 

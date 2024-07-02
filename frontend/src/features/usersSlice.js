@@ -24,13 +24,6 @@ export const usersSlice = createSlice({
     deleteUsers: () => {
       return [];
     },
-
-    updateUsers: (state, action) => {
-      const index = state.findIndex((user) => user._id === action.payload._id);
-      if (index !== -1) {
-        state[index] = { ...state[index], ...action.payload };
-      }
-    },
   },
   extraReducers: (builder) => {
     builder
