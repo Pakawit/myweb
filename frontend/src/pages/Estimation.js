@@ -15,29 +15,39 @@ import axios from "axios";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
 
 function Estimation() {
-  const [hfsLevel, setHfsLevel] = useState(0);
   const { API_BASE_URL } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation);
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [hfsLevels, setHfsLevels] = useState({});
 
   useEffect(() => {
     dispatch(fetchEstimationsThunk());
   }, [dispatch]);
 
-  async function handleSubmit(_id) {
+  const handleHfsLevelChange = (estimationId, level) => {
+    setHfsLevels((prevLevels) => ({
+      ...prevLevels,
+      [estimationId]: level,
+    }));
+  };
+
+  const handleSubmit = async (_id) => {
     try {
+      const hfsLevel = hfsLevels[_id];
+      if (hfsLevel === undefined) return;
+      
       await axios.put(`${API_BASE_URL}/editestimation`, {
-        _id: _id,
-        hfsLevel: hfsLevel,
+        _id,
+        hfsLevel,
       });
       dispatch(fetchEstimationsThunk());
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   const handleShowModal = (image) => {
     setSelectedImage(image);
@@ -98,14 +108,14 @@ function Estimation() {
                             variant="outline-success"
                             id="dropdown-basic"
                           >
-                            ระดับที่ {hfsLevel}
+                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : est.hfsLevel}
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
                             {[0, 1, 2, 3].map((level) => (
                               <Dropdown.Item
                                 key={level}
-                                onClick={() => setHfsLevel(level)}
+                                onClick={() => handleHfsLevelChange(est._id, level)}
                               >
                                 ระดับที่ {level}
                               </Dropdown.Item>

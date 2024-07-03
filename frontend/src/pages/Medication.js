@@ -13,6 +13,31 @@ function Medication() {
     dispatch(fetchMedicationsThunk());
   }, [dispatch]);
 
+  const renderStatusButton = (status) => {
+    switch (status) {
+      case 0:
+        return (
+          <Button variant="danger" disabled>
+            ไม่ได้กิน
+          </Button>
+        );
+      case 1:
+        return (
+          <Button variant="warning" disabled>
+            ล่าช้า
+          </Button>
+        );
+      case 2:
+        return (
+          <Button variant="success" disabled>
+            กินแล้ว
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Container>
       <Navigation />
@@ -50,29 +75,13 @@ function Medication() {
                         {med.time}
                       </td>
                       <td className="table-center" style={{ width: "33%" }}>
-                        {med.status === 0 ? (
-                          <Button variant="danger" disabled>
-                            ไม่ได้กิน
-                          </Button>
-                        ) : med.status === 1 ? (
-                          <Button variant="warning" disabled>
-                            ล่าช้า
-                          </Button>
-                        ) : (
-                          <Button variant="success" disabled>
-                            กินแล้ว
-                          </Button>
-                        )}
+                        {renderStatusButton(med.status)}
                       </td>
                     </tr>
                   ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="table-center"
-                    style={{ width: "100%" }}
-                  >
+                  <td colSpan={3} className="table-center" style={{ width: "100%" }}>
                     ไม่มีข้อมูลการกินยา
                   </td>
                 </tr>

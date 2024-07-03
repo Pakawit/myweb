@@ -1,6 +1,6 @@
 import "./App.css";
 import { useSelector } from "react-redux";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppContext } from "./context/appContext";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,11 +14,14 @@ function App() {
   const API_BASE_URL = "http://localhost:5001";
 
   return (
-    <AppContext.Provider value={{API_BASE_URL}}>
+    <AppContext.Provider value={{ API_BASE_URL }}>
       <BrowserRouter>
         <Routes>
           {!admin ? (
-            <Route path="/*" element={<Login />} />
+            <>
+              <Route path="/*" element={<Login />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </>
           ) : (
             <>
               <Route path="/" element={<Home />} />
@@ -26,6 +29,7 @@ function App() {
               <Route path="/personal" element={<Personal />} />
               <Route path="/medication" element={<Medication />} />
               <Route path="/estimation" element={<Estimation />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
         </Routes>

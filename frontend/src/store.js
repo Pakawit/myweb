@@ -39,10 +39,10 @@ const store = configureStore({
         maxDepth: 2, // กำหนดความลึกสูงสุดของ serialization
       },
     },
-    actionsDenylist: ['SOME_LARGE_ACTION_TYPE'], // หรือใช้ actionsAllowlist สำหรับรายการที่ต้องการแสดงเท่านั้น
+    actionsDenylist: ['SOME_LARGE_ACTION_TYPE'], 
     stateSanitizer: (state) => state.largeProperty ? { ...state, largeProperty: '<<LARGE_STATE>>' } : state,
     actionSanitizer: (action) => action.type === 'SOME_LARGE_ACTION_TYPE' ? { ...action, largeProperty: '<<LARGE_ACTION>>' } : action,
-  }
+  },
 });
 
 export default store;

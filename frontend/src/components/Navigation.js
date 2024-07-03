@@ -1,5 +1,5 @@
 import "./Navigation.css";
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { AppContext } from "../context/appContext";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -24,24 +24,36 @@ import axios from "axios";
 function Navigation() {
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
-  const { API_BASE_URL } = useContext(AppContext); // ใช้ AppContext จาก useContext
+  const { API_BASE_URL } = useContext(AppContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const [showModal, setShowModal] = useState(false);
   const [morningReminderTime, setMorningReminderTime] = useState("");
   const [eveningReminderTime, setEveningReminderTime] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchMedNotiSettings = async () => {
+  const fetchMedNotiSettings = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/getmednoti`); // ใช้ API_BASE_URL ในการเรียก API
+      const response = await axios.get(`${API_BASE_URL}/getmednoti`);
       const { morningTime, eveningTime } = response.data;
       setMorningReminderTime(morningTime);
       setEveningReminderTime(eveningTime);
     } catch (error) {
+      setError("Error fetching mednoti settings");
       console.error("Error fetching mednoti settings:", error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    if (showModal) {
+      fetchMedNotiSettings();
+    }
+  }, [showModal, fetchMedNotiSettings]);
 
   const back = () => {
     navigate("/");
@@ -57,6 +69,7 @@ function Navigation() {
         dispatch(deleteEstimation()),
         dispatch(deleteAdmin()),
       ]);
+      navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
     }
@@ -67,7 +80,7 @@ function Navigation() {
       const user = users.find((user) => user._id === notification.userId);
       if (user) {
         try {
-          await dispatch(setselectuser(user));
+          dispatch(setselectuser(user));
           navigate("/chat");
         } catch (error) {
           console.error("Error handling notification click:", error);
@@ -84,13 +97,9 @@ function Navigation() {
       });
       setShowModal(false);
     } catch (error) {
+      setError("Error saving reminder settings");
       console.error("Error saving reminder settings:", error);
     }
-  };
-
-  const handleShowModal = () => {
-    fetchMedNotiSettings();
-    setShowModal(true);
   };
 
   return (
@@ -100,7 +109,7 @@ function Navigation() {
           <i className="bi bi-chevron-left"></i>
         </Button>
         <Nav className="ms-autoNav">
-          <Button variant="outline-dark" onClick={handleShowModal}>
+          <Button variant="outline-dark" onClick={() => setShowModal(true)}>
             <i className="bi bi-clock"></i>
           </Button>
           <Dropdown style={{ marginLeft: "auto" }}>
@@ -165,13 +174,14 @@ function Navigation() {
                 />
               </Form.Group>
             </Form>
+            {error && <p className="text-danger mt-3">{error}</p>}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               ปิด
             </Button>
-            <Button variant="primary" onClick={handleSaveReminder}>
-              บันทึก
+            <Button variant="primary" onClick={handleSaveReminder} disabled={loading}>
+              {loading ? "บันทึก..." : "บันทึก"}
             </Button>
           </Modal.Footer>
         </Modal>
