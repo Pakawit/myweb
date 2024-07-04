@@ -8,7 +8,7 @@ export const removeNotificationThunk = createAsyncThunk(
   "notifications/removeNotificationThunk",
   async (userId, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axios.post("http://localhost:5001/removeNotification", {
+      const response = await axios.post("http://localhost:4451/removeNotification", {
         userId,
       });
       if (response.status === 200) {

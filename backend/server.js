@@ -414,7 +414,7 @@ app.put("/updatemednoti", async (req, res) => {
 require("./connection");
 
 const server = require("http").createServer(app);
-const PORT = 5001;
+const PORT = 4451;
 
 server.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);

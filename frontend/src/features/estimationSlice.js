@@ -9,7 +9,7 @@ export const fetchEstimationsThunk = createAsyncThunk(
   "estimation/fetchEstimations",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:5001/json/estimations.json");
+      const response = await axios.get("http://localhost:4451/json/estimations.json");
       return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);
