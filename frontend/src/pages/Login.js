@@ -24,7 +24,8 @@ function Login() {
         navigate("/");
       }
     } catch (error) {
-      setError(error.response?.data || "An error occurred. Please try again.");
+      const errorMessage = error.response?.data?.error || "An error occurred. Please try again.";
+      setError(errorMessage);
     }
   };
 
