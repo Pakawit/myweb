@@ -10,7 +10,7 @@ export const fetchMessagesThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // ดึงข้อมูลจากไฟล์ messages.json
-      const response = await axios.get("http://localhost:4451/json/messages.json");
+      const response = await axios.get("http://localhost:4452/json/messages.json");
       return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);

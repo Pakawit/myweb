@@ -9,7 +9,7 @@ export const fetchUsersThunk = createAsyncThunk(
   "users/fetchUsers",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:4451/json/users.json");
+      const response = await axios.get("http://localhost:4452/json/users.json");
       return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);
