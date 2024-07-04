@@ -24,6 +24,12 @@ function Chat() {
     if (selectuser) {
       dispatch(fetchMessagesThunk());
       dispatch(removeNotificationThunk(selectuser._id));
+
+      const intervalId = setInterval(() => {
+        dispatch(fetchMessagesThunk());
+      }, 5000); 
+
+      return () => clearInterval(intervalId);
     }
   }, [dispatch, selectuser]);
 
@@ -31,7 +37,7 @@ function Chat() {
     const file = e.target.files[0];
 
     if (file.size >= 3048576) {
-      return alert("Max file size is 3mb");
+      alert("Max file size is 3MB");
     } else {
       setImage(file);
     }

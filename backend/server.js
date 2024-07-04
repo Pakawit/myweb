@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(cors());
 
 // File paths
-
+app.use('/json', express.static(path.join(__dirname, '..', 'frontend', 'src', 'json')));
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "notification.json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
@@ -305,7 +305,7 @@ app.post("/getmessage", async (req, res) => {
 
 app.post("/createmessage", async (req, res) => {
   try {
-    const { from, to, date, time, content } = req.body;
+    const { from, to, date, time , content } = req.body;
     const newMessage = await Message.create({
       content: content,
       contentType: "text",
@@ -315,13 +315,24 @@ app.post("/createmessage", async (req, res) => {
       time,
     });
 
-    const user = await User.findById(from);
+    const user = await User.findById(req.body.from);
+    
     if (user) {
-      await updateNotificationFile(from);
+      await updateNotificationFile(req.body.from);
     }
 
-    res.json(newMessage);
+    const messages = await Message.find();
+    fs.writeFile(MESSAGES_FILE_PATH, JSON.stringify(messages, null, 2), (err) => {
+      if (err) {
+        console.error("Error writing JSON file:", err);
+        res.status(500).json({ error: "Error writing JSON file" });
+      } else {
+        console.log("JSON file updated successfully");
+        res.json(newMessage);
+      }
+    });
   } catch (err) {
+    console.error("Error creating message:", err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -340,13 +351,24 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
       time,
     });
 
-    const user = await User.findById(from);
+    const user = await User.findById(req.body.from);
+
     if (user) {
-      await updateNotificationFile(from);
+      await updateNotificationFile(req.body.from);
     }
 
-    res.json(newMessage);
-  } catch (err) {
+    const messages = await Message.find();
+    fs.writeFile(MESSAGES_FILE_PATH, JSON.stringify(messages, null, 2), (err) => {
+      if (err) {
+        console.error("Error writing JSON file:", err);
+        res.status(500).json({ error: "Error writing JSON file" });
+      } else {
+        console.log("JSON file updated successfully");
+        res.json(newMessage);
+      }
+    });
+  } catch (error) {
+    console.error("Error processing chat photo:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

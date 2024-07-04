@@ -1,16 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import Data from '../json/medications.json';
 
-// สถานะเริ่มต้น
-const initialState = Data;
+// สถานะเริ่มต้นเป็น array เปล่า
+const initialState = [];
 
-// Thunk สำหรับดึงข้อมูลยา (medication) จาก API
+// Thunk สำหรับดึงข้อมูลยา (medication) จาก JSON ไฟล์
 export const fetchMedicationsThunk = createAsyncThunk(
   "medication/fetchMedications",
   async (_, { rejectWithValue }) => {
     try {
-       await axios.post("http://localhost:5001/getmedication");
+      const response = await axios.get("http://localhost:5001/json/medications.json");
+      return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -30,8 +30,8 @@ export const medicationSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchMedicationsThunk.fulfilled, () => {
-        return initialState;
+      .addCase(fetchMedicationsThunk.fulfilled, (state, action) => {
+        return action.payload; // อัพเดตสถานะด้วยข้อมูลที่ดึงมา
       })
       .addCase(fetchMedicationsThunk.rejected, () => {
         console.error("Failed to fetch medications");

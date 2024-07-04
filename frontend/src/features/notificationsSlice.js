@@ -1,20 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 import Data from "../json/notification.json";
 
 const initialState = Data;
 
 export const removeNotificationThunk = createAsyncThunk(
   "notifications/removeNotificationThunk",
-  async (userId, { dispatch }) => {
-    const response = await fetch("http://localhost:5001/removeNotification", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId }),
-    });
-    if (response.ok) {
-      dispatch(removeNotification(userId));
+  async (userId, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await axios.post("http://localhost:5001/removeNotification", {
+        userId,
+      });
+      if (response.status === 200) {
+        dispatch(removeNotification(userId));
+      }
+    } catch (error) {
+      return rejectWithValue(error.response.data);
     }
   }
 );
@@ -29,9 +30,13 @@ const notificationsSlice = createSlice({
     removeNotification: (state, action) => {
       return state.filter((n) => n.userId !== action.payload);
     },
-    extraReducers: (builder) => {
-      builder.addCase(removeNotificationThunk.fulfilled, () => {});
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(removeNotificationThunk.fulfilled, () => {})
+      .addCase(removeNotificationThunk.rejected, (state, action) => {
+        console.error("Failed to remove notification:", action.payload);
+      });
   },
 });
 

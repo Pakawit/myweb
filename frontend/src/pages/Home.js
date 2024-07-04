@@ -26,6 +26,15 @@ function Home() {
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
     dispatch(fetchMessagesThunk());
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchUsersThunk());
+      dispatch(fetchMedicationsThunk());
+      dispatch(fetchEstimationsThunk());
+      dispatch(fetchMessagesThunk());
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const getLastMedicationStatus = (userId) => {

@@ -25,6 +25,12 @@ function Estimation() {
 
   useEffect(() => {
     dispatch(fetchEstimationsThunk());
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchEstimationsThunk());
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const handleHfsLevelChange = (estimationId, level) => {
@@ -38,7 +44,7 @@ function Estimation() {
     try {
       const hfsLevel = hfsLevels[_id];
       if (hfsLevel === undefined) return;
-      
+
       await axios.put(`${API_BASE_URL}/editestimation`, {
         _id,
         hfsLevel,

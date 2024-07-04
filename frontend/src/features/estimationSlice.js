@@ -1,16 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import Data from '../json/estimations.json';
 
-// สถานะเริ่มต้น
-const initialState = Data;
+// สถานะเริ่มต้นเป็น array เปล่า
+const initialState = [];
 
-// Thunk สำหรับดึงข้อมูลการประเมิน (estimation) จาก API
+// Thunk สำหรับดึงข้อมูลการประเมิน (estimation) จาก JSON ไฟล์
 export const fetchEstimationsThunk = createAsyncThunk(
   "estimation/fetchEstimations",
   async (_, { rejectWithValue }) => {
     try {
-       await axios.post("http://localhost:5001/getestimation");
+      const response = await axios.get("http://localhost:5001/json/estimations.json");
+      return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -30,8 +30,8 @@ export const estimationSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchEstimationsThunk.fulfilled, () => {
-        return initialState;
+      .addCase(fetchEstimationsThunk.fulfilled, (state, action) => {
+        return action.payload; // อัพเดตสถานะด้วยข้อมูลที่ดึงมา
       })
       .addCase(fetchEstimationsThunk.rejected, () => {
         console.error("Failed to fetch estimations");

@@ -11,6 +11,12 @@ function Medication() {
 
   useEffect(() => {
     dispatch(fetchMedicationsThunk());
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchMedicationsThunk());
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const renderStatusButton = (status) => {
