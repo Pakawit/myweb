@@ -17,6 +17,7 @@ app.use(express.json());
 app.use(cors());
 
 // File paths
+
 app.use('/json', express.static(path.join(__dirname, '..', 'frontend', 'src', 'json')));
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "notification.json");
@@ -129,7 +130,6 @@ app.post("/user", async (req, res) => {
     const { name, phone, password } = req.body;
     const user = await User.create({ name, phone, password });
 
-    // อ่านผู้ใช้ทั้งหมดและเขียนลงไฟล์ JSON
     const users = await User.find();
     await fs.promises.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2));
 
@@ -139,6 +139,7 @@ app.post("/user", async (req, res) => {
     res.status(400).json({ error: msg });
   }
 });
+
 
 app.post("/user/login", async (req, res) => {
   try {
@@ -235,6 +236,13 @@ app.put("/updatemedication", async (req, res) => {
       medication.status = status;
     }
     await medication.save();
+
+    const medications = await Medication.find();
+    await fs.promises.writeFile(
+      MEDICATIONS_FILE_PATH,
+      JSON.stringify(medications, null, 2)
+    );
+
     res.json(medication);
   } catch (err) {
     res.status(500).json({ error: "Error updating medication status" });
@@ -263,6 +271,13 @@ app.put("/editestimation", async (req, res) => {
       req.body,
       { new: true }
     );
+
+    const estimations = await Estimation.find();
+    await fs.promises.writeFile(
+      ESTIMATIONS_FILE_PATH,
+      JSON.stringify(estimations, null, 2)
+    );
+
     res.json(editestimation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -272,6 +287,13 @@ app.put("/editestimation", async (req, res) => {
 app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
+
+    const estimations = await Estimation.find();
+    await fs.promises.writeFile(
+      ESTIMATIONS_FILE_PATH,
+      JSON.stringify(estimations, null, 2)
+    );
+
     res.json(estimation);
   } catch (err) {
     res.status(500).json({ error: err.message });
