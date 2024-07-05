@@ -354,7 +354,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
     const user = await User.findById(req.body.from);
 
     if (user) {
-      await updateNotificationFile(req.body.from);
+      await updateNotificationFile(req.body.from); // Update notification file if necessary
     }
 
     const messages = await Message.find();
@@ -414,7 +414,7 @@ app.put("/updatemednoti", async (req, res) => {
 require("./connection");
 
 const server = require("http").createServer(app);
-const PORT = 4452;
+const PORT = 5001;
 
 server.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
