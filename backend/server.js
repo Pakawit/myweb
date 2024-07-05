@@ -128,6 +128,11 @@ app.post("/user", async (req, res) => {
   try {
     const { name, phone, password } = req.body;
     const user = await User.create({ name, phone, password });
+
+    // อ่านผู้ใช้ทั้งหมดและเขียนลงไฟล์ JSON
+    const users = await User.find();
+    await fs.promises.writeFile(USERS_FILE_PATH, JSON.stringify(users, null, 2));
+
     res.status(201).json(user);
   } catch (e) {
     const msg = e.code === 11000 ? "User already exists" : e.message;
