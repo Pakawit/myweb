@@ -1,16 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import Data from "../json/messages.json";
 
-// สถานะเริ่มต้น
-const initialState = Data;
+// สถานะเริ่มต้นเป็น array เปล่า
+const initialState = [];
 
-// Thunk สำหรับดึงข้อมูลข้อความจาก API
+// Thunk สำหรับดึงข้อมูลข้อความจาก JSON ไฟล์
 export const fetchMessagesThunk = createAsyncThunk(
   "message/fetchMessages",
   async (_, { rejectWithValue }) => {
     try {
-      await axios.post("http://localhost:5001/getmessages");
+      // ดึงข้อมูลจากไฟล์ messages.json
+      const response = await axios.get("http://localhost:4452/json/messages.json");
+      return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
@@ -30,8 +31,8 @@ export const messageSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchMessagesThunk.fulfilled, () => {
-        return initialState;
+      .addCase(fetchMessagesThunk.fulfilled, (state, action) => {
+        return action.payload; // อัพเดตสถานะด้วยข้อมูลที่ดึงมา
       })
       .addCase(fetchMessagesThunk.rejected, () => {
         console.error("Failed to fetch messages");

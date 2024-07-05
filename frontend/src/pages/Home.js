@@ -26,6 +26,15 @@ function Home() {
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
     dispatch(fetchMessagesThunk());
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchUsersThunk());
+      dispatch(fetchMedicationsThunk());
+      dispatch(fetchEstimationsThunk());
+      dispatch(fetchMessagesThunk());
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const getLastMedicationStatus = (userId) => {
@@ -41,13 +50,76 @@ function Home() {
   };
 
   const sortedUsers = Array.isArray(users)
-    ? users
-        .slice()
-        .sort(
-          (a, b) =>
-            getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)
-        )
+    ? users.slice().sort(
+        (a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)
+      )
     : [];
+
+  const handleNavigation = (userData, path) => {
+    dispatch(setselectuser(userData));
+    navigate(path);
+  };
+
+  const renderUserRows = (userData) => {
+    if (!userData || !userData._id || userData._id === admin._id) return null;
+
+    const lastMedicationStatus = getLastMedicationStatus(userData._id);
+    const rowClass = lastMedicationStatus === 0
+      ? "row-danger"
+      : lastMedicationStatus === 1
+      ? "row-warning"
+      : "row-success";
+
+    const buttonVariant = lastMedicationStatus === 0
+      ? "danger"
+      : lastMedicationStatus === 1
+      ? "warning"
+      : "success";
+
+    return (
+      <tr key={userData._id} className={rowClass}>
+        <td className="table-center">{userData.name}</td>
+        <td className="table-center">{userData.phone}</td>
+        <td className="table-center">{userData.age}</td>
+        <td className="table-center">{userData.ms_medicine}</td>
+        <td className="table-center">
+          <Button variant={buttonVariant} disabled>
+            {lastMedicationStatus === 0
+              ? "ไม่ได้กิน"
+              : lastMedicationStatus === 1
+              ? "ล่าช้า"
+              : "กินแล้ว"}
+          </Button>
+        </td>
+        <td className="table-center">
+          <Button
+            variant="outline-success"
+            onClick={() => handleNavigation(userData, "/personal")}
+          >
+            ข้อมูลส่วนบุคคล
+          </Button>{" "}
+          <Button
+            variant={`outline-${buttonVariant}`}
+            onClick={() => handleNavigation(userData, "/medication")}
+          >
+            รายละเอียดการกินยา
+          </Button>{" "}
+          <Button
+            variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"}
+            onClick={() => handleNavigation(userData, "/estimation")}
+          >
+            การประเมินอาการ HFS
+          </Button>{" "}
+          <Button
+            variant={`outline-${buttonVariant}`}
+            onClick={() => handleNavigation(userData, "/chat")}
+          >
+            แชท
+          </Button>
+        </td>
+      </tr>
+    );
+  };
 
   return (
     <Container>
@@ -66,101 +138,7 @@ function Home() {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(sortedUsers) &&
-                sortedUsers.map(
-                  (userData) =>
-                    userData &&
-                    userData._id &&
-                    userData._id !== admin._id && (
-                      <tr
-                        key={userData._id}
-                        className={
-                          getLastMedicationStatus(userData._id) === 0
-                            ? "row-danger"
-                            : getLastMedicationStatus(userData._id) === 1
-                            ? "row-warning"
-                            : "row-success"
-                        }
-                      >
-                        <td className="table-center">{userData.name}</td>
-                        <td className="table-center">{userData.phone}</td>
-                        <td className="table-center">{userData.age}</td>
-                        <td className="table-center">{userData.ms_medicine}</td>
-                        <td className="table-center">
-                          <Button
-                            className={
-                              getLastMedicationStatus(userData._id) === 0
-                                ? "btn-danger"
-                                : getLastMedicationStatus(userData._id) === 1
-                                ? "btn-warning"
-                                : "btn-success"
-                            }
-                            disabled
-                          >
-                            {getLastMedicationStatus(userData._id) === 0
-                              ? "ไม่ได้กิน"
-                              : getLastMedicationStatus(userData._id) === 1
-                              ? "ล่าช้า"
-                              : "กินแล้ว"}
-                          </Button>
-                        </td>
-                        <td className="table-center">
-                          <Button
-                            variant="outline-success"
-                            onClick={() => {
-                              dispatch(setselectuser(userData));
-                              navigate("/personal");
-                            }}
-                          >
-                            ข้อมูลส่วนบุคคล
-                          </Button>{" "}
-                          <Button
-                            variant={
-                              getLastMedicationStatus(userData._id) === 0
-                                ? "outline-danger"
-                                : getLastMedicationStatus(userData._id) === 1
-                                ? "outline-warning"
-                                : "outline-success"
-                            }
-                            onClick={() => {
-                              dispatch(setselectuser(userData));
-                              navigate("/medication");
-                            }}
-                          >
-                            รายละเอียดการกินยา
-                          </Button>{" "}
-                          <Button
-                            variant={
-                              hasEstimation(userData._id)
-                                ? "outline-warning"
-                                : "outline-success"
-                            }
-                            onClick={() => {
-                              dispatch(setselectuser(userData));
-                              navigate("/estimation");
-                            }}
-                          >
-                            การประเมินอาการ HFS
-                          </Button>{" "}
-                          <Button
-                            variant={
-                              getLastMedicationStatus(userData._id) === 0
-                                ? "outline-danger"
-                                : getLastMedicationStatus(userData._id) === 1
-                                ? "outline-warning"
-                                : "outline-success"
-                            }
-                            onClick={() => {
-                              dispatch(setselectuser(userData));
-                              navigate("/chat");
-                            }}
-                          >
-                            แชท
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                )}
+              {Array.isArray(sortedUsers) && sortedUsers.map(renderUserRows)}
             </tbody>
           </Table>
         </Col>

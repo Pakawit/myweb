@@ -21,15 +21,23 @@ function Chat() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchMessagesThunk());
-    dispatch(removeNotificationThunk(selectuser._id));
+    if (selectuser) {
+      dispatch(fetchMessagesThunk());
+      dispatch(removeNotificationThunk(selectuser._id));
+
+      const intervalId = setInterval(() => {
+        dispatch(fetchMessagesThunk());
+      }, 5000); 
+
+      return () => clearInterval(intervalId);
+    }
   }, [dispatch, selectuser]);
 
   function validateImg(e) {
     const file = e.target.files[0];
 
     if (file.size >= 3048576) {
-      return alert("Max file size is 3mb");
+      alert("Max file size is 3MB");
     } else {
       setImage(file);
     }
@@ -54,53 +62,39 @@ function Chat() {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!message && !image) {
+      return;
+    }
+
+    const { todayDate, time } = await getCurrentTime();
+
     try {
-      if (!message && !image) {
-        return;
-      }
-
-      const { todayDate, time } = await getCurrentTime();
-
-      let content = "";
-
       if (image) {
-        try {
-          const formData = new FormData();
-          formData.append("photo", image);
-          formData.append("from", admin._id);
-          formData.append("to", selectuser._id);
-          formData.append("date", todayDate);
-          formData.append("time", time);
+        const formData = new FormData();
+        formData.append("photo", image);
+        formData.append("from", admin._id);
+        formData.append("to", selectuser._id);
+        formData.append("date", todayDate);
+        formData.append("time", time);
 
-          axios
-            .post(`${API_BASE_URL}/chatphoto`, formData, {
-              headers: {
-                "Content-Type": "multipart/form-data",
-              },
-            })
-            .then((res) => {
-              dispatch(addMessage(res.data));
-            })
-            .catch((err) => console.log(err));
-          setImage(null);
-        } catch (error) {
-          console.error("Error uploading image:", error);
-          throw error;
-        }
+        const res = await axios.post(`${API_BASE_URL}/chatphoto`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        dispatch(addMessage(res.data));
+        setImage(null);
       } else {
-        content = message;
-        axios
-          .post(`${API_BASE_URL}/createmessage`, {
-            content: content,
-            time: time,
-            date: todayDate,
-            from: admin._id,
-            to: selectuser._id,
-          })
-          .then((res) => {
-            dispatch(addMessage(res.data));
-          })
-          .catch((err) => console.log(err));
+        const res = await axios.post(`${API_BASE_URL}/createmessage`, {
+          content: message,
+          time: time,
+          date: todayDate,
+          from: admin._id,
+          to: selectuser._id,
+        });
+
+        dispatch(addMessage(res.data));
       }
       setMessage("");
     } catch (error) {

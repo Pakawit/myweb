@@ -14,30 +14,29 @@ function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  async function handleLogin(e) {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/admin/login`, {
-        name,
-        password,
-      });
+      const res = await axios.post(`${API_BASE_URL}/admin/login`, { name, password });
       if (res.data) {
         dispatch(setAdmin(res.data));
         navigate("/");
       }
     } catch (error) {
-      setError(error.response.data);
+      const errorMessage = error.response?.data?.error || "An error occurred. Please try again.";
+      setError(errorMessage);
     }
-  }
+  };
 
   return (
     <Container>
-      <Row>
-        <Col className="d-flex align-items-center justify-content-center flex-direction-column">
+      <Row className="justify-content-center align-items-center min-vh-100">
+        <Col xs={12} md={6} lg={4}>
           <Form onSubmit={handleLogin}>
+            <h2 className="mb-4 text-center">Login</h2>
+            {error && <p className="alert alert-danger">{error}</p>}
             <Form.Group className="mb-3" controlId="formBasicEmail">
-              {error && <p className="alert alert-danger">{error}</p>}
               <Form.Label>User Name</Form.Label>
               <Form.Control
                 type="text"
@@ -47,7 +46,6 @@ function Login() {
                 required
               />
             </Form.Group>
-
             <Form.Group className="mb-3" controlId="formBasicPassword">
               <Form.Label>Password</Form.Label>
               <Form.Control
@@ -58,7 +56,7 @@ function Login() {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" className="w-100">
               Login
             </Button>
           </Form>
