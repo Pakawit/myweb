@@ -38,6 +38,9 @@ function Home() {
   }, [dispatch]);
 
   const getLastMedicationStatus = (userId) => {
+    if (!Array.isArray(medication)) {
+      return -1; 
+    }
     const userMedications = medication.filter((med) => med.from === userId);
     if (userMedications.length > 0) {
       return userMedications[userMedications.length - 1].status;
