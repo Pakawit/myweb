@@ -288,20 +288,20 @@ app.post("/getmessages", async (req, res) => {
   }
 });
 
-app.post("/getmessage", async (req, res) => {
-  try {
-    const { from, to } = req.body;
-    const messages = await Message.find({
-      $or: [
-        { from: from, to: to },
-        { from: to, to: from },
-      ],
-    });
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching messages" });
-  }
+app.post("/getmessage", (req, res) => {
+  const { from, to } = req.body;
+  Message.find({
+    $or: [
+      { from: from, to: to },
+      { from: to, to: from },
+    ],
+  })
+    .then((messages) => {
+      res.json(messages); // Ensure each message has a `contentType` field
+    })
+    .catch((err) => res.status(500).json({ error: 'Error fetching messages' }));
 });
+
 
 app.post("/createmessage", async (req, res) => {
   try {
@@ -354,7 +354,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
     const user = await User.findById(req.body.from);
 
     if (user) {
-      await updateNotificationFile(req.body.from); // Update notification file if necessary
+      await updateNotificationFile(req.body.from);
     }
 
     const messages = await Message.find();
