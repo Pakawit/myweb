@@ -1,17 +1,31 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Container, Button, Form, Row, Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { setselectuser } from "../features/selectuserSlice";
+import { fetchMedicationsThunk } from "../features/medicationSlice";
 
 function Personal() {
   const selectuser = useSelector((state) => state.selectuser);
+  const medication = useSelector((state) => state.medication) || [];
   const { API_BASE_URL } = useContext(AppContext);
   const [member, setMember] = useState(selectuser);
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchMedicationsThunk());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const msMedicineCount = medication.filter((med) => med.from === selectuser._id && med.status === 0).length;
+    setMember((prevMember) => ({
+      ...prevMember,
+      ms_medicine: msMedicineCount,
+    }));
+  }, [medication, selectuser._id]);
 
   const handleChange = (name, value) => {
     setMember((prevMember) => ({
@@ -161,7 +175,7 @@ function Personal() {
               name="ms_medicine"
               value={member.ms_medicine}
               onChange={(e) => handleChange("ms_medicine", e.target.value)}
-              disabled={!editMode}
+              disabled
             />
           </Col>
         </Form.Group>

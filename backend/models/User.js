@@ -33,10 +33,6 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    ms_medicine : {
-      type: Number,
-      default: 0,
-    },
     other_medicine : {
       type: String,
       default: "",

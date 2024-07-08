@@ -48,6 +48,13 @@ function Home() {
     return -1;
   };
 
+  const getMsMedicineCount = (userId) => {
+    if (!Array.isArray(medication)) {
+      return 0;
+    }
+    return medication.filter((med) => med.from === userId && med.status === 0).length;
+  };
+
   const hasEstimation = (userId) => {
     return estimation.some((est) => est.from === userId);
   };
@@ -79,12 +86,14 @@ function Home() {
       ? "warning"
       : "success";
 
+    const msMedicineCount = getMsMedicineCount(userData._id);
+
     return (
       <tr key={userData._id} className={rowClass}>
         <td className="table-center">{userData.name}</td>
         <td className="table-center">{userData.phone}</td>
         <td className="table-center">{userData.age}</td>
-        <td className="table-center">{userData.ms_medicine}</td>
+        <td className="table-center">{msMedicineCount}</td>
         <td className="table-center">
           <Button variant={buttonVariant} disabled>
             {lastMedicationStatus === 0
