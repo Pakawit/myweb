@@ -174,7 +174,6 @@ function Personal() {
               type="text"
               name="ms_medicine"
               value={member.ms_medicine}
-              onChange={(e) => handleChange("ms_medicine", e.target.value)}
               disabled
             />
           </Col>
