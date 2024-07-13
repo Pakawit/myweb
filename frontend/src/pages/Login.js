@@ -21,13 +21,6 @@ function Login() {
       const res = await axios.post(`${API_BASE_URL}/admin/login`, { name, password });
       if (res.data) {
         dispatch(setAdmin(res.data));
-
-        await axios.get(`${API_BASE_URL}/getusers`);
-        await axios.post(`${API_BASE_URL}/getmedication`);
-        await axios.post(`${API_BASE_URL}/getestimation`);
-        await axios.post(`${API_BASE_URL}/getmessages`);
-        await axios.get(`${API_BASE_URL}/getmednoti`);
-
         navigate("/");
       }
     } catch (error) {
