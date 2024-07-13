@@ -1,23 +1,33 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
+import { AppContext } from "../context/appContext";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 
 function Medication() {
+  const { API_BASE_URL } = useContext(AppContext);
   const medication = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
 
   useEffect(() => {
+    const fetchData = () => {
+      axios.post(`${API_BASE_URL}/getmedication`);
+    };
     dispatch(fetchMedicationsThunk());
 
     const intervalId = setInterval(() => {
       dispatch(fetchMedicationsThunk());
     }, 5000); 
+    window.addEventListener('beforeunload', fetchData);
 
-    return () => clearInterval(intervalId);
-  }, [dispatch]);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', fetchData);
+    }
+  }, [dispatch, API_BASE_URL]);
 
   const renderStatusButton = (status) => {
     switch (status) {

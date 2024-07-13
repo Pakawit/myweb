@@ -1,13 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Table,
-  Button,
-  Dropdown,
-  Modal,
-} from "react-bootstrap";
+import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -24,14 +16,22 @@ function Estimation() {
   const [hfsLevels, setHfsLevels] = useState({});
 
   useEffect(() => {
+    const fetchData = () => {
+      axios.post(`${API_BASE_URL}/getestimation`);
+    };
+
     dispatch(fetchEstimationsThunk());
 
     const intervalId = setInterval(() => {
       dispatch(fetchEstimationsThunk());
-    }, 5000); 
+    }, 5000);
+    window.addEventListener('beforeunload', fetchData); 
 
-    return () => clearInterval(intervalId);
-  }, [dispatch]);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', fetchData);
+    };
+  }, [dispatch, API_BASE_URL]);
 
   const handleHfsLevelChange = (estimationId, level) => {
     setHfsLevels((prevLevels) => ({

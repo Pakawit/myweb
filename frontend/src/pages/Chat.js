@@ -22,20 +22,27 @@ function Chat() {
 
   useEffect(() => {
     if (selectuser) {
+      const fetchData = () => {
+        axios.post(`${API_BASE_URL}/getmessages`);
+      };
+
       dispatch(fetchMessagesThunk());
       dispatch(removeNotificationThunk(selectuser._id));
 
       const intervalId = setInterval(() => {
         dispatch(fetchMessagesThunk());
-      }, 5000); 
+      }, 5000);
+      window.addEventListener('beforeunload', fetchData);
 
-      return () => clearInterval(intervalId);
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener('beforeunload', fetchData);
+      };
     }
-  }, [dispatch, selectuser]);
+  }, [dispatch, selectuser, API_BASE_URL]);
 
   function validateImg(e) {
     const file = e.target.files[0];
-
     if (file.size >= 3048576) {
       alert("Max file size is 3MB");
     } else {
@@ -88,7 +95,7 @@ function Chat() {
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
-          time: time,
+          time,
           date: todayDate,
           from: admin._id,
           to: selectuser._id,
@@ -123,78 +130,71 @@ function Chat() {
       <Navigation />
       <Row>
         <Col>
-          <>
-            <div className="messages-output">
-              {filteredMessages &&
-                filteredMessages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={
-                      message.from === admin._id
-                        ? "incoming-message"
-                        : "outgoing-message"
-                    }
-                  >
-                    <div className="message-inner">
-                      {message.contentType === "image" ? (
-                        <img
-                          src={`data:image/jpeg;base64,${message.content}`}
-                          alt=""
-                          className="message-img"
-                          onClick={() => handleShowModal(message.content)}
-                          style={{ cursor: "pointer" }}
-                        />
-                      ) : (
-                        <div>{message.content}</div>
-                      )}
-                      <div className="message-timestamp-left">
-                        {message.date} {message.time}
-                      </div>
-                    </div>
+          <div className="messages-output">
+            {filteredMessages.map((message, index) => (
+              <div
+                key={index}
+                className={
+                  message.from === admin._id ? "incoming-message" : "outgoing-message"
+                }
+              >
+                <div className="message-inner">
+                  {message.contentType === "image" ? (
+                    <img
+                      src={`data:image/jpeg;base64,${message.content}`}
+                      alt=""
+                      className="message-img"
+                      onClick={() => handleShowModal(message.content)}
+                      style={{ cursor: "pointer" }}
+                    />
+                  ) : (
+                    <div>{message.content}</div>
+                  )}
+                  <div className="message-timestamp-left">
+                    {message.date} {message.time}
                   </div>
-                ))}
-              <div ref={messageEndRef} />
-            </div>
+                </div>
+              </div>
+            ))}
+            <div ref={messageEndRef} />
+          </div>
 
-            <div>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group style={{ display: "flex" }}>
-                  <input
-                    style={{ display: "none" }}
-                    type="file"
-                    id="image-upload"
-                    hidden
-                    accept="image/png, image/jpeg"
-                    onChange={validateImg}
-                  />
-                  <label htmlFor="image-upload">
-                    <div className="img">
-                      <i className="bi bi-image"></i>
-                    </div>
-                  </label>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group style={{ display: "flex" }}>
+              <input
+                style={{ display: "none" }}
+                type="file"
+                id="image-upload"
+                hidden
+                accept="image/png, image/jpeg"
+                onChange={validateImg}
+              />
+              <label htmlFor="image-upload">
+                <div className="img">
+                  <i className="bi bi-image"></i>
+                </div>
+              </label>
 
-                  <Form.Control
-                    type="text"
-                    placeholder="Your message"
-                    value={message}
-                    style={{ backgroundColor: "#DDDDDD" }}
-                    onChange={(e) => setMessage(e.target.value)}
-                  ></Form.Control>
+              <Form.Control
+                type="text"
+                placeholder="Your message"
+                value={message}
+                style={{ backgroundColor: "#DDDDDD" }}
+                onChange={(e) => setMessage(e.target.value)}
+              ></Form.Control>
 
-                  <Button
-                    variant="outline-dark"
-                    type="submit"
-                    style={{
-                      backgroundColor: "#DDDDD",
-                      borderColor: "#DDDDD",
-                    }}
-                  >
-                    <i className="bi bi-send-fill"></i>
-                  </Button>
-                </Form.Group>
-              </Form>
-            </div>
-          </>
+              <Button
+                variant="outline-dark"
+                type="submit"
+                style={{
+                  backgroundColor: "#DDDDD",
+                  borderColor: "#DDDDD",
+                }}
+              >
+                <i className="bi bi-send-fill"></i>
+              </Button>
+            </Form.Group>
+          </Form>
         </Col>
       </Row>
       <Modal show={showModal} onHide={handleCloseModal} centered>

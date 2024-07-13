@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,6 +10,8 @@ import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
 import { fetchMessagesThunk } from "../features/messageSlice";
 import { addNotification } from "../features/notificationsSlice";
+import axios from "axios";
+import { AppContext } from "../context/appContext";
 
 function Home() {
   const admin = useSelector((state) => state.admin);
@@ -18,8 +20,23 @@ function Home() {
   const estimation = useSelector((state) => state.estimation) || [];
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { API_BASE_URL } = useContext(AppContext);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await axios.all([
+          axios.get(`${API_BASE_URL}/getusers`),
+          axios.post(`${API_BASE_URL}/getmedication`),
+          axios.post(`${API_BASE_URL}/getestimation`),
+          axios.post(`${API_BASE_URL}/getmessages`),
+          axios.get(`${API_BASE_URL}/getmednoti`)
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+      }
+    };
+
     dispatch(deleteselectuser());
     dispatch(addNotification());
     dispatch(fetchUsersThunk());
@@ -32,26 +49,22 @@ function Home() {
       dispatch(fetchMedicationsThunk());
       dispatch(fetchEstimationsThunk());
       dispatch(fetchMessagesThunk());
-    }, 5000); 
+    }, 5000);
 
-    return () => clearInterval(intervalId);
+    window.addEventListener('beforeunload', fetchData);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', fetchData);
+    };
   }, [dispatch]);
 
   const getLastMedicationStatus = (userId) => {
-    if (!Array.isArray(medication)) {
-      return -1; 
-    }
     const userMedications = medication.filter((med) => med.from === userId);
-    if (userMedications.length > 0) {
-      return userMedications[userMedications.length - 1].status;
-    }
-    return -1;
+    return userMedications.length > 0 ? userMedications[userMedications.length - 1].status : -1;
   };
 
   const getMsMedicineCount = (userId) => {
-    if (!Array.isArray(medication)) {
-      return 0;
-    }
     return medication.filter((med) => med.from === userId && med.status === 0).length;
   };
 
@@ -59,11 +72,7 @@ function Home() {
     return estimation.some((est) => est.from === userId);
   };
 
-  const sortedUsers = Array.isArray(users)
-    ? users.slice().sort(
-        (a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id)
-      )
-    : [];
+  const sortedUsers = users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id));
 
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));
@@ -71,21 +80,11 @@ function Home() {
   };
 
   const renderUserRows = (userData) => {
-    if (!userData || !userData._id || userData._id === admin._id) return null;
+    if (!userData || userData._id === admin._id) return null;
 
     const lastMedicationStatus = getLastMedicationStatus(userData._id);
-    const rowClass = lastMedicationStatus === 0
-      ? "row-danger"
-      : lastMedicationStatus === 1
-      ? "row-warning"
-      : "row-success";
-
-    const buttonVariant = lastMedicationStatus === 0
-      ? "danger"
-      : lastMedicationStatus === 1
-      ? "warning"
-      : "success";
-
+    const rowClass = lastMedicationStatus === 0 ? "row-danger" : lastMedicationStatus === 1 ? "row-warning" : "row-success";
+    const buttonVariant = lastMedicationStatus === 0 ? "danger" : lastMedicationStatus === 1 ? "warning" : "success";
     const msMedicineCount = getMsMedicineCount(userData._id);
 
     return (
@@ -96,38 +95,14 @@ function Home() {
         <td className="table-center">{msMedicineCount}</td>
         <td className="table-center">
           <Button variant={buttonVariant} disabled>
-            {lastMedicationStatus === 0
-              ? "ไม่ได้กิน"
-              : lastMedicationStatus === 1
-              ? "ล่าช้า"
-              : "กินแล้ว"}
+            {lastMedicationStatus === 0 ? "ไม่ได้กิน" : lastMedicationStatus === 1 ? "ล่าช้า" : "กินแล้ว"}
           </Button>
         </td>
         <td className="table-center">
-          <Button
-            variant="outline-success"
-            onClick={() => handleNavigation(userData, "/personal")}
-          >
-            ข้อมูลส่วนบุคคล
-          </Button>{" "}
-          <Button
-            variant={`outline-${buttonVariant}`}
-            onClick={() => handleNavigation(userData, "/medication")}
-          >
-            รายละเอียดการกินยา
-          </Button>{" "}
-          <Button
-            variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"}
-            onClick={() => handleNavigation(userData, "/estimation")}
-          >
-            การประเมินอาการ HFS
-          </Button>{" "}
-          <Button
-            variant={`outline-${buttonVariant}`}
-            onClick={() => handleNavigation(userData, "/chat")}
-          >
-            แชท
-          </Button>
+          <Button variant="outline-success" onClick={() => handleNavigation(userData, "/personal")}>ข้อมูลส่วนบุคคล</Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>รายละเอียดการกินยา</Button>
+          <Button variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"} onClick={() => handleNavigation(userData, "/estimation")}>การประเมินอาการ HFS</Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>แชท</Button>
         </td>
       </tr>
     );
@@ -150,7 +125,7 @@ function Home() {
               </tr>
             </thead>
             <tbody>
-              {Array.isArray(sortedUsers) && sortedUsers.map(renderUserRows)}
+              {sortedUsers.map(renderUserRows)}
             </tbody>
           </Table>
         </Col>

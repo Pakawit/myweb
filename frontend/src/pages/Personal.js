@@ -12,7 +12,7 @@ function Personal() {
   const medication = useSelector((state) => state.medication) || [];
   const { API_BASE_URL } = useContext(AppContext);
   const [member, setMember] = useState(selectuser);
-  const [originalMember, setOriginalMember] = useState(selectuser); // เก็บค่าเดิม
+  const [originalMember, setOriginalMember] = useState(selectuser); 
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
@@ -87,14 +87,14 @@ function Personal() {
   };
 
   const handleEditClick = () => {
-    setOriginalMember(member); // เก็บค่าเดิมเมื่อเริ่มแก้ไข
+    setOriginalMember(member); 
     setEditMode(true);
   };
 
   const handleCancelEdit = () => {
-    setMember(originalMember); // ย้อนกลับไปใช้ค่าเดิม
+    setMember(originalMember); 
     setEditMode(false);
-    setErrors({}); // ลบข้อความแจ้งเตือน
+    setErrors({}); 
   };
 
   const handleCloseModal = () => {
