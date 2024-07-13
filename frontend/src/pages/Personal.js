@@ -12,6 +12,7 @@ function Personal() {
   const medication = useSelector((state) => state.medication) || [];
   const { API_BASE_URL } = useContext(AppContext);
   const [member, setMember] = useState(selectuser);
+  const [originalMember, setOriginalMember] = useState(selectuser); // เก็บค่าเดิม
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
   const [editMode, setEditMode] = useState(false);
@@ -85,6 +86,21 @@ function Personal() {
     }
   };
 
+  const handleEditClick = () => {
+    setOriginalMember(member); // เก็บค่าเดิมเมื่อเริ่มแก้ไข
+    setEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setMember(originalMember); // ย้อนกลับไปใช้ค่าเดิม
+    setEditMode(false);
+    setErrors({}); // ลบข้อความแจ้งเตือน
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
   return (
     <Container>
       <Navigation />
@@ -147,7 +163,7 @@ function Personal() {
                 <Button
                   variant="outline-danger"
                   type="button"
-                  onClick={() => setEditMode(false)}
+                  onClick={handleCancelEdit}
                   style={{ marginLeft: "10px" }}
                 >
                   ยกเลิก
@@ -157,7 +173,7 @@ function Personal() {
               <Button
                 variant="outline-dark"
                 type="button"
-                onClick={() => setEditMode(true)}
+                onClick={handleEditClick}
               >
                 แก้ไข
               </Button>
@@ -165,13 +181,13 @@ function Personal() {
           </Col>
         </Form.Group>
       </Form>
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>การแก้ไขเสร็จสิ้น</Modal.Title>
         </Modal.Header>
         <Modal.Body>แก้ไขข้อมูลเรียบร้อยแล้ว</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Button variant="secondary" onClick={handleCloseModal}>
             ปิด
           </Button>
         </Modal.Footer>
