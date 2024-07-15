@@ -183,9 +183,9 @@ function Personal() {
       </Form>
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>การแก้ไขเสร็จสิ้น</Modal.Title>
+          <Modal.Title>แจ้งเตือน</Modal.Title>
         </Modal.Header>
-        <Modal.Body>แก้ไขข้อมูลเรียบร้อยแล้ว</Modal.Body>
+        <Modal.Body>แก้ไขข้อมูลเรียบร้อย</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
             ปิด

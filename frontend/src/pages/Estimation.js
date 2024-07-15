@@ -13,6 +13,7 @@ function Estimation() {
   const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [hfsLevels, setHfsLevels] = useState({});
 
   useEffect(() => {
@@ -25,7 +26,7 @@ function Estimation() {
     const intervalId = setInterval(() => {
       dispatch(fetchEstimationsThunk());
     }, 5000);
-    window.addEventListener('beforeunload', fetchData); 
+    window.addEventListener('beforeunload', fetchData);
 
     return () => {
       clearInterval(intervalId);
@@ -50,6 +51,7 @@ function Estimation() {
         hfsLevel,
       });
       dispatch(fetchEstimationsThunk());
+      setShowNotificationModal(true);
     } catch (err) {
       console.log(err);
     }
@@ -63,6 +65,11 @@ function Estimation() {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedImage(null);
+  };
+
+  const handleCloseNotificationModal = () => {
+    setShowNotificationModal(false);
+    window.location.reload(); // รีเฟรชหน้าเมื่อปิด Modal
   };
 
   return (
@@ -83,7 +90,7 @@ function Estimation() {
               </tr>
             </thead>
             <tbody>
-              {estimation && estimation.filter((est) => est.from === selectuser._id).length > 0 ? (
+              {estimation && selectuser && estimation.filter((est) => est.from === selectuser._id).length > 0 ? (
                 estimation
                   .filter((est) => est.from === selectuser._id)
                   .map((est, index) => (
@@ -168,6 +175,17 @@ function Estimation() {
             />
           )}
         </Modal.Body>
+      </Modal>
+      <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>แจ้งเตือน</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>แจ้งเตือนเรียบร้อย</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseNotificationModal}>
+            ปิด
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );
