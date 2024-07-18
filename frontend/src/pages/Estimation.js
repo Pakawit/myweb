@@ -44,11 +44,11 @@ function Estimation() {
   const handleSubmit = async (_id) => {
     try {
       const hfsLevel = hfsLevels[_id];
-      if (hfsLevel === undefined) return;
+      if (hfsLevel === undefined || hfsLevel === 0) return;
 
       await axios.put(`${API_BASE_URL}/editestimation`, {
         _id,
-        hfsLevel,
+        hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
       });
       dispatch(fetchEstimationsThunk());
       setShowNotificationModal(true);
@@ -69,7 +69,7 @@ function Estimation() {
 
   const handleCloseNotificationModal = () => {
     setShowNotificationModal(false);
-    window.location.reload(); // รีเฟรชหน้าเมื่อปิด Modal
+    window.location.reload(); 
   };
 
   return (
@@ -121,13 +121,13 @@ function Estimation() {
                             variant="outline-success"
                             id="dropdown-basic"
                           >
-                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : est.hfsLevel}
+                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : (est.hfsLevel === 0 ? "ไม่พบอาการ" : est.hfsLevel)}
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
-                            {[0, 1, 2, 3].map((level) => (
+                            {["ไม่พบอาการ", 1, 2, 3].map((level, index) => (
                               <Dropdown.Item
-                                key={level}
+                                key={index}
                                 onClick={() => handleHfsLevelChange(est._id, level)}
                               >
                                 ระดับที่ {level}

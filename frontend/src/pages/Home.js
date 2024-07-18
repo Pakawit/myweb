@@ -57,7 +57,7 @@ function Home() {
       clearInterval(intervalId);
       window.removeEventListener('beforeunload', fetchData);
     };
-  }, [dispatch]);
+  }, [dispatch, API_BASE_URL]);
 
   const getLastMedicationStatus = (userId) => {
     const userMedications = medication.filter((med) => med.from === userId);
