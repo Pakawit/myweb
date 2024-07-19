@@ -121,7 +121,7 @@ function Estimation() {
                             variant="outline-success"
                             id="dropdown-basic"
                           >
-                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : (est.hfsLevel === 0 ? "ไม่พบอาการ" : est.hfsLevel)}
+                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : (est.hfsLevel === 0 ? "" : est.hfsLevel)}
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
@@ -130,7 +130,7 @@ function Estimation() {
                                 key={index}
                                 onClick={() => handleHfsLevelChange(est._id, level)}
                               >
-                                ระดับที่ {level}
+                                {level}
                               </Dropdown.Item>
                             ))}
                           </Dropdown.Menu>
