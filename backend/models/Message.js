@@ -7,7 +7,6 @@ const MessageSchema = new mongoose.Schema({
   date: String,
   to: String,
   contentType: String,
-  image: String,
 });
 
 const Message = mongoose.model("Message", MessageSchema);

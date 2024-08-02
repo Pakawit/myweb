@@ -1,83 +1,95 @@
-
+/* Centered Table */
 .table-center {
-    text-align: center;
-  }
+  text-align: center;
+}
 
-/* chat */
+/* Chat Styles */
 .messages-output {
-    height: 80vh;
-    border: 1px solid lightgray;
-    overflow-y: auto;
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .message-inner {
-    margin-left: 20px;
-    margin-bottom: 10px;
-    min-width: 200px;
-    max-width: 90%;
-    text-align: center;
-    min-height: 80px;
-    font: 400 1em, sans-serif;
-    display: inline-block;
-    border-radius: 30px;
-    background-color: #E5E5E5;
-  }
-  
-  .incoming-message .message-inner {
-    background-color: #78E378;
-  }
-  
-  .incoming-message {
-    display: flex;
-    justify-content: flex-end;
-    margin-right: 20px;
-  }
-  
-  .message-timestamp-left {
-    font-size: 0.85em;
-    font-weight: 300;
-    margin-top: 10px;
-  }
-  
-  .message-sender {
-    margin-left: 25px ;
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
-  
-  .message-date-indicator {
-    width: 150px;
-    margin: 0 auto;
-  }
-  
-  .conversation-info {
-    padding: 0;
-    margin: 0 ;
-    text-align: center;
-    height: 100px;
-  }
-  
-  .img {
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid black;
-  }
+  height: 80vh;
+  border: 1px solid lightgray;
+  overflow-y: auto;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
 
-  .message-img {
-    max-width: 100%;
-    max-height: 200px; /* ปรับความสูงตามต้องการ */
-    width: auto;
-    height: auto;
-  }
+.messages-output > div:first-child {
+  margin-top: 20px; 
+}
 
-  
-  /*//////////////////////////////////////////// */
+.message-inner {
+  padding: 10px;
+  margin-left: 20px;
+  margin-bottom: 10px;
+  min-width: 200px;
+  max-width: 90%;
+  text-align: center;
+  min-height: 80px;
+  font: 400 1em sans-serif;
+  display: inline-block;
+  border-radius: 30px;
+  background-color: #E5E5E5;
+}
 
-  .modal-dialog {
-    max-width: 90%;
-    margin: auto;
-  }
-  
-  
+.incoming-message .message-inner {
+  background-color: #78E378;
+}
+
+.incoming-message {
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 20px;
+}
+
+.message-timestamp-left {
+  font-size: 0.85em;
+  font-weight: 300;
+  margin-top: 20px;
+}
+
+.message-sender {
+  margin-left: 25px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.message-date-indicator {
+  width: 150px;
+  margin: 0 auto;
+}
+
+.conversation-info {
+  padding: 0;
+  margin: 0;
+  text-align: center;
+  height: 100px;
+}
+
+.img {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid black;
+}
+
+.message-img {
+  max-width: 100%;
+  max-height: 200px;
+  width: auto;
+  height: auto;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Modal Dialog */
+.modal-dialog {
+  max-width: 90%;
+  margin: auto;
+}
+
+.modal-img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: 80vh;
+  margin: auto;
+  display: block;
+}

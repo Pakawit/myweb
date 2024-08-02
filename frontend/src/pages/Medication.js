@@ -1,34 +1,58 @@
 import React, { useContext, useEffect } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { setMedication } from "../features/medicationSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchMedicationsThunk } from "../features/medicationSlice";
 
 function Medication() {
-  const { member, API_BASE_URL } = useContext(AppContext);
+  const { API_BASE_URL } = useContext(AppContext);
   const medication = useSelector((state) => state.medication);
+  const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!member._id) {
-      navigate("/");
-    }
-    const fetchData = async () => {
-      try {
-        const res = await axios.post(`${API_BASE_URL}/getmedication`, {
-          _id: member._id,
-        });
-        dispatch(setMedication(res.data));
-      } catch (err) {
-        console.log(err);
-      }
+    const fetchData = () => {
+      axios.post(`${API_BASE_URL}/getmedication`);
     };
-    fetchData();
-  }, [dispatch, member._id, navigate ,API_BASE_URL]);
+    dispatch(fetchMedicationsThunk());
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchMedicationsThunk());
+    }, 5000); 
+    window.addEventListener('beforeunload', fetchData);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('beforeunload', fetchData);
+    }
+  }, [dispatch, API_BASE_URL]);
+
+  const renderStatusButton = (status) => {
+    switch (status) {
+      case 0:
+        return (
+          <Button variant="danger" disabled>
+            ไม่ได้กิน
+          </Button>
+        );
+      case 1:
+        return (
+          <Button variant="warning" disabled>
+            ล่าช้า
+          </Button>
+        );
+      case 2:
+        return (
+          <Button variant="success" disabled>
+            กินแล้ว
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <Container>
@@ -54,39 +78,26 @@ function Medication() {
             </thead>
             <tbody>
               {medication &&
-                medication.length > 0 &&
-                medication.map((medication, index) => (
-                  <tr key={index}>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {medication.date}
-                    </td>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {medication.time}
-                    </td>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {medication.status === 0 ? (
-                        <Button variant="danger" disabled>
-                          ยังไม่ได้กินยา
-                        </Button>
-                      ) : medication.status === 1 ? (
-                        <Button variant="warning" disabled>
-                          ยังไม่ได้กินยา
-                        </Button>
-                      ) : (
-                        <Button variant="success" disabled>
-                          กินยาแล้ว
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              {medication && medication.length === 0 && (
+              medication.filter((med) => med.from === selectuser._id).length >
+                0 ? (
+                medication
+                  .filter((med) => med.from === selectuser._id)
+                  .map((med, index) => (
+                    <tr key={index}>
+                      <td className="table-center" style={{ width: "33%" }}>
+                        {med.date}
+                      </td>
+                      <td className="table-center" style={{ width: "33%" }}>
+                        {med.time}
+                      </td>
+                      <td className="table-center" style={{ width: "33%" }}>
+                        {renderStatusButton(med.status)}
+                      </td>
+                    </tr>
+                  ))
+              ) : (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="table-center"
-                    style={{ width: "100%" }}
-                  >
+                  <td colSpan={3} className="table-center" style={{ width: "100%" }}>
                     ไม่มีข้อมูลการกินยา
                   </td>
                 </tr>
