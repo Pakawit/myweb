@@ -41,32 +41,32 @@ function Chat() {
     }
   }, [dispatch, selectuser, API_BASE_URL]);
 
-  function validateImg(e) {
+  const validateImg = (e) => {
     const file = e.target.files[0];
     if (file.size >= 3048576) {
       alert("Max file size is 3MB");
     } else {
       setImage(file);
     }
-  }
+  };
 
-  function scrollToBottom() {
+  const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }
+  };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  async function getCurrentTime() {
+  const getCurrentTime = async () => {
     const date = new Date();
     return {
       todayDate: date.toLocaleDateString("en-GB"),
       time: date.toTimeString().slice(0, 5),
     };
-  }
+  };
 
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!message && !image) {
@@ -107,7 +107,7 @@ function Chat() {
     } catch (error) {
       console.error("Error handling form submission:", error);
     }
-  }
+  };
 
   const filteredMessages = messages.filter(
     (msg) =>
@@ -181,7 +181,7 @@ function Chat() {
                 value={message}
                 style={{ backgroundColor: "#DDDDDD" }}
                 onChange={(e) => setMessage(e.target.value)}
-              ></Form.Control>
+              />
 
               <Button
                 variant="outline-dark"
@@ -198,20 +198,13 @@ function Chat() {
         </Col>
       </Row>
       <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton></Modal.Header>
+        <Modal.Header closeButton />
         <Modal.Body>
           {selectedImage && (
             <img
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="Detailed view"
-              style={{
-                width: "100%",
-                height: "auto",
-                maxWidth: "100%",
-                maxHeight: "80vh",
-                margin: "auto",
-                display: "block",
-              }}
+              className="modal-img"
             />
           )}
         </Modal.Body>
