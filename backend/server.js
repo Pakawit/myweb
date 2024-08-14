@@ -264,6 +264,15 @@ app.post("/getestimation", async (req, res) => {
   }
 });
 
+app.post("/getHFSDetails", async (req, res) => {
+  try {
+    const estimations = await Estimation.find({ hfsLevel: { $ne: 0 } });
+    res.json(estimations);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching estimations" });
+  }
+});
+
 app.put("/editestimation", async (req, res) => {
   try {
     const editestimation = await Estimation.findByIdAndUpdate(

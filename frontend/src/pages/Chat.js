@@ -18,6 +18,7 @@ function Chat() {
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imageMessage, setImageMessage] = useState(""); 
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -47,6 +48,7 @@ function Chat() {
       alert("Max file size is 3MB");
     } else {
       setImage(file);
+      setImageMessage("รูปภาพถูกเลือกแล้ว");
     }
   };
 
@@ -92,6 +94,7 @@ function Chat() {
 
         dispatch(addMessage(res.data));
         setImage(null);
+        setImageMessage(""); 
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
@@ -158,7 +161,7 @@ function Chat() {
             ))}
             <div ref={messageEndRef} />
           </div>
-
+          {imageMessage && <p className="text-success">{imageMessage}</p>}
           <Form onSubmit={handleSubmit}>
             <Form.Group style={{ display: "flex" }}>
               <input

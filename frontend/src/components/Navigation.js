@@ -1,5 +1,5 @@
-
 import React, { useContext, useState, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { AppContext } from "../context/appContext";
 import { useSelector, useDispatch } from "react-redux";
 import {
@@ -22,6 +22,7 @@ import { setselectuser } from "../features/selectuserSlice";
 import axios from "axios";
 
 function Navigation() {
+  const location = useLocation();
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
   const { API_BASE_URL } = useContext(AppContext);
@@ -102,10 +103,16 @@ function Navigation() {
     }
   };
 
+  const shouldHideBackButton = location.pathname === "/";
+
   return (
     <Navbar>
       <Container>
-        <Button variant="outline-dark" onClick={back}>
+        <Button
+          variant="outline-dark"
+          onClick={back}
+          style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }}
+        >
           <i className="bi bi-chevron-left"></i>
         </Button>
         <Nav className="ms-autoNav">
@@ -180,7 +187,11 @@ function Navigation() {
             <Button variant="secondary" onClick={() => setShowModal(false)}>
               ปิด
             </Button>
-            <Button variant="primary" onClick={handleSaveReminder} disabled={loading}>
+            <Button
+              variant="primary"
+              onClick={handleSaveReminder}
+              disabled={loading}
+            >
               {loading ? "บันทึก..." : "บันทึก"}
             </Button>
           </Modal.Footer>
