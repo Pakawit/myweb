@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import React, { useContext, useEffect, useState } from "react";
+import { Container, Row, Col, Table, Button, Pagination } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +21,9 @@ function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
+
+  const [currentPage, setCurrentPage] = useState(1); // สร้าง state สำหรับหน้าปัจจุบัน
+  const itemsPerPage = 10; // จำนวนรายการที่จะแสดงต่อหน้า
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,6 +77,15 @@ function Home() {
 
   const sortedUsers = users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id));
 
+  // คำนวณจำนวนหน้าทั้งหมด
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
+
+  // ตัดข้อมูลของผู้ใช้ตามหน้าที่เลือก
+  const paginatedUsers = sortedUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));
     navigate(path);
@@ -108,6 +120,11 @@ function Home() {
     );
   };
 
+  // ฟังก์ชันสำหรับเปลี่ยนหน้า
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Container>
       <Navigation />
@@ -125,9 +142,20 @@ function Home() {
               </tr>
             </thead>
             <tbody>
-              {sortedUsers.map(renderUserRows)}
+              {paginatedUsers.map(renderUserRows)}
             </tbody>
           </Table>
+          <Pagination className="justify-content-end">
+            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
+            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            {[...Array(totalPages).keys()].map((pageNumber) => (
+              <Pagination.Item key={pageNumber + 1} active={pageNumber + 1 === currentPage} onClick={() => handlePageChange(pageNumber + 1)}>
+                {pageNumber + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+          </Pagination>
         </Col>
       </Row>
     </Container>

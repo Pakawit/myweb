@@ -32,7 +32,7 @@ function Chat() {
 
       const intervalId = setInterval(() => {
         dispatch(fetchMessagesThunk());
-      }, 5000);
+      }, 3000);
       window.addEventListener('beforeunload', fetchData);
 
       return () => {

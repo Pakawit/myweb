@@ -1,5 +1,5 @@
-import React, { useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import React, { useContext, useEffect, useState } from "react";
+import { Container, Row, Col, Table, Button, Pagination } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
@@ -11,6 +11,9 @@ function Medication() {
   const medication = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
+
+  const [currentPage, setCurrentPage] = useState(1); // สร้าง state สำหรับหน้าปัจจุบัน
+  const itemsPerPage = 10; // จำนวนรายการที่จะแสดงต่อหน้า
 
   useEffect(() => {
     const fetchData = () => {
@@ -54,6 +57,20 @@ function Medication() {
     }
   };
 
+  // คำนวณจำนวนหน้าทั้งหมด
+  const filteredMedications = medication.filter((med) => med.from === selectuser._id);
+  const totalPages = Math.ceil(filteredMedications.length / itemsPerPage);
+
+  // ตัดข้อมูลการกินยาตามหน้าที่เลือก
+  const paginatedMedications = filteredMedications.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
   return (
     <Container>
       <Navigation />
@@ -77,24 +94,20 @@ function Medication() {
               </tr>
             </thead>
             <tbody>
-              {medication &&
-              medication.filter((med) => med.from === selectuser._id).length >
-                0 ? (
-                medication
-                  .filter((med) => med.from === selectuser._id)
-                  .map((med, index) => (
-                    <tr key={index}>
-                      <td className="table-center" style={{ width: "33%" }}>
-                        {med.date}
-                      </td>
-                      <td className="table-center" style={{ width: "33%" }}>
-                        {med.time}
-                      </td>
-                      <td className="table-center" style={{ width: "33%" }}>
-                        {renderStatusButton(med.status)}
-                      </td>
-                    </tr>
-                  ))
+              {paginatedMedications.length > 0 ? (
+                paginatedMedications.map((med, index) => (
+                  <tr key={index}>
+                    <td className="table-center" style={{ width: "33%" }}>
+                      {med.date}
+                    </td>
+                    <td className="table-center" style={{ width: "33%" }}>
+                      {med.time}
+                    </td>
+                    <td className="table-center" style={{ width: "33%" }}>
+                      {renderStatusButton(med.status)}
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td colSpan={3} className="table-center" style={{ width: "100%" }}>
@@ -104,6 +117,17 @@ function Medication() {
               )}
             </tbody>
           </Table>
+          <Pagination className="justify-content-end">
+            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
+            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            {[...Array(totalPages).keys()].map((pageNumber) => (
+              <Pagination.Item key={pageNumber + 1} active={pageNumber + 1 === currentPage} onClick={() => handlePageChange(pageNumber + 1)}>
+                {pageNumber + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+          </Pagination>
         </Col>
       </Row>
     </Container>
