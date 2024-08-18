@@ -253,7 +253,7 @@ app.put("/updatemedication", async (req, res) => {
 
 app.post("/getestimation", async (req, res) => {
   try {
-    const estimations = await Estimation.find({ hfsLevel: 0 });
+    const estimations = await Estimation.find();
     await fs.promises.writeFile(
       ESTIMATIONS_FILE_PATH,
       JSON.stringify(estimations, null, 2)

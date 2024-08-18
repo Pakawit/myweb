@@ -9,7 +9,7 @@ import { addMessage, fetchMessagesThunk } from "../features/messageSlice";
 import { removeNotificationThunk } from "../features/notificationsSlice";
 
 function Chat() {
-  const messages = useSelector((state) => state.message);
+  const messages = useSelector((state) => state.message) || [];
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser);
   const [message, setMessage] = useState("");

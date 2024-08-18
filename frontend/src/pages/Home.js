@@ -72,7 +72,7 @@ function Home() {
   };
 
   const hasEstimation = (userId) => {
-    return estimation.some((est) => est.from === userId);
+    return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
   };
 
   const sortedUsers = users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id));
@@ -85,6 +85,10 @@ function Home() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));
@@ -118,11 +122,6 @@ function Home() {
         </td>
       </tr>
     );
-  };
-
-  // ฟังก์ชันสำหรับเปลี่ยนหน้า
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   return (

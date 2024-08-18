@@ -8,12 +8,12 @@ import { fetchMedicationsThunk } from "../features/medicationSlice";
 
 function Medication() {
   const { API_BASE_URL } = useContext(AppContext);
-  const medication = useSelector((state) => state.medication);
+  const medication = useSelector((state) => state.medication) || [];
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
 
-  const [currentPage, setCurrentPage] = useState(1); // สร้าง state สำหรับหน้าปัจจุบัน
-  const itemsPerPage = 10; // จำนวนรายการที่จะแสดงต่อหน้า
+  const [currentPage, setCurrentPage] = useState(1); 
+  const itemsPerPage = 10; 
 
   useEffect(() => {
     const fetchData = () => {
@@ -57,11 +57,23 @@ function Medication() {
     }
   };
 
-  // คำนวณจำนวนหน้าทั้งหมด
-  const filteredMedications = medication.filter((med) => med.from === selectuser._id);
+  const convertDate = (dateStr) => {
+    const [day, month, year] = dateStr.split('/');
+    return `${year}-${month}-${day}`;
+  };
+
+  const filteredMedications = medication
+    .filter((med) => med.from === selectuser._id)
+    .sort((a, b) => {
+      const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
+      const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
+      return dateB - dateA; // Sort by descending date
+    });
+
+  // console.log(filteredMedications); // ตรวจสอบข้อมูลที่ถูกเรียงลำดับ
+
   const totalPages = Math.ceil(filteredMedications.length / itemsPerPage);
 
-  // ตัดข้อมูลการกินยาตามหน้าที่เลือก
   const paginatedMedications = filteredMedications.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
