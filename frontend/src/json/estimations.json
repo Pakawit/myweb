@@ -19,7 +19,7 @@
     "_id": "66c20bc60ae3bf40d03d336e",
     "painLevel": 2,
     "photos": [],
-    "hfsLevel": 0,
+    "hfsLevel": 5,
     "from": "668c013ff883e66ff8f630b7",
     "time": "11.30",
     "date": "1/5/2024",
@@ -34,6 +34,28 @@
     "from": "668c013ff883e66ff8f630b7",
     "time": "19.30",
     "date": "1/5/2024",
+    "to": "661fcb62f221a425cddcc258",
+    "__v": 0
+  },
+  {
+    "_id": "66c477097e05637e8806a666",
+    "painLevel": 2,
+    "photos": [],
+    "hfsLevel": 0,
+    "from": "668c013ff883e66ff8f630b7",
+    "time": "19.30",
+    "date": "3/5/2024",
+    "to": "661fcb62f221a425cddcc258",
+    "__v": 0
+  },
+  {
+    "_id": "66c4770e7e05637e8806a669",
+    "painLevel": 2,
+    "photos": [],
+    "hfsLevel": 0,
+    "from": "668c013ff883e66ff8f630b7",
+    "time": "19.30",
+    "date": "2/5/2024",
     "to": "661fcb62f221a425cddcc258",
     "__v": 0
   }

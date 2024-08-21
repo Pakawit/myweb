@@ -1,5 +1,14 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Modal, Pagination } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Dropdown,
+  Modal,
+  Pagination,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -16,7 +25,7 @@ function Estimation() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [hfsLevels, setHfsLevels] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 3;
 
   useEffect(() => {
     const fetchData = () => {
@@ -28,11 +37,11 @@ function Estimation() {
     const intervalId = setInterval(() => {
       dispatch(fetchEstimationsThunk());
     }, 5000);
-    window.addEventListener('beforeunload', fetchData);
+    window.addEventListener("beforeunload", fetchData);
 
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener('beforeunload', fetchData);
+      window.removeEventListener("beforeunload", fetchData);
     };
   }, [dispatch, API_BASE_URL]);
 
@@ -71,11 +80,11 @@ function Estimation() {
 
   const handleCloseNotificationModal = () => {
     setShowNotificationModal(false);
-    window.location.reload(); 
+    window.location.reload();
   };
 
   const convertDate = (dateStr) => {
-    const [day, month, year] = dateStr.split('/');
+    const [day, month, year] = dateStr.split("/");
     return `${year}-${month}-${day}`;
   };
 
@@ -84,7 +93,7 @@ function Estimation() {
     .sort((a, b) => {
       const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
       const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
-      return dateB - dateA; // Sort by descending date
+      return dateA < dateB ? 1 : -1; // แก้ไขเป็นการเรียงลำดับแบบถูกต้อง
     });
 
   const totalPages = Math.ceil(filteredEstimations.length / itemsPerPage);
@@ -120,7 +129,9 @@ function Estimation() {
                 paginatedEstimations.map((est, index) => (
                   <tr
                     key={index}
-                    className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}
+                    className={
+                      est.hfsLevel !== 0 ? "bg-secondary text-white" : ""
+                    }
                   >
                     <td className="table-center">{est.date}</td>
                     <td className="table-center">{est.time}</td>
@@ -149,14 +160,19 @@ function Estimation() {
                             variant="outline-success"
                             id="dropdown-basic"
                           >
-                            ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : ""}
+                            ระดับที่{" "}
+                            {hfsLevels[est._id] !== undefined
+                              ? hfsLevels[est._id]
+                              : ""}
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
                             {["ไม่พบอาการ", 1, 2, 3].map((level, index) => (
                               <Dropdown.Item
                                 key={index}
-                                onClick={() => handleHfsLevelChange(est._id, level)}
+                                onClick={() =>
+                                  handleHfsLevelChange(est._id, level)
+                                }
                               >
                                 {level}
                               </Dropdown.Item>
@@ -164,7 +180,11 @@ function Estimation() {
                           </Dropdown.Menu>
                         </Dropdown>
                       ) : (
-                        <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
+                        <span>
+                          {est.hfsLevel === 5
+                            ? "ไม่พบอาการ"
+                            : `ระดับที่ ${est.hfsLevel}`}
+                        </span>
                       )}
                     </td>
                     <td>
@@ -193,15 +213,31 @@ function Estimation() {
             </tbody>
           </Table>
           <Pagination className="justify-content-end">
-            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
-            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            <Pagination.First
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            />
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            />
             {[...Array(totalPages).keys()].map((pageNumber) => (
-              <Pagination.Item key={pageNumber + 1} active={pageNumber + 1 === currentPage} onClick={() => handlePageChange(pageNumber + 1)}>
+              <Pagination.Item
+                key={pageNumber + 1}
+                active={pageNumber + 1 === currentPage}
+                onClick={() => handlePageChange(pageNumber + 1)}
+              >
                 {pageNumber + 1}
               </Pagination.Item>
             ))}
-            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
-            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            />
+            <Pagination.Last
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+            />
           </Pagination>
         </Col>
       </Row>
@@ -213,7 +249,7 @@ function Estimation() {
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="รูปภาพ"
               style={{
-                width: "100%",
+                width: "auto",
                 height: "auto",
                 maxWidth: "100%",
                 maxHeight: "80vh",
@@ -224,7 +260,11 @@ function Estimation() {
           )}
         </Modal.Body>
       </Modal>
-      <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
+      <Modal
+        show={showNotificationModal}
+        onHide={handleCloseNotificationModal}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>แจ้งเตือน</Modal.Title>
         </Modal.Header>

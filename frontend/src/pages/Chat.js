@@ -18,7 +18,7 @@ function Chat() {
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [imageMessage, setImageMessage] = useState(""); 
+  const [imageMessage, setImageMessage] = useState("");
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -33,11 +33,11 @@ function Chat() {
       const intervalId = setInterval(() => {
         dispatch(fetchMessagesThunk());
       }, 3000);
-      window.addEventListener('beforeunload', fetchData);
+      window.addEventListener("beforeunload", fetchData);
 
       return () => {
         clearInterval(intervalId);
-        window.removeEventListener('beforeunload', fetchData);
+        window.removeEventListener("beforeunload", fetchData);
       };
     }
   }, [dispatch, selectuser, API_BASE_URL]);
@@ -94,7 +94,7 @@ function Chat() {
 
         dispatch(addMessage(res.data));
         setImage(null);
-        setImageMessage(""); 
+        setImageMessage("");
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
@@ -138,7 +138,9 @@ function Chat() {
               <div
                 key={index}
                 className={
-                  message.from === admin._id ? "incoming-message" : "outgoing-message"
+                  message.from === admin._id
+                    ? "incoming-message"
+                    : "outgoing-message"
                 }
               >
                 <div className="message-inner">
