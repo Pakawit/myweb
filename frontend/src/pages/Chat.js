@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Form, Button, Container, Row, Col, Modal } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-import "./style.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
@@ -12,35 +11,40 @@ function Chat() {
   const messages = useSelector((state) => state.message) || [];
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser);
+  const notifications = useSelector((state) => state.notifications) || [];
   const [message, setMessage] = useState("");
   const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [imageMessage, setImageMessage] = useState("");
   const dispatch = useDispatch();
 
   useEffect(() => {
     if (selectuser) {
-      const fetchData = () => {
-        axios.post(`${API_BASE_URL}/getmessages`);
-      };
-
-      dispatch(fetchMessagesThunk());
+      dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
       dispatch(removeNotificationThunk(selectuser._id));
 
       const intervalId = setInterval(() => {
-        dispatch(fetchMessagesThunk());
+        dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
       }, 3000);
-      window.addEventListener("beforeunload", fetchData);
 
       return () => {
         clearInterval(intervalId);
-        window.removeEventListener("beforeunload", fetchData);
       };
     }
-  }, [dispatch, selectuser, API_BASE_URL]);
+  }, [dispatch, selectuser, admin._id]);
+
+  useEffect(() => {
+    if (selectuser && notifications.length > 0) {
+      const notificationToRemove = notifications.find(
+        (notification) => notification.from === selectuser._id
+      );
+      if (notificationToRemove) {
+        dispatch(removeNotificationThunk(selectuser._id));
+      }
+    }
+  }, [selectuser, notifications, dispatch]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];
@@ -48,7 +52,7 @@ function Chat() {
       alert("Max file size is 3MB");
     } else {
       setImage(file);
-      setImageMessage("รูปภาพถูกเลือกแล้ว");
+      setMessage("เลือกรูปภาพแล้ว"); // แสดงการแจ้งเตือนในช่องข้อความ
     }
   };
 
@@ -94,7 +98,7 @@ function Chat() {
 
         dispatch(addMessage(res.data));
         setImage(null);
-        setImageMessage("");
+        setMessage(""); // เคลียร์ช่องข้อความหลังส่งภาพ
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
@@ -129,10 +133,11 @@ function Chat() {
   };
 
   return (
-    <Container>
+    <Container fluid>
       <Navigation />
       <Row>
         <Col>
+          <div className="chat-header">{selectuser.name}</div>
           <div className="messages-output">
             {filteredMessages.map((message, index) => (
               <div
@@ -163,7 +168,6 @@ function Chat() {
             ))}
             <div ref={messageEndRef} />
           </div>
-          {imageMessage && <p className="text-success">{imageMessage}</p>}
           <Form onSubmit={handleSubmit}>
             <Form.Group style={{ display: "flex" }}>
               <input
@@ -184,7 +188,11 @@ function Chat() {
                 type="text"
                 placeholder="Your message"
                 value={message}
-                style={{ backgroundColor: "#DDDDDD" }}
+                style={{
+                  backgroundColor: "#DDDDDD",
+                  color: image ? "green" : "black",
+                  fontWeight: image ? "bold" : "normal",
+                }}
                 onChange={(e) => setMessage(e.target.value)}
               />
 

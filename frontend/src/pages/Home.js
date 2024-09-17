@@ -8,7 +8,6 @@ import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
-import { fetchMessagesThunk } from "../features/messageSlice";
 import { addNotification } from "../features/notificationsSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
@@ -22,8 +21,8 @@ function Home() {
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
 
-  const [currentPage, setCurrentPage] = useState(1); // สร้าง state สำหรับหน้าปัจจุบัน
-  const itemsPerPage = 10; // จำนวนรายการที่จะแสดงต่อหน้า
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +31,6 @@ function Home() {
           axios.get(`${API_BASE_URL}/getusers`),
           axios.post(`${API_BASE_URL}/getmedication`),
           axios.post(`${API_BASE_URL}/getestimation`),
-          axios.post(`${API_BASE_URL}/getmessages`),
           axios.get(`${API_BASE_URL}/getmednoti`)
         ]);
       } catch (error) {
@@ -45,13 +43,11 @@ function Home() {
     dispatch(fetchUsersThunk());
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
-    dispatch(fetchMessagesThunk());
 
     const intervalId = setInterval(() => {
       dispatch(fetchUsersThunk());
       dispatch(fetchMedicationsThunk());
       dispatch(fetchEstimationsThunk());
-      dispatch(fetchMessagesThunk());
     }, 5000);
 
     window.addEventListener('beforeunload', fetchData);
@@ -64,7 +60,7 @@ function Home() {
 
   const getLastMedicationStatus = (userId) => {
     const userMedications = medication.filter((med) => med.from === userId);
-    return userMedications.length > 0 ? userMedications[userMedications.length - 1].status : -1;
+    return userMedications.length > 0 ? userMedications[userMedications.length - 1].status : null;
   };
 
   const getMsMedicineCount = (userId) => {
@@ -75,12 +71,15 @@ function Home() {
     return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
   };
 
-  const sortedUsers = users.slice().sort((a, b) => getLastMedicationStatus(a._id) - getLastMedicationStatus(b._id));
+  const sortedUsers = users.slice().sort((a, b) => {
+    const statusA = getLastMedicationStatus(a._id);
+    const statusB = getLastMedicationStatus(b._id);
+    if (statusA === null) return 1; // นำผู้ใช้ที่ไม่มีข้อมูลไปไว้ท้าย
+    if (statusB === null) return -1;
+    return statusA - statusB;
+  });
 
-  // คำนวณจำนวนหน้าทั้งหมด
   const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
-
-  // ตัดข้อมูลของผู้ใช้ตามหน้าที่เลือก
   const paginatedUsers = sortedUsers.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -99,9 +98,26 @@ function Home() {
     if (!userData || userData._id === admin._id) return null;
 
     const lastMedicationStatus = getLastMedicationStatus(userData._id);
-    const rowClass = lastMedicationStatus === 0 ? "row-danger" : lastMedicationStatus === 1 ? "row-warning" : "row-success";
-    const buttonVariant = lastMedicationStatus === 0 ? "danger" : lastMedicationStatus === 1 ? "warning" : "success";
     const msMedicineCount = getMsMedicineCount(userData._id);
+    let rowClass = "row-default";
+    let buttonVariant = "secondary";
+    let buttonText = "ไม่พบข้อมูล";
+
+    if (lastMedicationStatus !== null) {
+      if (lastMedicationStatus === 0) {
+        rowClass = "row-danger";
+        buttonVariant = "danger";
+        buttonText = "ไม่ได้กิน";
+      } else if (lastMedicationStatus === 1) {
+        rowClass = "row-warning";
+        buttonVariant = "warning";
+        buttonText = "รอกิน";
+      } else if (lastMedicationStatus === 2) {
+        rowClass = "row-success";
+        buttonVariant = "success";
+        buttonText = "กินแล้ว";
+      }
+    }
 
     return (
       <tr key={userData._id} className={rowClass}>
@@ -111,7 +127,7 @@ function Home() {
         <td className="table-center">{msMedicineCount}</td>
         <td className="table-center">
           <Button variant={buttonVariant} disabled>
-            {lastMedicationStatus === 0 ? "ไม่ได้กิน" : lastMedicationStatus === 1 ? "ล่าช้า" : "กินแล้ว"}
+            {buttonText}
           </Button>
         </td>
         <td className="table-center">
@@ -125,11 +141,11 @@ function Home() {
   };
 
   return (
-    <Container>
+    <Container fluid>
       <Navigation />
       <Row>
         <Col>
-          <Table>
+          <Table responsive striped bordered hover >
             <thead>
               <tr>
                 <th className="table-center">ชื่อ-สกุล</th>

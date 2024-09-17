@@ -5,7 +5,7 @@ const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
-const MedNoti = require("./models/MedNoti");
+const Notification = require("./models/Notification");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
@@ -23,94 +23,52 @@ app.use(
   express.static(path.join(__dirname, "..", "frontend", "src", "json"))
 );
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
-const NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "notification.json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
 const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
-const MESSAGES_FILE_PATH = path.join(BASE_PATH, "messages.json");
 
-// Helpers
+// Notification helpers
 
-const hasDataChanged = (newData, filePath) => {
+app.get("/getnotifications", async (req, res) => {
   try {
-    const currentData = fs.existsSync(filePath)
-      ? JSON.parse(fs.readFileSync(filePath, "utf8"))
-      : null;
-    return JSON.stringify(currentData) !== JSON.stringify(newData);
+    const notifications = await Notification.find();
+    res.json(notifications);
   } catch (err) {
-    console.error(`Error comparing data: ${err.message}`);
-    return true; // Assume changed if there's an error
+    res.status(500).json({ error: "Error fetching notifications" });
   }
-};
+});
 
-const readNotifications = () => {
-  return new Promise((resolve, reject) => {
-    fs.readFile(NOTIFICATION_FILE_PATH, (err, data) => {
-      if (err && err.code !== "ENOENT") {
-        return reject(new Error("Error reading notification file"));
-      }
-
-      let notifications = [];
-      if (!err) {
-        try {
-          notifications = JSON.parse(data);
-        } catch (parseErr) {
-          return reject(new Error("Error parsing notification file"));
-        }
-      }
-
-      resolve(notifications);
-    });
-  });
-};
-
-const writeNotifications = (notifications) => {
-  return new Promise((resolve, reject) => {
-    if (hasDataChanged(notifications, NOTIFICATION_FILE_PATH)) {
-      fs.writeFile(
-        NOTIFICATION_FILE_PATH,
-        JSON.stringify(notifications, null, 2),
-        (err) => {
-          if (err) {
-            return reject(new Error("Error writing notification file"));
-          }
-          resolve();
-        }
-      );
-    } else {
-      console.log("No changes detected in notifications, skipping write.");
-      resolve();
-    }
-  });
-};
-
-const updateNotificationFile = async (userId) => {
+const updateNotification = async ( from ) => {
   try {
-    let notifications = await readNotifications();
-    let notification = notifications.find((n) => n.userId === userId);
-    if (!notification) {
-      notifications.push({ userId });
+    const userExists = await User.findById( from );
+    if (!userExists) {
+      console.log("User not found, notification not created");
+      return;
     }
-    await writeNotifications(notifications);
-    console.log("Notification file updated successfully");
+
+    const notification = await Notification.findOne({ from });
+    if (!notification) {
+      await Notification.create({ from });
+    } else {
+      console.log("Notification already exists for this user");
+    }
+    console.log("Notification updated successfully");
   } catch (error) {
-    console.error(error.message);
+    console.error("Error updating notification:", error.message);
   }
 };
 
 app.post("/removeNotification", async (req, res) => {
   const { userId } = req.body;
   try {
-    let notifications = await readNotifications();
-    notifications = notifications.filter((n) => n.userId !== userId);
-    await writeNotifications(notifications);
+    await Notification.deleteOne({ userId });
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Admin
+//Admin
 
 app.post("/admin", async (req, res) => {
   try {
@@ -143,20 +101,18 @@ app.delete("/admin/logout", async (req, res) => {
   }
 });
 
-// User
+//User
 
 app.post("/user", async (req, res) => {
   try {
-    const { name, phone, password } = req.body;
-    const user = await User.create({ name, phone, password });
+    const { name, phone, password, age } = req.body; 
+    const user = await User.create({ name, phone, password, age });
 
     const users = await User.find();
-    if (hasDataChanged(users, USERS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        USERS_FILE_PATH,
-        JSON.stringify(users, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      USERS_FILE_PATH,
+      JSON.stringify(users, null, 2)
+    );
 
     res.status(201).json(user);
   } catch (e) {
@@ -195,18 +151,34 @@ app.delete("/logout", async (req, res) => {
   }
 });
 
+// Users
+
 app.get("/getusers", async (req, res) => {
   try {
     const users = await User.find();
-    if (hasDataChanged(users, USERS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        USERS_FILE_PATH,
-        JSON.stringify(users, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      USERS_FILE_PATH,
+      JSON.stringify(users, null, 2)
+    );
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: "Error writing JSON file" });
+  }
+});
+
+app.post('/getuser', async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Error fetching user' });
   }
 });
 
@@ -217,12 +189,10 @@ app.put("/update", async (req, res) => {
     });
 
     const users = await User.find();
-    if (hasDataChanged(users, USERS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        USERS_FILE_PATH,
-        JSON.stringify(users, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      USERS_FILE_PATH,
+      JSON.stringify(users, null, 2)
+    );
     res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ error: "Error updating user" });
@@ -234,12 +204,10 @@ app.put("/update", async (req, res) => {
 app.post("/getmedication", async (req, res) => {
   try {
     const medications = await Medication.find();
-    if (hasDataChanged(medications, MEDICATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        MEDICATIONS_FILE_PATH,
-        JSON.stringify(medications, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      MEDICATIONS_FILE_PATH,
+      JSON.stringify(medications, null, 2)
+    );
     res.json(medications);
   } catch (err) {
     res.status(500).json({ error: "Error writing JSON file" });
@@ -250,12 +218,10 @@ app.post("/createmedication", async (req, res) => {
   try {
     const medication = await Medication.create(req.body);
     const medications = await Medication.find();
-    if (hasDataChanged(medications, MEDICATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        MEDICATIONS_FILE_PATH,
-        JSON.stringify(medications, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      MEDICATIONS_FILE_PATH,
+      JSON.stringify(medications, null, 2)
+    );
     res.json(medication);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -274,12 +240,10 @@ app.put("/updatemedication", async (req, res) => {
     await medication.save();
 
     const medications = await Medication.find();
-    if (hasDataChanged(medications, MEDICATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        MEDICATIONS_FILE_PATH,
-        JSON.stringify(medications, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      MEDICATIONS_FILE_PATH,
+      JSON.stringify(medications, null, 2)
+    );
 
     res.json(medication);
   } catch (err) {
@@ -292,12 +256,10 @@ app.put("/updatemedication", async (req, res) => {
 app.post("/getestimation", async (req, res) => {
   try {
     const estimations = await Estimation.find();
-    if (hasDataChanged(estimations, ESTIMATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        ESTIMATIONS_FILE_PATH,
-        JSON.stringify(estimations, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      ESTIMATIONS_FILE_PATH,
+      JSON.stringify(estimations, null, 2)
+    );
     res.json(estimations);
   } catch (err) {
     res.status(500).json({ error: "Error fetching estimations" });
@@ -322,12 +284,10 @@ app.put("/editestimation", async (req, res) => {
     );
 
     const estimations = await Estimation.find();
-    if (hasDataChanged(estimations, ESTIMATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        ESTIMATIONS_FILE_PATH,
-        JSON.stringify(estimations, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      ESTIMATIONS_FILE_PATH,
+      JSON.stringify(estimations, null, 2)
+    );
 
     res.json(editestimation);
   } catch (err) {
@@ -338,13 +298,13 @@ app.put("/editestimation", async (req, res) => {
 app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
+
     const estimations = await Estimation.find();
-    if (hasDataChanged(estimations, ESTIMATIONS_FILE_PATH)) {
-      await fs.promises.writeFile(
-        ESTIMATIONS_FILE_PATH,
-        JSON.stringify(estimations, null, 2)
-      );
-    }
+    await fs.promises.writeFile(
+      ESTIMATIONS_FILE_PATH,
+      JSON.stringify(estimations, null, 2)
+    );
+
     res.json(estimation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -352,15 +312,6 @@ app.post("/createstimation", async (req, res) => {
 });
 
 // Chat
-
-app.post("/getmessages", async (req, res) => {
-  try {
-    const messages = await Message.find();
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ error: "Error" });
-  }
-});
 
 app.post("/getmessage", async (req, res) => {
   try {
@@ -379,7 +330,8 @@ app.post("/getmessage", async (req, res) => {
 
 app.post("/createmessage", async (req, res) => {
   try {
-    const { from, to, date, time, content } = req.body;
+    const { from, to, date, time, content } = req.body; // รับ selectuser จาก request
+
     const newMessage = await Message.create({
       content: content,
       contentType: "text",
@@ -389,31 +341,9 @@ app.post("/createmessage", async (req, res) => {
       time,
     });
 
-    const user = await User.findById(req.body.from);
+    await updateNotification( from );
 
-    if (user) {
-      await updateNotificationFile(req.body.from);
-    }
-
-    const messages = await Message.find();
-    if (hasDataChanged(messages, MESSAGES_FILE_PATH)) {
-      fs.writeFile(
-        MESSAGES_FILE_PATH,
-        JSON.stringify(messages, null, 2),
-        (err) => {
-          if (err) {
-            console.error("Error writing JSON file:", err);
-            res.status(500).json({ error: "Error writing JSON file" });
-          } else {
-            console.log("JSON file updated successfully");
-            res.json(newMessage);
-          }
-        }
-      );
-    } else {
-      console.log("No changes detected in messages, skipping write.");
-      res.json(newMessage);
-    }
+    res.json(newMessage);
   } catch (err) {
     console.error("Error creating message:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -422,7 +352,7 @@ app.post("/createmessage", async (req, res) => {
 
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
-    const { from, to, date, time } = req.body;
+    const { from, to, date, time } = req.body; // รับ selectuser จาก request
     const image = req.file.buffer.toString("base64");
 
     const newMessage = await Message.create({
@@ -434,72 +364,12 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
       time,
     });
 
-    const user = await User.findById(req.body.from);
+    await updateNotification( from );
 
-    if (user) {
-      await updateNotificationFile(req.body.from);
-    }
-
-    const messages = await Message.find();
-    if (hasDataChanged(messages, MESSAGES_FILE_PATH)) {
-      fs.writeFile(
-        MESSAGES_FILE_PATH,
-        JSON.stringify(messages, null, 2),
-        (err) => {
-          if (err) {
-            console.error("Error writing JSON file:", err);
-            res.status(500).json({ error: "Error writing JSON file" });
-          } else {
-            console.log("JSON file updated successfully");
-            res.json(newMessage);
-          }
-        }
-      );
-    } else {
-      console.log("No changes detected in messages, skipping write.");
-      res.json(newMessage);
-    }
+    res.json(newMessage);
   } catch (error) {
     console.error("Error processing chat photo:", error);
     res.status(500).json({ error: "Internal Server Error" });
-  }
-});
-
-// MedNoti
-
-app.post("/mednoti", async (req, res) => {
-  try {
-    const { morningTime, eveningTime } = req.body;
-    const newMedNoti = await MedNoti.create({ morningTime, eveningTime });
-    res.status(201).json(newMedNoti);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-app.get("/getmednoti", async (req, res) => {
-  try {
-    const medNoti = await MedNoti.findOne();
-    res.json(medNoti);
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching MedNoti settings" });
-  }
-});
-
-app.put("/updatemednoti", async (req, res) => {
-  try {
-    const { morningTime, eveningTime } = req.body;
-    let medNoti = await MedNoti.findOne();
-    if (!medNoti) {
-      medNoti = await MedNoti.create({ morningTime, eveningTime });
-    } else {
-      medNoti.morningTime = morningTime;
-      medNoti.eveningTime = eveningTime;
-      await medNoti.save();
-    }
-    res.json(medNoti);
-  } catch (err) {
-    res.status(500).json({ error: "Error updating MedNoti settings" });
   }
 });
 

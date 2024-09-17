@@ -37,9 +37,13 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    laststatus : {
-      type: Number,
-      default: 0,
+    morningTime : {
+      type: String,
+      default: "08:00",
+    },
+    eveningTime : {
+      type: String,
+      default: "20:00",
     },
     taking_capecitabine : {
       type: String,

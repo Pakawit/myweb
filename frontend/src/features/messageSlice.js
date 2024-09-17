@@ -4,16 +4,18 @@ import axios from "axios";
 // สถานะเริ่มต้นเป็น array เปล่า
 const initialState = [];
 
-// Thunk สำหรับดึงข้อมูลข้อความจาก JSON ไฟล์
+// Thunk สำหรับดึงข้อมูลข้อความระหว่างสองคนจาก API
 export const fetchMessagesThunk = createAsyncThunk(
   "message/fetchMessages",
-  async (_, { rejectWithValue }) => {
+  async ({ from, to }, { rejectWithValue }) => {
     try {
-      // ดึงข้อมูลจากไฟล์ messages.json
-      const response = await axios.get("http://localhost:4452/json/messages.json");
+      const response = await axios.post("http://localhost:4452/getmessage", {
+        from,
+        to,
+      });
       return response.data; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue("Failed to fetch messages");
     }
   }
 );

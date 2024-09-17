@@ -61,6 +61,12 @@ function Personal() {
           error = "ต้องไม่เกิน 50 ตัว";
         }
         break;
+      case "morningTime":
+      case "eveningTime":
+        if (!value) {
+          error = "กรุณาระบุเวลา";
+        }
+        break;
       default:
         break;
     }
@@ -102,37 +108,163 @@ function Personal() {
   };
 
   return (
-    <Container>
-      <Navigation />
+    <Container fluid>
+        <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
       <Form onSubmit={(e) => e.preventDefault()}>
-        {[
-          { label: "ชื่อ-สกุล", name: "name" },
-          { label: "เบอร์โทรศัพท์", name: "phone" },
-          { label: "เบอร์โทรศัพท์ผู้ติดต่อ", name: "other_numbers" },
-          { label: "อายุ", name: "age", type: "number" },
-          { label: "การวินิจฉัยโรคหลัก", name: "diagnosis", as: "textarea" },
-          { label: "การรับประทานยา Capecitabine", name: "taking_capecitabine", as: "textarea" },
-          { label: "ยาที่ใช้ร่วม", name: "other_medicine", as: "textarea" },
-          { label: "เลขโรงพยาบาล", name: "hospital_number" }
-        ].map((field, index) => (
-          <Form.Group as={Row} className="mb-3" key={index}>
-            <Form.Label column sm="6" style={{ textAlign: "center" }}>
-              {field.label}
-            </Form.Label>
-            <Col sm="6">
-              <Form.Control
-                type={field.type || "text"}
-                as={field.as}
-                name={field.name}
-                value={member[field.name] || ""}
-                onChange={handleChange}
-                disabled={!editMode}
-              />
-              {errors[field.name] && <Alert variant="danger">{errors[field.name]}</Alert>}
-            </Col>
-          </Form.Group>
-        ))}
+        {/* ฟิลด์เดิม ๆ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            ชื่อ-สกุล
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="name"
+              value={member.name || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.name && <Alert variant="danger">{errors.name}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เบอร์โทรศัพท์
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="phone"
+              value={member.phone || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.phone && <Alert variant="danger">{errors.phone}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เบอร์โทรศัพท์ผู้ติดต่อ
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="other_numbers"
+              value={member.other_numbers || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.other_numbers && <Alert variant="danger">{errors.other_numbers}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            อายุ
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="number"
+              name="age"
+              value={member.age || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.age && <Alert variant="danger">{errors.age}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            การวินิจฉัยโรคหลัก
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              as="textarea"
+              name="diagnosis"
+              value={member.diagnosis || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.diagnosis && <Alert variant="danger">{errors.diagnosis}</Alert>}
+          </Col>
+        </Form.Group>
+        {/* เพิ่มฟิลด์เวลารับประทานยาเช้าและเย็นที่นี่ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            การรับประทานยา Capecitabine
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              as="textarea"
+              name="taking_capecitabine"
+              value={member.taking_capecitabine || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.taking_capecitabine && <Alert variant="danger">{errors.taking_capecitabine}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เวลารับประทานยาช่วงเช้า
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="time"
+              name="morningTime"
+              value={member.morningTime || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.morningTime && <Alert variant="danger">{errors.morningTime}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เวลารับประทานยาช่วงเย็น
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="time"
+              name="eveningTime"
+              value={member.eveningTime || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.eveningTime && <Alert variant="danger">{errors.eveningTime}</Alert>}
+          </Col>
+        </Form.Group>
+        {/* ฟิลด์เดิม ๆ ต่อจากตรงนี้ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            ยาที่ใช้ร่วม
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              as="textarea"
+              name="other_medicine"
+              value={member.other_medicine || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.other_medicine && <Alert variant="danger">{errors.other_medicine}</Alert>}
+          </Col>
+        </Form.Group>
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" style={{ textAlign: "center" }}>
+            เลขโรงพยาบาล
+          </Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="hospital_number"
+              value={member.hospital_number || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.hospital_number && <Alert variant="danger">{errors.hospital_number}</Alert>}
+          </Col>
+        </Form.Group>
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             ขาดยา

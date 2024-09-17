@@ -1,18 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 
 // สถานะเริ่มต้นเป็น array เปล่า
 const initialState = [];
 
-// Thunk สำหรับดึงข้อมูลการประเมิน (estimation) จาก JSON ไฟล์
+// Thunk สำหรับดึงข้อมูลการประเมิน (estimation) จาก JSON ไฟล์โดยใช้ Dynamic Import
 export const fetchEstimationsThunk = createAsyncThunk(
   "estimation/fetchEstimations",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:4452/json/estimations.json");
-      return response.data; // คืนค่าข้อมูลที่ดึงมา
+      // ใช้ Dynamic Import ในการนำเข้าข้อมูลจาก estimations.json
+      const estimationsData = await import('../json/estimations.json');
+      return estimationsData.default; // คืนค่าข้อมูลที่ดึงมา
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue("Failed to fetch estimations");
     }
   }
 );

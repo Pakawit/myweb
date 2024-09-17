@@ -43,7 +43,7 @@ function Medication() {
       case 1:
         return (
           <Button variant="warning" disabled>
-            ล่าช้า
+            รอกิน
           </Button>
         );
       case 2:
@@ -84,14 +84,14 @@ function Medication() {
   };
 
   return (
-    <Container>
-      <Navigation />
+    <Container fluid>
+        <Navigation />
       <Row>
         <h1>รายละเอียดการกินยา</h1>
       </Row>
       <Row>
         <Col>
-          <Table>
+          <Table responsive striped bordered hover>
             <thead>
               <tr>
                 <th className="table-center" style={{ width: "33%" }}>
