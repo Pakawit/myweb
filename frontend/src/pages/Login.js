@@ -18,13 +18,17 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/admin/login`, { name, password });
+      const res = await axios.post(`${API_BASE_URL}/admin/login`, {
+        name,
+        password,
+      });
       if (res.data) {
         dispatch(setAdmin(res.data));
         navigate("/");
       }
     } catch (error) {
-      const errorMessage = error.response?.data?.error || "An error occurred. Please try again.";
+      const errorMessage =
+        error.response?.data?.error || "An error occurred. Please try again.";
       setError(errorMessage);
     }
   };
@@ -34,7 +38,7 @@ function Login() {
       <Row className="justify-content-center align-items-center min-vh-100">
         <Col xs={12} md={6} lg={4}>
           <Form onSubmit={handleLogin}>
-            <h2 className="mb-4 text-center">Login</h2>
+            <h1 className="mb-4 text-center fw-bold">Login</h1>
             {error && <p className="alert alert-danger">{error}</p>}
             <Form.Group className="mb-3" controlId="formBasicEmail">
               <Form.Label>User Name</Form.Label>
@@ -56,7 +60,7 @@ function Login() {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="w-100">
+            <Button variant="success" type="submit" className="w-100">
               Login
             </Button>
           </Form>

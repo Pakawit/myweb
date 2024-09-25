@@ -23,20 +23,18 @@ function Chat() {
   useEffect(() => {
     if (selectuser) {
       dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
-      dispatch(removeNotificationThunk(selectuser._id));
 
       const intervalId = setInterval(() => {
         dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
       }, 3000);
 
-      return () => {
-        clearInterval(intervalId);
-      };
+      return () => clearInterval(intervalId);
     }
   }, [dispatch, selectuser, admin._id]);
 
   useEffect(() => {
     if (selectuser && notifications.length > 0) {
+      // ตรวจสอบว่า `selectuser._id` มีการแจ้งเตือนอยู่จริงหรือไม่
       const notificationToRemove = notifications.find(
         (notification) => notification.from === selectuser._id
       );
@@ -52,7 +50,7 @@ function Chat() {
       alert("Max file size is 3MB");
     } else {
       setImage(file);
-      setMessage("เลือกรูปภาพแล้ว"); // แสดงการแจ้งเตือนในช่องข้อความ
+      setMessage("Image selected"); // Display a message in the input field
     }
   };
 
@@ -64,7 +62,7 @@ function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const getCurrentTime = async () => {
+  const getCurrentTime = () => {
     const date = new Date();
     return {
       todayDate: date.toLocaleDateString("en-GB"),
@@ -75,11 +73,9 @@ function Chat() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!message && !image) {
-      return;
-    }
+    if (!message && !image) return;
 
-    const { todayDate, time } = await getCurrentTime();
+    const { todayDate, time } = getCurrentTime();
 
     try {
       if (image) {
@@ -98,7 +94,7 @@ function Chat() {
 
         dispatch(addMessage(res.data));
         setImage(null);
-        setMessage(""); // เคลียร์ช่องข้อความหลังส่งภาพ
+        setMessage(""); // Clear message input after sending the image
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
@@ -137,7 +133,6 @@ function Chat() {
       <Navigation />
       <Row>
         <Col>
-          <div className="chat-header">{selectuser.name}</div>
           <div className="messages-output">
             {filteredMessages.map((message, index) => (
               <div
@@ -194,6 +189,7 @@ function Chat() {
                   fontWeight: image ? "bold" : "normal",
                 }}
                 onChange={(e) => setMessage(e.target.value)}
+                disabled={!!image} // Disable input while image is selected
               />
 
               <Button
@@ -203,6 +199,7 @@ function Chat() {
                   backgroundColor: "#DDDDD",
                   borderColor: "#DDDDD",
                 }}
+                disabled={!message && !image} // Disable submit button if no message or image
               >
                 <i className="bi bi-send-fill"></i>
               </Button>

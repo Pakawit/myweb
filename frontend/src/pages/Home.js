@@ -31,7 +31,6 @@ function Home() {
           axios.get(`${API_BASE_URL}/getusers`),
           axios.post(`${API_BASE_URL}/getmedication`),
           axios.post(`${API_BASE_URL}/getestimation`),
-          axios.get(`${API_BASE_URL}/getmednoti`)
         ]);
       } catch (error) {
         console.error("Failed to fetch data:", error);

@@ -26,7 +26,7 @@ function Personal() {
     const msMedicineCount = medication.filter((med) => med.from === selectuser._id && med.status === 0).length;
     setMember((prevMember) => ({
       ...prevMember,
-      ms_medicine: msMedicineCount,
+      ms_medicine: msMedicineCount > 0 ? msMedicineCount : 0,
     }));
   }, [medication, selectuser._id]);
 
@@ -112,7 +112,6 @@ function Personal() {
         <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
       <Form onSubmit={(e) => e.preventDefault()}>
-        {/* ฟิลด์เดิม ๆ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             ชื่อ-สกุล
@@ -188,7 +187,6 @@ function Personal() {
             {errors.diagnosis && <Alert variant="danger">{errors.diagnosis}</Alert>}
           </Col>
         </Form.Group>
-        {/* เพิ่มฟิลด์เวลารับประทานยาเช้าและเย็นที่นี่ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             การรับประทานยา Capecitabine
@@ -234,7 +232,6 @@ function Personal() {
             {errors.eveningTime && <Alert variant="danger">{errors.eveningTime}</Alert>}
           </Col>
         </Form.Group>
-        {/* ฟิลด์เดิม ๆ ต่อจากตรงนี้ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             ยาที่ใช้ร่วม
@@ -273,7 +270,7 @@ function Personal() {
             <Form.Control
               type="text"
               name="ms_medicine"
-              value={member.ms_medicine || ""}
+              value={member.ms_medicine > 0 ? member.ms_medicine : 0} // Show 0 if no missed medications
               disabled
             />
           </Col>
