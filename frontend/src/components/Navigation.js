@@ -16,22 +16,26 @@ import { deleteMessage } from "../features/messageSlice";
 import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchNotificationsThunk, removeNotificationThunk } from "../features/notificationsSlice";
+import {
+  fetchNotificationsThunk,
+  removeNotificationThunk,
+} from "../features/notificationsSlice";
 
 function Navigation() {
   const location = useLocation();
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
+  const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   useEffect(() => {
-    dispatch(fetchNotificationsThunk()); // ดึงข้อมูล Notification เมื่อ Component ถูก mount
+    dispatch(fetchNotificationsThunk());
     const intervalId = setInterval(() => {
-      dispatch(fetchNotificationsThunk()); // ดึงข้อมูล Notification ทุก 3 วินาที
+      dispatch(fetchNotificationsThunk());
     }, 3000);
 
-    return () => clearInterval(intervalId); // ลบ interval เมื่อ component ถูก unmount
+    return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const back = () => {
@@ -81,6 +85,16 @@ function Navigation() {
         >
           <i className="bi bi-chevron-left"></i>
         </Button>
+
+        {location.pathname === "/chat" && selectuser && selectuser.name && (
+          <Navbar.Brand
+            className="mx-auto fw-bold"
+            style={{ fontSize: "1.5rem" }}
+          >
+            {selectuser.name}
+          </Navbar.Brand>
+        )}
+
         <Nav className="ms-autoNav">
           <Dropdown style={{ marginLeft: "auto" }}>
             <Dropdown.Toggle

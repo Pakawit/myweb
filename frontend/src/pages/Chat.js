@@ -15,6 +15,7 @@ function Chat() {
   const [message, setMessage] = useState("");
   const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
+  const fileInputRef = useRef(null); 
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -34,7 +35,6 @@ function Chat() {
 
   useEffect(() => {
     if (selectuser && notifications.length > 0) {
-      // ตรวจสอบว่า `selectuser._id` มีการแจ้งเตือนอยู่จริงหรือไม่
       const notificationToRemove = notifications.find(
         (notification) => notification.from === selectuser._id
       );
@@ -48,9 +48,10 @@ function Chat() {
     const file = e.target.files[0];
     if (file.size >= 3048576) {
       alert("Max file size is 3MB");
+      fileInputRef.current.value = ""; 
     } else {
       setImage(file);
-      setMessage("Image selected"); // Display a message in the input field
+      setMessage("Image selected"); 
     }
   };
 
@@ -93,8 +94,10 @@ function Chat() {
         });
 
         dispatch(addMessage(res.data));
-        setImage(null);
-        setMessage(""); // Clear message input after sending the image
+        setImage(null); 
+        setMessage(""); 
+        fileInputRef.current.value = ""; 
+        scrollToBottom(); 
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
@@ -105,6 +108,7 @@ function Chat() {
         });
 
         dispatch(addMessage(res.data));
+        scrollToBottom(); 
       }
       setMessage("");
     } catch (error) {
@@ -172,6 +176,7 @@ function Chat() {
                 hidden
                 accept="image/png, image/jpeg"
                 onChange={validateImg}
+                ref={fileInputRef} 
               />
               <label htmlFor="image-upload">
                 <div className="img">
@@ -189,7 +194,7 @@ function Chat() {
                   fontWeight: image ? "bold" : "normal",
                 }}
                 onChange={(e) => setMessage(e.target.value)}
-                disabled={!!image} // Disable input while image is selected
+                disabled={!!image} 
               />
 
               <Button
@@ -199,7 +204,7 @@ function Chat() {
                   backgroundColor: "#DDDDD",
                   borderColor: "#DDDDD",
                 }}
-                disabled={!message && !image} // Disable submit button if no message or image
+                disabled={!message && !image} 
               >
                 <i className="bi bi-send-fill"></i>
               </Button>
