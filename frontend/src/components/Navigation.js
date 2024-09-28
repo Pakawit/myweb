@@ -86,11 +86,8 @@ function Navigation() {
           <i className="bi bi-chevron-left"></i>
         </Button>
 
-        {location.pathname === "/chat" && selectuser && selectuser.name && (
-          <Navbar.Brand
-            className="mx-auto fw-bold"
-            style={{ fontSize: "1.5rem" }}
-          >
+        {selectuser && selectuser.name && (
+          <Navbar.Brand className="mx-auto fw-bold custom-brand">
             {selectuser.name}
           </Navbar.Brand>
         )}
