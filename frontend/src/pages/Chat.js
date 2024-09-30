@@ -9,37 +9,40 @@ import { removeNotificationThunk } from "../features/notificationsSlice";
 
 function Chat() {
   const messages = useSelector((state) => state.message) || [];
-  const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser);
   const notifications = useSelector((state) => state.notifications) || [];
   const [message, setMessage] = useState("");
   const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
-  const fileInputRef = useRef(null); 
+  const fileInputRef = useRef(null);
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const dispatch = useDispatch();
+  const previousSelectUser = useRef(null);
 
   useEffect(() => {
     if (selectuser) {
-      dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
+      dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
 
       const intervalId = setInterval(() => {
-        dispatch(fetchMessagesThunk({ from: admin._id, to: selectuser._id }));
+        dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
       }, 3000);
 
       return () => clearInterval(intervalId);
     }
-  }, [dispatch, selectuser, admin._id]);
+  }, [dispatch, selectuser]);
 
   useEffect(() => {
     if (selectuser && notifications.length > 0) {
-      const notificationToRemove = notifications.find(
-        (notification) => notification.from === selectuser._id
-      );
-      if (notificationToRemove) {
-        dispatch(removeNotificationThunk(selectuser._id));
+      if (previousSelectUser.current !== selectuser) {
+        const notificationToRemove = notifications.find(
+          (notification) => notification.from === selectuser._id
+        );
+        if (notificationToRemove) {
+          dispatch(removeNotificationThunk(selectuser._id));
+        }
+        previousSelectUser.current = selectuser;
       }
     }
   }, [selectuser, notifications, dispatch]);
@@ -48,10 +51,10 @@ function Chat() {
     const file = e.target.files[0];
     if (file.size >= 3048576) {
       alert("Max file size is 3MB");
-      fileInputRef.current.value = ""; 
+      fileInputRef.current.value = "";
     } else {
       setImage(file);
-      setMessage("Image selected"); 
+      setMessage("Image selected");
     }
   };
 
@@ -82,7 +85,7 @@ function Chat() {
       if (image) {
         const formData = new FormData();
         formData.append("photo", image);
-        formData.append("from", admin._id);
+        formData.append("from", "admin");
         formData.append("to", selectuser._id);
         formData.append("date", todayDate);
         formData.append("time", time);
@@ -94,21 +97,21 @@ function Chat() {
         });
 
         dispatch(addMessage(res.data));
-        setImage(null); 
-        setMessage(""); 
-        fileInputRef.current.value = ""; 
-        scrollToBottom(); 
+        setImage(null);
+        setMessage("");
+        fileInputRef.current.value = "";
+        scrollToBottom();
       } else {
         const res = await axios.post(`${API_BASE_URL}/createmessage`, {
           content: message,
           time,
           date: todayDate,
-          from: admin._id,
+          from: "admin",
           to: selectuser._id,
         });
 
         dispatch(addMessage(res.data));
-        scrollToBottom(); 
+        scrollToBottom();
       }
       setMessage("");
     } catch (error) {
@@ -118,8 +121,8 @@ function Chat() {
 
   const filteredMessages = messages.filter(
     (msg) =>
-      (msg.from === admin._id && msg.to === selectuser._id) ||
-      (msg.from === selectuser._id && msg.to === admin._id)
+      (msg.from === "admin" && msg.to === selectuser._id) ||
+      (msg.from === selectuser._id && msg.to === "admin")
   );
 
   const handleShowModal = (image) => {
@@ -142,7 +145,7 @@ function Chat() {
               <div
                 key={index}
                 className={
-                  message.from === admin._id
+                  message.from === "admin"
                     ? "incoming-message"
                     : "outgoing-message"
                 }
@@ -176,7 +179,7 @@ function Chat() {
                 hidden
                 accept="image/png, image/jpeg"
                 onChange={validateImg}
-                ref={fileInputRef} 
+                ref={fileInputRef}
               />
               <label htmlFor="image-upload">
                 <div className="img">
@@ -194,7 +197,7 @@ function Chat() {
                   fontWeight: image ? "bold" : "normal",
                 }}
                 onChange={(e) => setMessage(e.target.value)}
-                disabled={!!image} 
+                disabled={!!image}
               />
 
               <Button
@@ -204,7 +207,7 @@ function Chat() {
                   backgroundColor: "#DDDDD",
                   borderColor: "#DDDDD",
                 }}
-                disabled={!message && !image} 
+                disabled={!message && !image}
               >
                 <i className="bi bi-send-fill"></i>
               </Button>

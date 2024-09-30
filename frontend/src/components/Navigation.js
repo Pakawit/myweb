@@ -16,10 +16,7 @@ import { deleteMessage } from "../features/messageSlice";
 import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import {
-  fetchNotificationsThunk,
-  removeNotificationThunk,
-} from "../features/notificationsSlice";
+import { fetchNotificationsThunk } from "../features/notificationsSlice";
 
 function Navigation() {
   const location = useLocation();
@@ -64,7 +61,6 @@ function Navigation() {
       if (user) {
         try {
           dispatch(setselectuser(user));
-          dispatch(removeNotificationThunk(notification.from));
           navigate("/chat");
         } catch (error) {
           console.error("Error handling notification click:", error);
