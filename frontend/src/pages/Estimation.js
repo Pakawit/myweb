@@ -7,6 +7,7 @@ import axios from "axios";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
 
 function Estimation() {
+  const admin = useSelector((state) => state.admin);
   const { API_BASE_URL } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation) || [];
   const selectuser = useSelector((state) => state.selectuser);
@@ -14,6 +15,7 @@ function Estimation() {
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
   const [hfsLevels, setHfsLevels] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
@@ -34,12 +36,22 @@ function Estimation() {
   const handleSubmit = async (_id) => {
     const hfsLevel = hfsLevels[_id];
     if (hfsLevel !== undefined && hfsLevel !== 0) {
-      await axios.put(`${API_BASE_URL}/editestimation`, {
-        _id,
-        hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
-      });
-      dispatch(fetchEstimationsThunk());
-      setShowNotificationModal(true);
+      try {
+        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
+          userId: selectuser._id,
+          adminName: admin.name,
+          hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
+        });
+
+        // ตรวจสอบ response ที่ได้จาก API
+        setNotificationMessage(response.data.message);
+        setShowNotificationModal(true);
+        
+        // ทำการอัพเดตสถานะการประเมิน
+        dispatch(fetchEstimationsThunk());
+      } catch (error) {
+        console.error("Error submitting evaluation:", error);
+      }
     }
   };
 
@@ -82,8 +94,8 @@ function Estimation() {
   };
 
   const renderPhotos = (photos) => {
-    const leftPhotos = [photos[0], photos[1], photos[4], photos[5]]; // รูปฝั่งซ้าย
-    const rightPhotos = [photos[2], photos[3], photos[6], photos[7]]; // รูปฝั่งขวา
+    const leftPhotos = [photos[0], photos[1], photos[4], photos[5]]; 
+    const rightPhotos = [photos[2], photos[3], photos[6], photos[7]]; 
 
     const createGrid = (photosArray) => {
       return (
@@ -118,7 +130,7 @@ function Estimation() {
 
   return (
     <Container fluid > 
-        <Navigation />
+      <Navigation />
       <Row>
         <h1>การประเมินอาการ HFS</h1>
         <Col>
@@ -142,7 +154,9 @@ function Estimation() {
                     <td className="table-center">{renderPhotos(est.photos)}</td>
                     <td className="table-center">{est.painLevel}</td>
                     <td className="table-center">
-                      {est.hfsLevel === 0 ? (
+                      {est.hfsLevel !== 0 ? (
+                        <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
+                      ) : (
                         <Dropdown>
                           <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
                             ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : ""}
@@ -155,17 +169,15 @@ function Estimation() {
                             ))}
                           </Dropdown.Menu>
                         </Dropdown>
-                      ) : (
-                        <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
                       )}
                     </td>
                     <td>
                       <Button
-                        variant={est.hfsLevel === 0 ? "outline-success" : "outline-secondary"}
+                        variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
                         onClick={() => handleSubmit(est._id)}
                         disabled={est.hfsLevel !== 0}
                       >
-                        {est.hfsLevel === 0 ? "แจ้งผู้ป่วย" : "แจ้งแล้ว"}
+                        {est.hfsLevel !== 0 ? "แจ้งแล้ว" : "แจ้งผู้ป่วย"}
                       </Button>
                     </td>
                   </tr>
@@ -202,9 +214,9 @@ function Estimation() {
       </Modal>
       <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>แจ้งเตือน</Modal.Title>
+          <Modal.Title>ผลการประเมิน</Modal.Title>
         </Modal.Header>
-        <Modal.Body>แจ้งเตือนเรียบร้อย</Modal.Body>
+        <Modal.Body>{notificationMessage}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseNotificationModal}>ปิด</Button>
         </Modal.Footer>

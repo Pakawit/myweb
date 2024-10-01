@@ -17,18 +17,33 @@ app.use(express.json());
 app.use(cors());
 
 // File paths
-
-app.use(
-  "/json",
-  express.static(path.join(__dirname, "..", "frontend", "src", "json"))
-);
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
 const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
+const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, 'estimationHFS.json');
+
+// ฟังก์ชันอ่านไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
+const readJSONFile = async (filePath) => {
+  try {
+    const data = await fs.promises.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    // ถ้าไฟล์ยังไม่มีให้คืนค่าว่าง
+    return {};
+  }
+};
+
+// ฟังก์ชันเขียนไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
+const writeJSONFile = async (filePath, data) => {
+  try {
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Error writing to JSON file:', err);
+  }
+};
 
 // Notification helpers
-
 app.get("/getnotifications", async (req, res) => {
   try {
     const notifications = await Notification.find();
@@ -38,9 +53,9 @@ app.get("/getnotifications", async (req, res) => {
   }
 });
 
-const updateNotification = async ( from ) => {
+const updateNotification = async (from) => {
   try {
-    const userExists = await User.findById( from );
+    const userExists = await User.findById(from);
     if (!userExists) {
       console.log("User not found, notification not created");
       return;
@@ -68,8 +83,7 @@ app.post("/removeNotification", async (req, res) => {
   }
 });
 
-//Admin
-
+// Admin
 app.post("/admin", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -101,18 +115,14 @@ app.delete("/admin/logout", async (req, res) => {
   }
 });
 
-//User
-
+// User
 app.post("/user", async (req, res) => {
   try {
-    const { name, phone, password, age } = req.body; 
+    const { name, phone, password, age } = req.body;
     const user = await User.create({ name, phone, password, age });
 
     const users = await User.find();
-    await fs.promises.writeFile(
-      USERS_FILE_PATH,
-      JSON.stringify(users, null, 2)
-    );
+    await writeJSONFile(USERS_FILE_PATH, users);
 
     res.status(201).json(user);
   } catch (e) {
@@ -152,14 +162,10 @@ app.delete("/logout", async (req, res) => {
 });
 
 // Users
-
 app.get("/getusers", async (req, res) => {
   try {
     const users = await User.find();
-    await fs.promises.writeFile(
-      USERS_FILE_PATH,
-      JSON.stringify(users, null, 2)
-    );
+    await writeJSONFile(USERS_FILE_PATH, users);
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: "Error writing JSON file" });
@@ -189,10 +195,7 @@ app.put("/update", async (req, res) => {
     });
 
     const users = await User.find();
-    await fs.promises.writeFile(
-      USERS_FILE_PATH,
-      JSON.stringify(users, null, 2)
-    );
+    await writeJSONFile(USERS_FILE_PATH, users);
     res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ error: "Error updating user" });
@@ -200,14 +203,10 @@ app.put("/update", async (req, res) => {
 });
 
 // Medication
-
 app.post("/getmedication", async (req, res) => {
   try {
     const medications = await Medication.find();
-    await fs.promises.writeFile(
-      MEDICATIONS_FILE_PATH,
-      JSON.stringify(medications, null, 2)
-    );
+    await writeJSONFile(MEDICATIONS_FILE_PATH, medications);
     res.json(medications);
   } catch (err) {
     res.status(500).json({ error: "Error writing JSON file" });
@@ -218,10 +217,7 @@ app.post("/createmedication", async (req, res) => {
   try {
     const medication = await Medication.create(req.body);
     const medications = await Medication.find();
-    await fs.promises.writeFile(
-      MEDICATIONS_FILE_PATH,
-      JSON.stringify(medications, null, 2)
-    );
+    await writeJSONFile(MEDICATIONS_FILE_PATH, medications);
     res.json(medication);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -240,10 +236,7 @@ app.put("/updatemedication", async (req, res) => {
     await medication.save();
 
     const medications = await Medication.find();
-    await fs.promises.writeFile(
-      MEDICATIONS_FILE_PATH,
-      JSON.stringify(medications, null, 2)
-    );
+    await writeJSONFile(MEDICATIONS_FILE_PATH, medications);
 
     res.json(medication);
   } catch (err) {
@@ -252,14 +245,10 @@ app.put("/updatemedication", async (req, res) => {
 });
 
 // Estimation
-
 app.post("/getestimation", async (req, res) => {
   try {
     const estimations = await Estimation.find();
-    await fs.promises.writeFile(
-      ESTIMATIONS_FILE_PATH,
-      JSON.stringify(estimations, null, 2)
-    );
+    await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
     res.json(estimations);
   } catch (err) {
     res.status(500).json({ error: "Error fetching estimations" });
@@ -275,44 +264,64 @@ app.post("/getHFSDetails", async (req, res) => {
   }
 });
 
-app.put("/editestimation", async (req, res) => {
+app.put("/evaluateHFS", async (req, res) => {
+  const { userId, adminName, hfsLevel } = req.body;
+
   try {
-    const editestimation = await Estimation.findByIdAndUpdate(
-      req.body._id,
-      req.body,
-      { new: true }
-    );
+    // อ่านข้อมูลจาก estimationHFS.json
+    let estimationsHFS = await readJSONFile(ESTIMATIONHFS_FILE_PATH);
 
-    const estimations = await Estimation.find();
-    await fs.promises.writeFile(
-      ESTIMATIONS_FILE_PATH,
-      JSON.stringify(estimations, null, 2)
-    );
+    // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
+    let estimation = estimationsHFS[userId];
+    if (!estimation) {
+      estimation = { userId, evaluations: {} };
+      estimationsHFS[userId] = estimation;
+    }
 
-    res.json(editestimation);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    // อัปเดตผลการประเมินของแอดมิน
+    estimation.evaluations[adminName] = { hfsLevel };
 
-app.post("/createstimation", async (req, res) => {
-  try {
-    const estimation = await Estimation.create(req.body);
+    const { admin1, admin2 } = estimation.evaluations;
 
-    const estimations = await Estimation.find();
-    await fs.promises.writeFile(
-      ESTIMATIONS_FILE_PATH,
-      JSON.stringify(estimations, null, 2)
-    );
+    // ตรวจสอบว่าทั้ง admin1 และ admin2 ประเมินแล้วหรือยัง
+    if (admin1?.hfsLevel !== undefined && admin2?.hfsLevel !== undefined) {
+      if (admin1.hfsLevel === admin2.hfsLevel) {
+        // ถ้าผลการประเมินตรงกัน ให้แก้ไข hfsLevel ในฐานข้อมูล MongoDB
+        const updatedEstimation = await Estimation.findOneAndUpdate(
+          { from: userId }, // ค้นหาจาก userId หรือ _id
+          { hfsLevel: admin1.hfsLevel }, // อัปเดตค่า hfsLevel ให้เป็นค่าที่ทั้งคู่เห็นตรงกัน
+          { new: true } // ส่งคืนเอกสารที่ถูกอัปเดตแล้ว
+        );
 
-    res.json(estimation);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+        // ส่งข้อมูลอัปเดตกลับไปยัง client
+        res.json({ message: `Both admins agreed on HFS level ${admin1.hfsLevel}. Estimation updated.`, updatedEstimation });
+
+        // ลบข้อมูลการประเมินชั่วคราวในไฟล์ JSON เพื่อให้พร้อมสำหรับการประเมินใหม่
+        delete estimationsHFS[userId];
+        const estimations = await Estimation.find();
+        await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
+      } else {
+        // ถ้าผลการประเมินไม่ตรงกัน ให้รีเซ็ตการประเมินของทั้งคู่ในไฟล์ JSON
+        delete estimation.evaluations.admin1.hfsLevel;
+        delete estimation.evaluations.admin2.hfsLevel;
+        res.json({ message: "Admins did not agree, please evaluate again." });
+      }
+    } else {
+      // ถ้าผลการประเมินยังไม่ครบทั้งสองคน
+      res.json({
+        message: `Waiting for ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} to evaluate.`,
+      });
+    }
+
+    // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
+    await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Chat
-
 app.post("/getmessage", async (req, res) => {
   try {
     const { from, to } = req.body;
@@ -341,7 +350,7 @@ app.post("/createmessage", async (req, res) => {
       time,
     });
 
-    await updateNotification( from );
+    await updateNotification(from);
 
     res.json(newMessage);
   } catch (err) {
@@ -364,7 +373,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
       time,
     });
 
-    await updateNotification( from );
+    await updateNotification(from);
 
     res.json(newMessage);
   } catch (error) {
