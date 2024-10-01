@@ -22,6 +22,7 @@ const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
 const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
 const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, 'estimationHFS.json');
+const PERSONAL_FILE_PATH = path.join(BASE_PATH, 'personal.json');
 
 // ฟังก์ชันอ่านไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
 const readJSONFile = async (filePath) => {
@@ -112,6 +113,72 @@ app.delete("/admin/logout", async (req, res) => {
     res.status(200).send();
   } catch (e) {
     res.status(400).send({ error: e.message });
+  }
+});
+
+// Personal 
+
+app.get("/getPendingChanges", async (req, res) => {
+  try {
+    const pendingChanges = await readJSONFile(PERSONAL_FILE_PATH);
+    res.status(200).json(Object.values(pendingChanges)); // ส่งคืนข้อมูลเป็น array
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching pending changes" });
+  }
+});
+
+app.post("/saveChangesToJson", async (req, res) => {
+  const { _id, changes } = req.body; // รับข้อมูล _id และ changes จาก request
+  try {
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    personalData[_id] = changes; // ใช้ _id แทน userId
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    res.json({ message: "Changes saved to personal.json", changes });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving changes to personal.json" });
+  }
+});
+
+app.post("/confirmChanges", async (req, res) => {
+  const { _id } = req.body; // รับ _id แทน userId
+  try {
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    const pendingChange = personalData[_id];
+    console.log(pendingChange)
+    if (!pendingChange) {
+      return res.status(404).json({ message: "No pending changes found" });
+    }
+
+    // อัปเดตข้อมูลในฐานข้อมูล MongoDB
+    await User.findByIdAndUpdate(_id, pendingChange, { new: true });
+
+    // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
+    personalData[_id] = pendingChange; // ยืนยันการเปลี่ยนแปลง
+
+    // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
+    delete personalData[_id]; 
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    const users = await User.find();
+    await writeJSONFile(USERS_FILE_PATH, users);
+    res.json({ message: "Changes confirmed and saved to database and personal.json", pendingChange });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/rejectChanges", async (req, res) => {
+  const { _id } = req.body; // ใช้ _id แทน userId
+  try {
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    const pendingChange = personalData[_id];
+    if (!pendingChange) {
+      return res.status(404).json({ message: "No pending changes found" });
+    }
+    delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    res.json({ message: "Changes rejected and removed from pending list" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
