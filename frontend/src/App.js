@@ -8,6 +8,7 @@ import Chat from "./pages/Chat";
 import Personal from "./pages/Personal";
 import Medication from "./pages/Medication";
 import Estimation from "./pages/Estimation";
+import Handbook from "./pages/Handbook";
 
 function App() {
   const admin = useSelector((state) => state.admin);
@@ -21,6 +22,7 @@ function App() {
             <>
               <Route path="/*" element={<Login />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
+              <Route path="/handbook" element={<Handbook />} />
             </>
           ) : (
             <>

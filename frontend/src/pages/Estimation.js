@@ -177,7 +177,7 @@ function Estimation() {
                         onClick={() => handleSubmit(est._id)}
                         disabled={est.hfsLevel !== 0}
                       >
-                        {est.hfsLevel !== 0 ? "แจ้งแล้ว" : "แจ้งผู้ป่วย"}
+                        {est.hfsLevel !== 0 ? "ยืนยันแล้ว" : "ยืนยัน"}
                       </Button>
                     </td>
                   </tr>
