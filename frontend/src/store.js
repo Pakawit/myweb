@@ -2,21 +2,25 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import storage from "redux-persist/lib/storage";
 import { persistReducer } from "redux-persist";
 import adminSlice from "./features/adminSlice";
-import usersReducer from "./features/usersSlice";
+import usersSlice from "./features/usersSlice";
 import selectuserSlice from "./features/selectuserSlice";
-import medicationReducer from "./features/medicationSlice";
-import messageReducer from "./features/messageSlice";
-import estimationReducer from "./features/estimationSlice";
-import notificationsReducer from "./features/notificationsSlice";
+import medicationSlice from "./features/medicationSlice";
+import messageSlice from "./features/messageSlice";
+import estimationSlice from "./features/estimationSlice";
+import notificationsSlice from "./features/notificationsSlice";
+import personalSlice from "./features/personalSlice";
+import estimationHFSSlice from "./features/estimationHFSSlice";
 
 const rootReducer = combineReducers({
   admin: adminSlice,
-  users: usersReducer,
+  users: usersSlice,
   selectuser: selectuserSlice,
-  medication: medicationReducer,
-  message: messageReducer,
-  estimation: estimationReducer,
-  notifications: notificationsReducer,
+  medication: medicationSlice,
+  message: messageSlice,
+  estimation: estimationSlice,
+  notifications: notificationsSlice,
+  personal: personalSlice,
+  estimationHFS: estimationHFSSlice,
 });
 
 const persistConfig = {

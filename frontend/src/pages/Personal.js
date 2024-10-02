@@ -6,65 +6,45 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { setselectuser } from "../features/selectuserSlice";
+import { fetchPersonalDataThunk } from "../features/personalSlice"; // Ensure you're importing the personal data slice
 
 function Personal() {
   const admin = useSelector((state) => state.admin); // ใช้ admin จาก Redux state
   const selectuser = useSelector((state) => state.selectuser);
   const medication = useSelector((state) => state.medication) || [];
+  const personal = useSelector((state) => state.personal); // Get the personal data state from Redux
   const { API_BASE_URL } = useContext(AppContext);
-  const [member, setMember] = useState(selectuser);
+  const [member, setMember] = useState(selectuser || {}); // เริ่มต้นให้ member เป็น object ว่าง
   const [errors, setErrors] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState([]);
   const [notificationMessage, setNotificationMessage] = useState("");
   const dispatch = useDispatch();
 
   const fetchUserDetails = async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/getuser`, { id: selectuser._id });
-      const updatedUser = response.data;
-      setMember(updatedUser); // อัปเดต state
-      dispatch(setselectuser(updatedUser)); // เก็บข้อมูลใหม่ใน Redux
-    } catch (error) {
-      console.error("Error fetching user details:", error);
+    if (selectuser && selectuser._id) {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/getuser`, { id: selectuser._id });
+        const updatedUser = response.data;
+        setMember(updatedUser); // อัปเดต state
+        dispatch(setselectuser(updatedUser)); // เก็บข้อมูลใหม่ใน Redux
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
     }
   };
 
-  // ดึงข้อมูลผู้ใช้ทุกๆ 3 วินาที
   useEffect(() => {
     if (selectuser && selectuser._id && !editMode) {
       const intervalId = setInterval(fetchUserDetails, 3000); // ดึงข้อมูลทุกๆ 3 วินาที
-
       return () => clearInterval(intervalId); // ล้าง interval เมื่อ component ถูก unmount
     }
-  }, [selectuser._id, editMode]);
+  }, [selectuser, editMode]);
 
-  // Fetch medications when the component mounts
   useEffect(() => {
     dispatch(fetchMedicationsThunk());
+    dispatch(fetchPersonalDataThunk()); // Fetch the personal.json data
   }, [dispatch]);
-
-  // Fetch pending changes only when admin2 is logged in
-  useEffect(() => {
-    let intervalId;
-
-    if (admin.name === "admin2") {
-      const fetchPendingChanges = () => {
-        axios
-          .get(`${API_BASE_URL}/getPendingChanges`)
-          .then((res) => setPendingChanges(res.data))
-          .catch((err) => console.log(err));
-      };
-
-      fetchPendingChanges(); // เรียกครั้งแรกเพื่อดึงข้อมูลทันที
-      intervalId = setInterval(fetchPendingChanges, 3000); // ตั้งการดึงข้อมูลทุกๆ 3 วินาที
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId); // ล้าง interval เมื่อ component unmount
-    };
-  }, [API_BASE_URL, admin.name]);
 
   const validate = (name, value) => {
     let error = "";
@@ -118,42 +98,39 @@ function Personal() {
   const handleSubmit = async () => {
     if (Object.values(errors).every((err) => err === "")) {
       if (admin.name === "admin1") {
-        // admin1 ทำการส่งการเปลี่ยนแปลงไปยัง JSON เพื่อให้ admin2 ยืนยัน
-        axios
-          .post(`${API_BASE_URL}/saveChangesToJson`, {
+        try {
+          await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
             _id: member._id,
             changes: member,
-          })
-          .then(() => {
-            setEditMode(false);
-            setNotificationMessage("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Admin2)");
-            setShowModal(true);
-          })
-          .catch((err) => console.log(err));
+          });
+          setEditMode(false);
+          setNotificationMessage("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Admin2)");
+          setShowModal(true);
+        } catch (err) {
+          console.log(err);
+        }
       }
     }
   };
 
   const handleConfirm = async (change) => {
-    axios
-      .post(`${API_BASE_URL}/confirmChanges`, { _id: change._id })
-      .then(() => {
-        setNotificationMessage("ยืนยันการเปลี่ยนแปลงแล้ว");
-        setPendingChanges((prev) => prev.filter((c) => c._id !== change._id));
-        setShowModal(true);
-      })
-      .catch((err) => console.log(err));
+    try {
+      await axios.post(`${API_BASE_URL}/confirmChanges`, { _id: change._id });
+      setNotificationMessage("ยืนยันการเปลี่ยนแปลงแล้ว");
+      setShowModal(true);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const handleReject = async (change) => {
-    axios
-      .post(`${API_BASE_URL}/rejectChanges`, { _id: change._id })
-      .then(() => {
-        setNotificationMessage("ยกเลิกการเปลี่ยนแปลงแล้ว");
-        setPendingChanges((prev) => prev.filter((c) => c._id !== change._id));
-        setShowModal(true);
-      })
-      .catch((err) => console.log(err));
+    try {
+      await axios.post(`${API_BASE_URL}/rejectChanges`, { _id: change._id });
+      setNotificationMessage("ยกเลิกการเปลี่ยนแปลงแล้ว");
+      setShowModal(true);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const getMsMedicineCount = (userId) => {
@@ -166,6 +143,7 @@ function Personal() {
       <h1>ข้อมูลส่วนบุคคล</h1>
 
       <Form onSubmit={(e) => e.preventDefault()}>
+        {/* ส่วนแสดงฟอร์มสำหรับ admin1 */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" style={{ textAlign: "center" }}>
             ชื่อ-สกุล
@@ -362,7 +340,7 @@ function Personal() {
       </Form>
 
       {/* ตารางสำหรับ admin2 */}
-      {admin.name === "admin2" && pendingChanges.length > 0 && (
+      {admin.name === "admin2" && Object.keys(personal).length > 0 && (
         <Table striped bordered hover>
           <thead>
             <tr>
@@ -379,22 +357,22 @@ function Personal() {
             </tr>
           </thead>
           <tbody>
-            {pendingChanges.map((change) => (
-              <tr key={change._id}>
-                <td>{change.name}</td>
-                <td>{change.phone}</td>
-                <td>{change.other_numbers}</td>
-                <td>{change.age}</td>
-                <td>{change.diagnosis}</td>
-                <td>{change.taking_capecitabine}</td>
-                <td>{change.morningTime}</td>
-                <td>{change.eveningTime}</td>
-                <td>{change.hospital_number}</td>
+            {Object.keys(personal).map((key) => (
+              <tr key={key}>
+                <td>{personal[key].name}</td>
+                <td>{personal[key].phone}</td>
+                <td>{personal[key].other_numbers}</td>
+                <td>{personal[key].age}</td>
+                <td>{personal[key].diagnosis}</td>
+                <td>{personal[key].taking_capecitabine}</td>
+                <td>{personal[key].morningTime}</td>
+                <td>{personal[key].eveningTime}</td>
+                <td>{personal[key].hospital_number}</td>
                 <td>
-                  <Button variant="outline-success" onClick={() => handleConfirm(change)}>
+                  <Button variant="outline-success" onClick={() => handleConfirm(personal[key])}>
                     ยืนยัน
                   </Button>
-                  <Button variant="outline-danger" onClick={() => handleReject(change)} style={{ marginLeft: "10px" }}>
+                  <Button variant="outline-danger" onClick={() => handleReject(personal[key])} style={{ marginLeft: "10px" }}>
                     ปฏิเสธ
                   </Button>
                 </td>

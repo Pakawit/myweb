@@ -8,6 +8,8 @@ import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
+import { fetchPersonalDataThunk } from "../features/personalSlice"; 
+import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice"; 
 import { addNotification } from "../features/notificationsSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
@@ -17,6 +19,8 @@ function Home() {
   const users = useSelector((state) => state.users) || [];
   const medication = useSelector((state) => state.medication) || [];
   const estimation = useSelector((state) => state.estimation) || [];
+  const estimationHFS = useSelector((state) => state.estimationHFS) || {}; // New estimation HFS state
+  const personal = useSelector((state) => state.personal) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
@@ -42,11 +46,15 @@ function Home() {
     dispatch(fetchUsersThunk());
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
+    dispatch(fetchPersonalDataThunk());
+    dispatch(fetchEstimationHFSThunk()); // Fetch estimation HFS data
 
     const intervalId = setInterval(() => {
       dispatch(fetchUsersThunk());
       dispatch(fetchMedicationsThunk());
       dispatch(fetchEstimationsThunk());
+      dispatch(fetchPersonalDataThunk());
+      dispatch(fetchEstimationHFSThunk()); // Fetch estimation HFS data every 5 seconds
     }, 5000);
 
     window.addEventListener('beforeunload', fetchData);
@@ -67,7 +75,25 @@ function Home() {
   };
 
   const hasEstimation = (userId) => {
+    // Check if there's an estimation for the user with hfsLevel === 0
     return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
+  };
+
+  // New function to check if there is an HFS evaluation from either admin1 or admin2
+  const hasEstimationHFS = (userId) => {
+    // Check if the userId exists in the estimationHFS object
+    const evaluations = estimationHFS[userId]?.evaluations;
+    if (!evaluations) return false;
+
+    // Check for hfsLevel in evaluations from both admin1 and admin2
+    const admin1Evaluated = evaluations.admin1 && evaluations.admin1.hfsLevel !== undefined;
+    const admin2Evaluated = evaluations.admin2 && evaluations.admin2.hfsLevel !== undefined;
+
+    return admin1Evaluated || admin2Evaluated;
+  };
+
+  const hasPersonalData = (userId) => {
+    return personal.hasOwnProperty(userId); // Check if the userId exists as a key in the personal object
   };
 
   const sortedUsers = users.slice().sort((a, b) => {
@@ -118,6 +144,17 @@ function Home() {
       }
     }
 
+    const personalButtonVariant = hasPersonalData(userData._id) ? "outline-warning" : "outline-success";
+    
+    // Check for hfsLevel === 0 in estimation or any evaluation in estimationHFS (from admin1 or admin2)
+    let estimationHFSButtonVariant = "outline-success"; // Default is success
+    if (hasEstimation(userData._id)) {
+      estimationHFSButtonVariant = "outline-warning"; // If estimation has hfsLevel === 0, change to yellow outline
+    }
+    if (hasEstimationHFS(userData._id)) {
+      estimationHFSButtonVariant = "warning"; // If any evaluation from admin1 or admin2 exists in estimationHFS, make it solid yellow (warning)
+    }
+
     return (
       <tr key={userData._id} className={rowClass}>
         <td className="table-center">{userData.name}</td>
@@ -130,10 +167,18 @@ function Home() {
           </Button>
         </td>
         <td className="table-center">
-          <Button variant="outline-success" onClick={() => handleNavigation(userData, "/personal")}>ข้อมูลส่วนบุคคล</Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>รายละเอียดการกินยา</Button>
-          <Button variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"} onClick={() => handleNavigation(userData, "/estimation")}>การประเมินอาการ HFS</Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>แชท</Button>
+          <Button variant={personalButtonVariant} onClick={() => handleNavigation(userData, "/personal")}>
+            ข้อมูลส่วนบุคคล
+          </Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>
+            รายละเอียดการกินยา
+          </Button>
+          <Button variant={estimationHFSButtonVariant} onClick={() => handleNavigation(userData, "/estimation")}>
+            การประเมินอาการ HFS
+          </Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>
+            แชท
+          </Button>
         </td>
       </tr>
     );

@@ -4,7 +4,7 @@
     "name": "AW WP",
     "phone": "0111111111",
     "other_numbers": "1111111111",
-    "age": 0,
+    "age": 99,
     "diagnosis": "",
     "hospital_number": "11234687",
     "other_medicine": "",
@@ -13,7 +13,7 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:32:41.030Z",
-    "updatedAt": "2024-10-01T10:01:58.874Z",
+    "updatedAt": "2024-10-02T07:08:54.635Z",
     "__v": 0
   },
   {

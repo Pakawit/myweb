@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 export const selectuserSlice = createSlice({
-  name: "setselectuser",
+  name: "selectuser",
   initialState: null,
   reducers: {
     setselectuser: (state, action) => {
