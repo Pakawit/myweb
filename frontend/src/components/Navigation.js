@@ -17,8 +17,12 @@ import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
 import { fetchNotificationsThunk } from "../features/notificationsSlice";
+import { AppContext } from "../context/appContext";
+import axios from "axios";
 
 function Navigation() {
+  const admin = useSelector((state) => state.admin);
+  const { API_BASE_URL } = useContext(AppContext);
   const location = useLocation();
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
@@ -39,6 +43,10 @@ function Navigation() {
     navigate("/");
   };
 
+  const handLog = () => {
+    navigate("/log");
+  };
+
   const handleLogout = async (e) => {
     e.preventDefault();
     try {
@@ -49,6 +57,11 @@ function Navigation() {
         dispatch(deleteEstimation()),
         dispatch(deleteAdmin()),
       ]);
+
+      await axios.post(`${API_BASE_URL}/admin/logout`, {
+        name: admin.name, 
+      });
+
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -89,6 +102,9 @@ function Navigation() {
         )}
 
         <Nav className="ms-autoNav">
+          <Button variant="outline-dark" onClick={handLog}>
+            <i className="bi bi-journal"></i>
+          </Button>
           <Dropdown style={{ marginLeft: "auto" }}>
             <Dropdown.Toggle
               variant="outline-dark"

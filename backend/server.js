@@ -6,6 +6,7 @@ const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
 const Notification = require("./models/Notification");
+const Log = require("./models/Log");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
@@ -21,13 +22,13 @@ const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
 const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
-const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, 'estimationHFS.json');
-const PERSONAL_FILE_PATH = path.join(BASE_PATH, 'personal.json');
+const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, "estimationHFS.json");
+const PERSONAL_FILE_PATH = path.join(BASE_PATH, "personal.json");
 
 // ฟังก์ชันอ่านไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
 const readJSONFile = async (filePath) => {
   try {
-    const data = await fs.promises.readFile(filePath, 'utf8');
+    const data = await fs.promises.readFile(filePath, "utf8");
     return JSON.parse(data);
   } catch (err) {
     // ถ้าไฟล์ยังไม่มีให้คืนค่าว่าง
@@ -40,7 +41,7 @@ const writeJSONFile = async (filePath, data) => {
   try {
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error('Error writing to JSON file:', err);
+    console.error("Error writing to JSON file:", err);
   }
 };
 
@@ -100,23 +101,35 @@ app.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
     const admin = await Admin.findByCredentials(name, password);
+    
+    await Log.create({
+      action: "admin login",
+      user: name,
+      details: "Admin logged in",
+    });
     res.status(200).json(admin);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
 
-app.delete("/admin/logout", async (req, res) => {
+app.post("/admin/logout", async (req, res) => {
   try {
-    const { _id } = req.body;
-    await Admin.findByIdAndDelete(_id);
+    const { name } = req.body;
+
+    await Log.create({
+      action: "admin logout",
+      user: name,
+      details: "Admin logged out",
+    });
+
     res.status(200).send();
   } catch (e) {
     res.status(400).send({ error: e.message });
   }
 });
 
-// Personal 
+// Personal
 
 app.get("/getPendingChanges", async (req, res) => {
   try {
@@ -140,11 +153,11 @@ app.post("/saveChangesToJson", async (req, res) => {
 });
 
 app.post("/confirmChanges", async (req, res) => {
-  const { _id } = req.body; // รับ _id แทน userId
+  const { _id, name } = req.body; // รับ _id แทน userId
   try {
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
     const pendingChange = personalData[_id];
-    console.log(pendingChange)
+    console.log(pendingChange);
     if (!pendingChange) {
       return res.status(404).json({ message: "No pending changes found" });
     }
@@ -152,15 +165,24 @@ app.post("/confirmChanges", async (req, res) => {
     // อัปเดตข้อมูลในฐานข้อมูล MongoDB
     await User.findByIdAndUpdate(_id, pendingChange, { new: true });
 
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin",
+      details: `แก้ไขข้อมูล ${name}`,
+    });
+
     // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
     personalData[_id] = pendingChange; // ยืนยันการเปลี่ยนแปลง
 
     // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
-    delete personalData[_id]; 
+    delete personalData[_id];
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     const users = await User.find();
     await writeJSONFile(USERS_FILE_PATH, users);
-    res.json({ message: "Changes confirmed and saved to database and personal.json", pendingChange });
+    res.json({
+      message: "Changes confirmed and saved to database and personal.json",
+      pendingChange,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -239,19 +261,19 @@ app.get("/getusers", async (req, res) => {
   }
 });
 
-app.post('/getuser', async (req, res) => {
+app.post("/getuser", async (req, res) => {
   const { id } = req.body;
 
   try {
     const user = await User.findById(id);
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     res.json(user);
   } catch (err) {
-    res.status(500).json({ error: 'Error fetching user' });
+    res.status(500).json({ error: "Error fetching user" });
   }
 });
 
@@ -361,7 +383,10 @@ app.put("/evaluateHFS", async (req, res) => {
         );
 
         // ส่งข้อมูลอัปเดตกลับไปยัง client
-        res.json({ message: `Both admins agreed on HFS level ${admin1.hfsLevel}. Estimation updated.`, updatedEstimation });
+        res.json({
+          message: `Both admins agreed on HFS level ${admin1.hfsLevel}. Estimation updated.`,
+          updatedEstimation,
+        });
 
         // ลบข้อมูลการประเมินชั่วคราวในไฟล์ JSON เพื่อให้พร้อมสำหรับการประเมินใหม่
         delete estimationsHFS[userId];
@@ -376,13 +401,14 @@ app.put("/evaluateHFS", async (req, res) => {
     } else {
       // ถ้าผลการประเมินยังไม่ครบทั้งสองคน
       res.json({
-        message: `Waiting for ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} to evaluate.`,
+        message: `Waiting for ${
+          admin1?.hfsLevel === undefined ? "admin1" : "admin2"
+        } to evaluate.`,
       });
     }
 
     // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -446,6 +472,16 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   } catch (error) {
     console.error("Error processing chat photo:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+//log
+app.get("/logs", async (req, res) => {
+  try {
+    const logs = await Log.find().sort({ timestamp: -1 }); // ดึง log ทั้งหมดและเรียงตามเวลาล่าสุด
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
