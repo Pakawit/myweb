@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Container, Button, Form, Row, Col, Modal, Alert, Table } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
@@ -10,7 +10,7 @@ import { fetchPersonalDataThunk } from "../features/personalSlice"; // Ensure yo
 
 function Personal() {
   const admin = useSelector((state) => state.admin); // ใช้ admin จาก Redux state
-  const selectuser = useSelector((state) => state.selectuser);
+  const selectuser = useSelector((state) => state.selectuser); // ดึงข้อมูลของผู้ป่วยที่ถูกเลือก
   const medication = useSelector((state) => state.medication) || [];
   const personal = useSelector((state) => state.personal); // Get the personal data state from Redux
   const { API_BASE_URL } = useContext(AppContext);
@@ -115,7 +115,7 @@ function Personal() {
 
   const handleConfirm = async (change) => {
     try {
-      await axios.post(`${API_BASE_URL}/confirmChanges`, { _id: change._id });
+      await axios.post(`${API_BASE_URL}/confirmChanges`, { _id: change._id , name: change.name});
       setNotificationMessage("ยืนยันการเปลี่ยนแปลงแล้ว");
       setShowModal(true);
     } catch (err) {
@@ -339,8 +339,8 @@ function Personal() {
         )}
       </Form>
 
-      {/* ตารางสำหรับ admin2 */}
-      {admin.name === "admin2" && Object.keys(personal).length > 0 && (
+      {/* ตารางสำหรับ admin2 ที่แสดงเฉพาะผู้ใช้ที่ถูกเลือก */}
+      {admin.name === "admin2" && personal[selectuser._id] && (
         <Table striped bordered hover>
           <thead>
             <tr>
@@ -357,27 +357,25 @@ function Personal() {
             </tr>
           </thead>
           <tbody>
-            {Object.keys(personal).map((key) => (
-              <tr key={key}>
-                <td>{personal[key].name}</td>
-                <td>{personal[key].phone}</td>
-                <td>{personal[key].other_numbers}</td>
-                <td>{personal[key].age}</td>
-                <td>{personal[key].diagnosis}</td>
-                <td>{personal[key].taking_capecitabine}</td>
-                <td>{personal[key].morningTime}</td>
-                <td>{personal[key].eveningTime}</td>
-                <td>{personal[key].hospital_number}</td>
-                <td>
-                  <Button variant="outline-success" onClick={() => handleConfirm(personal[key])}>
-                    ยืนยัน
-                  </Button>
-                  <Button variant="outline-danger" onClick={() => handleReject(personal[key])} style={{ marginLeft: "10px" }}>
-                    ปฏิเสธ
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            <tr>
+              <td>{personal[selectuser._id].name}</td>
+              <td>{personal[selectuser._id].phone}</td>
+              <td>{personal[selectuser._id].other_numbers}</td>
+              <td>{personal[selectuser._id].age}</td>
+              <td>{personal[selectuser._id].diagnosis}</td>
+              <td>{personal[selectuser._id].taking_capecitabine}</td>
+              <td>{personal[selectuser._id].morningTime}</td>
+              <td>{personal[selectuser._id].eveningTime}</td>
+              <td>{personal[selectuser._id].hospital_number}</td>
+              <td>
+                <Button variant="outline-success" onClick={() => handleConfirm(personal[selectuser._id])}>
+                  ยืนยัน
+                </Button>
+                <Button variant="outline-danger" onClick={() => handleReject(personal[selectuser._id])} style={{ marginLeft: "10px" }}>
+                  ปฏิเสธ
+                </Button>
+              </td>
+            </tr>
           </tbody>
         </Table>
       )}

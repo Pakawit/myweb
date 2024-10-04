@@ -1,5 +1,14 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Modal, Pagination } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Dropdown,
+  Modal,
+  Pagination,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -39,23 +48,24 @@ function Estimation() {
     }));
   };
 
-  const handleSubmit = async (_id) => {
-    const hfsLevel = hfsLevels[_id];
+  const handleSubmit = async (estimationId) => {
+    const hfsLevel = hfsLevels[estimationId]; // ใช้ estimationId แทน userId
     if (hfsLevel !== undefined && hfsLevel !== 0) {
       try {
         const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
-          userId: selectuser._id,
+          estimationId: estimationId, // ส่ง estimationId แทน userId
           adminName: admin.name,
           hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
         });
 
-        // Set the response message and show notification modal
+        // แสดงข้อความตอบกลับจากเซิร์ฟเวอร์
         setNotificationMessage(response.data.message);
         setShowNotificationModal(true);
 
-        // Fetch updated estimations
+        // ดึงข้อมูลการประเมินล่าสุด
         dispatch(fetchEstimationsThunk());
         dispatch(fetchEstimationHFSThunk());
+        await axios.post(`${API_BASE_URL}/getestimation`);
       } catch (error) {
         console.error("Error submitting evaluation:", error);
       }
@@ -136,15 +146,13 @@ function Estimation() {
   };
 
   const checkEstimationStatus = (estimationId, hfsLevel) => {
-    // รับค่าจาก estimationHFS
-    const evaluations = estimationHFS[selectuser._id]?.evaluations || {};
-
+    const evaluations = estimationHFS[estimationId]?.evaluations || {};
     const admin1Level = evaluations.admin1?.hfsLevel;
     const admin2Level = evaluations.admin2?.hfsLevel;
 
     // ถ้า hfsLevel เป็น 0 จะไม่สนใจ
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
-        return { disabled: false, message: "ยืนยัน" };
+      return { disabled: false, message: "ยืนยัน" };
     }
 
     // ถ้าทั้งสองคนประเมินแล้วและมีค่าเท่ากัน
@@ -152,19 +160,18 @@ function Estimation() {
       return { disabled: true, message: "ประเมินแล้ว" };
     }
 
-
     // ถ้า admin1 ประเมินแล้ว admin1 จะไม่สามารถประเมินได้อีก
     if (admin1Level !== undefined && admin.name === "admin1") {
-        return { disabled: true, message: "รอการประเมินจาก Admin2" };
+      return { disabled: true, message: "รอการประเมินจาก Admin2" };
     }
 
     // ถ้า admin2 ประเมินแล้ว admin2 จะไม่สามารถประเมินได้อีก
     if (admin2Level !== undefined && admin.name === "admin2") {
-        return { disabled: true, message: "รอการประเมินจาก Admin1" };
+      return { disabled: true, message: "รอการประเมินจาก Admin1" };
     }
 
     return { disabled: false, message: "ยืนยัน" };
-};
+  };
 
   return (
     <Container fluid>
@@ -186,24 +193,73 @@ function Estimation() {
             <tbody>
               {paginatedEstimations.length > 0 ? (
                 paginatedEstimations.map((est, index) => {
-                  const { disabled, message } = checkEstimationStatus(est._id, est.hfsLevel);
+                  const { disabled, message } = checkEstimationStatus(
+                    est._id,
+                    est.hfsLevel
+                  );
                   return (
-                    <tr key={index} className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
+                    <tr
+                      key={est._id}
+                      className={
+                        est.hfsLevel !== 0 ? "bg-secondary text-white" : ""
+                      }
+                    >
                       <td className="table-center">{est.date}</td>
                       <td className="table-center">{est.time}</td>
-                      <td className="table-center">{renderPhotos(est.photos)}</td>
+                      <td className="table-center">
+                        {renderPhotos(est.photos)}
+                      </td>
                       <td className="table-center">{est.painLevel}</td>
                       <td className="table-center">
                         {est.hfsLevel !== 0 ? (
-                          <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
+                          <span>
+                            {est.hfsLevel === 5
+                              ? "ไม่พบอาการ"
+                              : `ระดับที่ ${est.hfsLevel}`}
+                          </span>
+                        ) : admin.name === "admin1" &&
+                          estimationHFS[est._id]?.evaluations?.admin1
+                            ?.hfsLevel !== undefined ? (
+                          <span>{`คุณประเมินว่า: ${
+                            estimationHFS[est._id]?.evaluations?.admin1
+                              ?.hfsLevel === 5
+                              ? "ไม่พบอาการ"
+                              : `ระดับที่ ${
+                                  estimationHFS[est._id]?.evaluations?.admin1
+                                    ?.hfsLevel
+                                }`
+                          }`}</span>
+                        ) : admin.name === "admin2" &&
+                          estimationHFS[est._id]?.evaluations?.admin2
+                            ?.hfsLevel !== undefined ? (
+                          <span>{`คุณประเมินว่า: ${
+                            estimationHFS[est._id]?.evaluations?.admin2
+                              ?.hfsLevel === 5
+                              ? "ไม่พบอาการ"
+                              : `ระดับที่ ${
+                                  estimationHFS[est._id]?.evaluations?.admin2
+                                    ?.hfsLevel
+                                }`
+                          }`}</span>
                         ) : (
                           <Dropdown>
-                            <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
-                              ระดับที่ {hfsLevels[est._id] !== undefined ? hfsLevels[est._id] : ""}
+                            <Dropdown.Toggle
+                              variant="outline-success"
+                              id="dropdown-basic"
+                            >
+                              ระดับที่{" "}
+                              {hfsLevels[est._id] !== undefined
+                                ? hfsLevels[est._id]
+                                : ""}
                             </Dropdown.Toggle>
                             <Dropdown.Menu>
                               {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
-                                <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>
+                                <Dropdown.Item
+                                  key={idx}
+                                  onClick={() =>
+                                    handleHfsLevelChange(est._id, level)
+                                  }
+                                >
                                   {level}
                                 </Dropdown.Item>
                               ))}
@@ -211,10 +267,15 @@ function Estimation() {
                           </Dropdown>
                         )}
                       </td>
+
                       <td>
                         <Button
-                          variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
-                          onClick={() => handleSubmit(est._id)}
+                          variant={
+                            est.hfsLevel !== 0
+                              ? "outline-secondary"
+                              : "outline-success"
+                          }
+                          onClick={() => handleSubmit(est._id)} // ใช้ estimationId แทนการส่ง userId
                           disabled={disabled}
                         >
                           {disabled ? message : "ยืนยัน"}
@@ -225,14 +286,22 @@ function Estimation() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="table-center">ไม่มีข้อมูล</td>
+                  <td colSpan="6" className="table-center">
+                    ไม่มีข้อมูล
+                  </td>
                 </tr>
               )}
             </tbody>
           </Table>
           <Pagination className="justify-content-end">
-            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
-            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            <Pagination.First
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            />
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            />
             {[...Array(totalPages).keys()].map((pageNumber) => (
               <Pagination.Item
                 key={pageNumber + 1}
@@ -242,24 +311,49 @@ function Estimation() {
                 {pageNumber + 1}
               </Pagination.Item>
             ))}
-            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
-            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            />
+            <Pagination.Last
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+            />
           </Pagination>
         </Col>
       </Row>
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton />
         <Modal.Body>
-          {selectedImage && <img src={`data:image/jpeg;base64,${selectedImage}`} alt="รูปภาพ" style={{ width: "auto", height: "auto", maxWidth: "100%", maxHeight: "80vh", margin: "0 auto", display: "block" }} />}
+          {selectedImage && (
+            <img
+              src={`data:image/jpeg;base64,${selectedImage}`}
+              alt="รูปภาพ"
+              style={{
+                width: "auto",
+                height: "auto",
+                maxWidth: "100%",
+                maxHeight: "80vh",
+                margin: "0 auto",
+                display: "block",
+              }}
+            />
+          )}
         </Modal.Body>
       </Modal>
-      <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
+      <Modal
+        show={showNotificationModal}
+        onHide={handleCloseNotificationModal}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>ผลการประเมิน</Modal.Title>
         </Modal.Header>
         <Modal.Body>{notificationMessage}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseNotificationModal}>ปิด</Button>
+          <Button variant="secondary" onClick={handleCloseNotificationModal}>
+            ปิด
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>

@@ -157,7 +157,6 @@ app.post("/confirmChanges", async (req, res) => {
   try {
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
     const pendingChange = personalData[_id];
-    console.log(pendingChange);
     if (!pendingChange) {
       return res.status(404).json({ message: "No pending changes found" });
     }
@@ -353,18 +352,27 @@ app.post("/getHFSDetails", async (req, res) => {
   }
 });
 
+app.post("/createstimation", async (req, res) => {
+  try {
+    const estimation = await Estimation.create(req.body);
+    res.json(estimation);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put("/evaluateHFS", async (req, res) => {
-  const { userId, adminName, hfsLevel } = req.body;
+  const { estimationId, adminName, hfsLevel } = req.body; // ใช้ estimationId แทน userId
 
   try {
     // อ่านข้อมูลจาก estimationHFS.json
     let estimationsHFS = await readJSONFile(ESTIMATIONHFS_FILE_PATH);
 
     // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
-    let estimation = estimationsHFS[userId];
+    let estimation = estimationsHFS[estimationId]; // ใช้ estimationId
     if (!estimation) {
-      estimation = { userId, evaluations: {} };
-      estimationsHFS[userId] = estimation;
+      estimation = { estimationId, evaluations: {} }; // ใช้ estimationId แทน userId
+      estimationsHFS[estimationId] = estimation;
     }
 
     // อัปเดตผลการประเมินของแอดมิน
@@ -377,21 +385,22 @@ app.put("/evaluateHFS", async (req, res) => {
       if (admin1.hfsLevel === admin2.hfsLevel) {
         // ถ้าผลการประเมินตรงกัน ให้แก้ไข hfsLevel ในฐานข้อมูล MongoDB
         const updatedEstimation = await Estimation.findOneAndUpdate(
-          { from: userId }, // ค้นหาจาก userId หรือ _id
+          { _id: estimationId }, // ใช้ _id แทนการค้นหาด้วย userId
           { hfsLevel: admin1.hfsLevel }, // อัปเดตค่า hfsLevel ให้เป็นค่าที่ทั้งคู่เห็นตรงกัน
           { new: true } // ส่งคืนเอกสารที่ถูกอัปเดตแล้ว
         );
 
         // ส่งข้อมูลอัปเดตกลับไปยัง client
         res.json({
-          message: `Both admins agreed on HFS level ${admin1.hfsLevel}. Estimation updated.`,
+          message: `Both admins agreed on HFS level ${admin1.hfsLevel === 5 ? "ไม่พบอาการ" : admin1.hfsLevel}. Estimation updated.`,
           updatedEstimation,
         });
 
-        // ลบข้อมูลการประเมินชั่วคราวในไฟล์ JSON เพื่อให้พร้อมสำหรับการประเมินใหม่
-        delete estimationsHFS[userId];
-        const estimations = await Estimation.find();
-        await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
+        // ลบเฉพาะข้อมูลของ estimationId นี้จาก estimationHFS.json
+        delete estimationsHFS[estimationId]; // ลบข้อมูลเฉพาะ estimationId ที่ทำการประเมินเสร็จแล้ว
+
+        // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
+        await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
         // ถ้าผลการประเมินไม่ตรงกัน ให้รีเซ็ตการประเมินของทั้งคู่ในไฟล์ JSON
         delete estimation.evaluations.admin1.hfsLevel;
@@ -400,10 +409,11 @@ app.put("/evaluateHFS", async (req, res) => {
       }
     } else {
       // ถ้าผลการประเมินยังไม่ครบทั้งสองคน
+      const admin1Status = admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : admin1?.hfsLevel;
+      const admin2Status = admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : admin2?.hfsLevel;
+
       res.json({
-        message: `Waiting for ${
-          admin1?.hfsLevel === undefined ? "admin1" : "admin2"
-        } to evaluate.`,
+        message: `Waiting for ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} to evaluate. Current: ${admin1?.hfsLevel === undefined ? admin2Status : admin1Status}`,
       });
     }
 
