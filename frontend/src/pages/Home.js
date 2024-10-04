@@ -19,7 +19,7 @@ function Home() {
   const users = useSelector((state) => state.users) || [];
   const medication = useSelector((state) => state.medication) || [];
   const estimation = useSelector((state) => state.estimation) || [];
-  const estimationHFS = useSelector((state) => state.estimationHFS) || {}; // New estimation HFS state
+  const estimationHFS = useSelector((state) => state.estimationHFS) || {}; 
   const personal = useSelector((state) => state.personal) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -47,14 +47,14 @@ function Home() {
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
     dispatch(fetchPersonalDataThunk());
-    dispatch(fetchEstimationHFSThunk()); // Fetch estimation HFS data
+    dispatch(fetchEstimationHFSThunk());
 
     const intervalId = setInterval(() => {
       dispatch(fetchUsersThunk());
       dispatch(fetchMedicationsThunk());
       dispatch(fetchEstimationsThunk());
       dispatch(fetchPersonalDataThunk());
-      dispatch(fetchEstimationHFSThunk()); // Fetch estimation HFS data every 5 seconds
+      dispatch(fetchEstimationHFSThunk()); 
     }, 5000);
 
     window.addEventListener('beforeunload', fetchData);
@@ -75,17 +75,14 @@ function Home() {
   };
 
   const hasEstimation = (userId) => {
-    // Check if there's an estimation for the user with hfsLevel === 0
     return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
   };
 
-  // New function to check if there is an HFS evaluation from either admin1 or admin2
-  const hasEstimationHFS = (userId) => {
-    // Check if the userId exists in the estimationHFS object
-    const evaluations = estimationHFS[userId]?.evaluations;
+  // Updated: Check if there is an HFS evaluation or if the hfsLevel is 0
+  const hasEstimationHFS = (estimationId) => {
+    const evaluations = estimationHFS[estimationId]?.evaluations;
     if (!evaluations) return false;
 
-    // Check for hfsLevel in evaluations from both admin1 and admin2
     const admin1Evaluated = evaluations.admin1 && evaluations.admin1.hfsLevel !== undefined;
     const admin2Evaluated = evaluations.admin2 && evaluations.admin2.hfsLevel !== undefined;
 
@@ -93,13 +90,13 @@ function Home() {
   };
 
   const hasPersonalData = (userId) => {
-    return personal.hasOwnProperty(userId); // Check if the userId exists as a key in the personal object
+    return personal.hasOwnProperty(userId);
   };
 
   const sortedUsers = users.slice().sort((a, b) => {
     const statusA = getLastMedicationStatus(a._id);
     const statusB = getLastMedicationStatus(b._id);
-    if (statusA === null) return 1; // นำผู้ใช้ที่ไม่มีข้อมูลไปไว้ท้าย
+    if (statusA === null) return 1;
     if (statusB === null) return -1;
     return statusA - statusB;
   });
@@ -144,15 +141,17 @@ function Home() {
       }
     }
 
-    const personalButtonVariant = hasPersonalData(userData._id) ? "outline-warning" : "outline-success";
+    const personalButtonVariant = hasPersonalData(userData._id) ? "warning" : "outline-success";
     
-    // Check for hfsLevel === 0 in estimation or any evaluation in estimationHFS (from admin1 or admin2)
-    let estimationHFSButtonVariant = "outline-success"; // Default is success
-    if (hasEstimation(userData._id)) {
-      estimationHFSButtonVariant = "outline-warning"; // If estimation has hfsLevel === 0, change to yellow outline
+    const userEstimation = estimation.find(est => est.from === userData._id);
+    const estimationId = userEstimation ? userEstimation._id : null;
+
+    let estimationHFSButtonVariant = "outline-success"; 
+    if (estimationId && hasEstimationHFS(estimationId)) {
+      estimationHFSButtonVariant = "warning";
     }
-    if (hasEstimationHFS(userData._id)) {
-      estimationHFSButtonVariant = "warning"; // If any evaluation from admin1 or admin2 exists in estimationHFS, make it solid yellow (warning)
+    if (userEstimation?.hfsLevel === 0 && !hasEstimationHFS(estimationId)) {
+      estimationHFSButtonVariant = "outline-warning"; 
     }
 
     return (
