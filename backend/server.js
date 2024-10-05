@@ -141,10 +141,15 @@ app.get("/getPendingChanges", async (req, res) => {
 });
 
 app.post("/saveChangesToJson", async (req, res) => {
-  const { _id, changes } = req.body; // รับข้อมูล _id และ changes จาก request
+  const { changes } = req.body; // รับข้อมูล _id และ changes จาก request
   try {
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin1",
+      details: `แก้ไขข้อมูล ${changes.name}`,
+    });
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
-    personalData[_id] = changes; // ใช้ _id แทน userId
+    personalData[changes._id] = changes; // ใช้ _id แทน userId
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     res.json({ message: "Changes saved to personal.json", changes });
   } catch (error) {
@@ -166,8 +171,8 @@ app.post("/confirmChanges", async (req, res) => {
 
     await Log.create({
       action: "แก้ไขข้อมูล",
-      user: "admin",
-      details: `แก้ไขข้อมูล ${name}`,
+      user: "admin2",
+      details: `ยืนยันการแก้ไขข้อมูล ${name}`,
     });
 
     // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
@@ -188,13 +193,18 @@ app.post("/confirmChanges", async (req, res) => {
 });
 
 app.post("/rejectChanges", async (req, res) => {
-  const { _id } = req.body; // ใช้ _id แทน userId
+  const { _id, name } = req.body; // ใช้ _id แทน userId
   try {
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
     const pendingChange = personalData[_id];
     if (!pendingChange) {
       return res.status(404).json({ message: "No pending changes found" });
     }
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin2",
+      details: `ยกเลิกการแก้ไขข้อมูล ${name}`,
+    });
     delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     res.json({ message: "Changes rejected and removed from pending list" });
@@ -396,12 +406,23 @@ app.put("/evaluateHFS", async (req, res) => {
           updatedEstimation,
         });
 
+        await Log.create({
+          action: "ประเมินอาการ HFS",
+          user: adminName,
+          details: `ประเมินอาการโดย ${adminName}`,
+        });
+
         // ลบเฉพาะข้อมูลของ estimationId นี้จาก estimationHFS.json
         delete estimationsHFS[estimationId]; // ลบข้อมูลเฉพาะ estimationId ที่ทำการประเมินเสร็จแล้ว
 
         // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
+        await Log.create({
+          action: "ประเมินอาการ HFS",
+          user: 'admin',
+          details: `ประเมินอาการผิดพลาด`,
+        });
         // ถ้าผลการประเมินไม่ตรงกัน ให้รีเซ็ตการประเมินของทั้งคู่ในไฟล์ JSON
         delete estimation.evaluations.admin1.hfsLevel;
         delete estimation.evaluations.admin2.hfsLevel;
@@ -409,6 +430,13 @@ app.put("/evaluateHFS", async (req, res) => {
       }
     } else {
       // ถ้าผลการประเมินยังไม่ครบทั้งสองคน
+
+      await Log.create({
+        action: "ประเมินอาการ HFS",
+        user: adminName,
+        details: `ประเมินอาการโดย ${adminName}`,
+      });
+      
       const admin1Status = admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : admin1?.hfsLevel;
       const admin2Status = admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : admin2?.hfsLevel;
 

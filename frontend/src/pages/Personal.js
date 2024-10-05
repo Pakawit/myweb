@@ -10,7 +10,7 @@ import { fetchPersonalDataThunk } from "../features/personalSlice"; // Ensure yo
 
 function Personal() {
   const admin = useSelector((state) => state.admin); // ใช้ admin จาก Redux state
-  const selectuser = useSelector((state) => state.selectuser); // ดึงข้อมูลของผู้ป่วยที่ถูกเลือก
+  const selectuser = useSelector((state) => state.selectuser) || {}; // ดึงข้อมูลของผู้ป่วยที่ถูกเลือก
   const medication = useSelector((state) => state.medication) || [];
   const personal = useSelector((state) => state.personal); // Get the personal data state from Redux
   const { API_BASE_URL } = useContext(AppContext);
@@ -100,7 +100,6 @@ function Personal() {
       if (admin.name === "admin1") {
         try {
           await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
-            _id: member._id,
             changes: member,
           });
           setEditMode(false);
@@ -125,7 +124,7 @@ function Personal() {
 
   const handleReject = async (change) => {
     try {
-      await axios.post(`${API_BASE_URL}/rejectChanges`, { _id: change._id });
+      await axios.post(`${API_BASE_URL}/rejectChanges`, { _id: change._id , name: change.name});
       setNotificationMessage("ยกเลิกการเปลี่ยนแปลงแล้ว");
       setShowModal(true);
     } catch (err) {
