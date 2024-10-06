@@ -22,11 +22,13 @@ import axios from "axios";
 
 function Navigation() {
   const admin = useSelector((state) => state.admin);
+  const selectuser = useSelector((state) => state.selectuser) || {};
   const { API_BASE_URL } = useContext(AppContext);
   const location = useLocation();
   const notifications = useSelector((state) => state.notifications) || [];
   const users = useSelector((state) => state.users) || [];
-  const selectuser = useSelector((state) => state.selectuser);
+  const personal = useSelector((state) => state.personal) || {};
+  const estimationHFS = useSelector((state) => state.estimationHFS) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -59,7 +61,7 @@ function Navigation() {
       ]);
 
       await axios.post(`${API_BASE_URL}/admin/logout`, {
-        name: admin.name, 
+        name: admin.name,
       });
 
       navigate("/login");
@@ -73,7 +75,7 @@ function Navigation() {
       const user = users.find((user) => user._id === notification.from);
       if (user) {
         try {
-          dispatch(setselectuser(user));
+          dispatch(setselectuser(user)); 
           navigate("/chat");
         } catch (error) {
           console.error("Error handling notification click:", error);
@@ -82,15 +84,38 @@ function Navigation() {
     }
   };
 
+  const handlePersonalNotificationClick = async (userId) => {
+    if (userId && personal[userId]) {
+      try {
+        dispatch(setselectuser(personal[userId])); 
+        navigate("/personal");
+      } catch (error) {
+        console.error("Error handling personal notification click:", error);
+      }
+    }
+  };
+
+  const handleHFSNotificationClick = async (estimationId) => {
+    if (estimationId && estimationHFS[estimationId]) {
+      try {
+        dispatch(setselectuser(estimationHFS[estimationId].user)); 
+        navigate("/estimation");
+      } catch (error) {
+        console.error("Error handling HFS notification click:", error);
+      }
+    }
+  };
+
   const shouldHideBackButton = location.pathname === "/";
 
   return (
     <Navbar>
-      <Container fluid>
+      <Container fluid className="d-flex align-items-center justify-content-between">
         <Button
           variant="outline-dark"
           onClick={back}
           style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }}
+          className="me-2"
         >
           <i className="bi bi-chevron-left"></i>
         </Button>
@@ -101,14 +126,55 @@ function Navigation() {
           </Navbar.Brand>
         )}
 
-        <Nav className="ms-autoNav">
-          <Button variant="outline-dark" onClick={handLog}>
-            <i className="bi bi-journal"></i>
-          </Button>
-          <Dropdown style={{ marginLeft: "auto" }}>
+        <Nav className="d-flex align-items-center">
+          <Dropdown className="me-2">
             <Dropdown.Toggle
               variant="outline-dark"
-              className="mx-1"
+              id="personal-notification-dropdown"
+            >
+              <i className="bi bi-exclamation-triangle"></i>
+              {(Object.keys(personal).length > 0 ||
+                Object.keys(estimationHFS).length > 0) && (
+                <Badge pill bg="warning" style={{ marginLeft: "5px" }}>
+                  {Object.keys(personal).length +
+                    Object.keys(estimationHFS).length}
+                </Badge>
+              )}
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {Object.keys(personal).length === 0 &&
+              Object.keys(estimationHFS).length === 0 ? (
+                <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
+              ) : (
+                <>
+                  {Object.keys(personal).map((userId) => (
+                    <Dropdown.Item
+                      key={userId}
+                      onClick={() => handlePersonalNotificationClick(userId)}
+                    >
+                      แก้ไขข้อมูล {personal[userId]?.name || "Unknown"}
+                    </Dropdown.Item>
+                  ))}
+
+                  {Object.keys(estimationHFS).map((estimationId) => (
+                    <Dropdown.Item
+                      key={estimationId}
+                      onClick={() => handleHFSNotificationClick(estimationId)}
+                    >
+                      ประเมินอาการ{" "}
+                      {estimationHFS[estimationId]?.user?.name
+                        ? estimationHFS[estimationId]?.user?.name
+                        : "Unknown User"}
+                    </Dropdown.Item>
+                  ))}
+                </>
+              )}
+            </Dropdown.Menu>
+          </Dropdown>
+
+          <Dropdown className="me-2">
+            <Dropdown.Toggle
+              variant="outline-dark"
               id="dropdown-basic"
             >
               <i className="bi bi-bell"></i>
@@ -139,6 +205,11 @@ function Navigation() {
               )}
             </Dropdown.Menu>
           </Dropdown>
+
+          <Button variant="outline-dark" className="me-2" onClick={handLog}>
+            <i className="bi bi-journal"></i>
+          </Button>
+
           <Button variant="outline-dark" onClick={handleLogout}>
             <i className="bi bi-box-arrow-in-right"></i>
           </Button>

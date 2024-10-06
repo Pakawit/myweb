@@ -21,7 +21,7 @@ function Estimation() {
   const { API_BASE_URL } = useContext(AppContext);
   const estimation = useSelector((state) => state.estimation) || [];
   const estimationHFS = useSelector((state) => state.estimationHFS) || {};
-  const selectuser = useSelector((state) => state.selectuser);
+  const selectuser = useSelector((state) => state.selectuser)|| {};
   const dispatch = useDispatch();
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -54,6 +54,7 @@ function Estimation() {
       try {
         const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
           estimationId: estimationId, // ส่ง estimationId แทน userId
+          user: selectuser,
           adminName: admin.name,
           hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
         });

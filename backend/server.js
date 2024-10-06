@@ -372,7 +372,7 @@ app.post("/createstimation", async (req, res) => {
 });
 
 app.put("/evaluateHFS", async (req, res) => {
-  const { estimationId, adminName, hfsLevel } = req.body; // ใช้ estimationId แทน userId
+  const { estimationId, user, adminName, hfsLevel } = req.body; // ใช้ estimationId แทน userId
 
   try {
     // อ่านข้อมูลจาก estimationHFS.json
@@ -381,7 +381,7 @@ app.put("/evaluateHFS", async (req, res) => {
     // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
     let estimation = estimationsHFS[estimationId]; // ใช้ estimationId
     if (!estimation) {
-      estimation = { estimationId, evaluations: {} }; // ใช้ estimationId แทน userId
+      estimation = { estimationId, user, evaluations: {} }; // ใช้ estimationId แทน userId
       estimationsHFS[estimationId] = estimation;
     }
 
