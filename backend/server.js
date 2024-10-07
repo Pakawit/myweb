@@ -13,8 +13,8 @@ const path = require("path");
 const multer = require("multer");
 const upload = multer();
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.json({ limit: '2mb' }));
 app.use(cors());
 
 // File paths
