@@ -8,8 +8,6 @@ import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { fetchEstimationsThunk } from "../features/estimationSlice";
-import { fetchPersonalDataThunk } from "../features/personalSlice"; 
-import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice"; 
 import { addNotification } from "../features/notificationsSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
@@ -19,8 +17,6 @@ function Home() {
   const users = useSelector((state) => state.users) || [];
   const medication = useSelector((state) => state.medication) || [];
   const estimation = useSelector((state) => state.estimation) || [];
-  const estimationHFS = useSelector((state) => state.estimationHFS) || {}; 
-  const personal = useSelector((state) => state.personal) || {};
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
@@ -46,15 +42,11 @@ function Home() {
     dispatch(fetchUsersThunk());
     dispatch(fetchMedicationsThunk());
     dispatch(fetchEstimationsThunk());
-    dispatch(fetchPersonalDataThunk());
-    dispatch(fetchEstimationHFSThunk());
 
     const intervalId = setInterval(() => {
       dispatch(fetchUsersThunk());
       dispatch(fetchMedicationsThunk());
       dispatch(fetchEstimationsThunk());
-      dispatch(fetchPersonalDataThunk());
-      dispatch(fetchEstimationHFSThunk()); 
     }, 5000);
 
     window.addEventListener('beforeunload', fetchData);
@@ -78,25 +70,10 @@ function Home() {
     return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
   };
 
-  // Updated: Check if there is an HFS evaluation or if the hfsLevel is 0
-  const hasEstimationHFS = (estimationId) => {
-    const evaluations = estimationHFS[estimationId]?.evaluations;
-    if (!evaluations) return false;
-
-    const admin1Evaluated = evaluations.admin1 && evaluations.admin1.hfsLevel !== undefined;
-    const admin2Evaluated = evaluations.admin2 && evaluations.admin2.hfsLevel !== undefined;
-
-    return admin1Evaluated || admin2Evaluated;
-  };
-
-  const hasPersonalData = (userId) => {
-    return personal.hasOwnProperty(userId);
-  };
-
   const sortedUsers = users.slice().sort((a, b) => {
     const statusA = getLastMedicationStatus(a._id);
     const statusB = getLastMedicationStatus(b._id);
-    if (statusA === null) return 1;
+    if (statusA === null) return 1; 
     if (statusB === null) return -1;
     return statusA - statusB;
   });
@@ -141,19 +118,6 @@ function Home() {
       }
     }
 
-    const personalButtonVariant = hasPersonalData(userData._id) ? "warning" : "outline-success";
-    
-    const userEstimation = estimation.find(est => est.from === userData._id);
-    const estimationId = userEstimation ? userEstimation._id : null;
-
-    let estimationHFSButtonVariant = "outline-success"; 
-    if (estimationId && hasEstimationHFS(estimationId)) {
-      estimationHFSButtonVariant = "warning";
-    }
-    if (userEstimation?.hfsLevel === 0 && !hasEstimationHFS(estimationId)) {
-      estimationHFSButtonVariant = "outline-warning"; 
-    }
-
     return (
       <tr key={userData._id} className={rowClass}>
         <td className="table-center">{userData.name}</td>
@@ -166,18 +130,10 @@ function Home() {
           </Button>
         </td>
         <td className="table-center">
-          <Button variant={personalButtonVariant} onClick={() => handleNavigation(userData, "/personal")}>
-            ข้อมูลส่วนบุคคล
-          </Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>
-            รายละเอียดการกินยา
-          </Button>
-          <Button variant={estimationHFSButtonVariant} onClick={() => handleNavigation(userData, "/estimation")}>
-            การประเมินอาการ HFS
-          </Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>
-            แชท
-          </Button>
+          <Button variant="outline-success" onClick={() => handleNavigation(userData, "/personal")}>ข้อมูลส่วนบุคคล</Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>รายละเอียดการกินยา</Button>
+          <Button variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"} onClick={() => handleNavigation(userData, "/estimation")}>การประเมินอาการ HFS</Button>
+          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>แชท</Button>
         </td>
       </tr>
     );

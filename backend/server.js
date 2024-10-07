@@ -365,6 +365,8 @@ app.post("/getHFSDetails", async (req, res) => {
 app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
+    const estimations = await Estimation.find();
+    await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
     res.json(estimation);
   } catch (err) {
     res.status(500).json({ error: err.message });

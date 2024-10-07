@@ -18,8 +18,22 @@ function Chat() {
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showStickersModal, setShowStickersModal] = useState(false);
   const dispatch = useDispatch();
   const previousSelectUser = useRef(null);
+
+  const stickers = [
+    "nurse_charactor-01.png",
+    "nurse_charactor-02.png",
+    "nurse_charactor-03.png",
+    "nurse_charactor-04.png",
+    "nurse_charactor-05.png",
+    "nurse_charactor-06.png",
+    "nurse_charactor-07.png",
+    "nurse_charactor-08.png",
+    "nurse_charactor-09.png",
+    "nurse_charactor-10.png",
+  ];
 
   useEffect(() => {
     if (selectuser) {
@@ -72,6 +86,37 @@ function Chat() {
       todayDate: date.toLocaleDateString("en-GB"),
       time: date.toTimeString().slice(0, 5),
     };
+  };
+
+  const handleStickerSelect = async (stickerName) => {
+    const { todayDate, time } = getCurrentTime();
+    const stickerPath = `/img/${stickerName}`;
+
+    try {
+
+      const response = await fetch(stickerPath);
+      const blob = await response.blob();
+
+      const formData = new FormData();
+      formData.append("photo", blob, stickerName);  
+      formData.append("from", "admin");
+      formData.append("to", selectuser._id);
+      formData.append("date", todayDate);
+      formData.append("time", time);
+
+      const res = await axios.post(`${API_BASE_URL}/chatphoto`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      dispatch(addMessage(res.data));
+      scrollToBottom();
+    } catch (error) {
+      console.error("Error handling sticker selection:", error);
+    } finally {
+      setShowStickersModal(false); 
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -179,13 +224,22 @@ function Chat() {
                 hidden
                 accept="image/png, image/jpeg"
                 onChange={validateImg}
-                ref={fileInputRef}
+                ref={fileInputRef} 
               />
-              <label htmlFor="image-upload">
-                <div className="img">
-                  <i className="bi bi-image"></i>
-                </div>
-              </label>
+
+              <Button
+                variant="outline-dark"
+                onClick={() => fileInputRef.current.click()} 
+              >
+                <i className="bi bi-image"></i>
+              </Button>
+
+              <Button
+                variant="outline-secondary"
+                onClick={() => setShowStickersModal(true)}
+              >
+                <i className="bi bi-emoji-smile"></i>
+              </Button>
 
               <Form.Control
                 type="text"
@@ -215,6 +269,30 @@ function Chat() {
           </Form>
         </Col>
       </Row>
+
+      <Modal
+        show={showStickersModal}
+        onHide={() => setShowStickersModal(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>เลือกสติกเกอร์</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div>
+            {stickers.map((sticker, idx) => (
+              <img
+                key={idx}
+                src={`/img/${sticker}`}
+                alt={`sticker-${idx}`}
+                className="sticker"
+                onClick={() => handleStickerSelect(sticker)}
+                style={{ cursor: "pointer", width: "100px", margin: "25px" }}
+              />
+            ))}
+          </div>
+        </Modal.Body>
+      </Modal>
+
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton />
         <Modal.Body>

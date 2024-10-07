@@ -17,8 +17,11 @@ import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
 import { fetchNotificationsThunk } from "../features/notificationsSlice";
+import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import { fetchPersonalDataThunk } from "../features/personalSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
+
 
 function Navigation() {
   const admin = useSelector((state) => state.admin);
@@ -34,9 +37,13 @@ function Navigation() {
 
   useEffect(() => {
     dispatch(fetchNotificationsThunk());
+    dispatch(fetchEstimationHFSThunk());
+    dispatch(fetchPersonalDataThunk());
     const intervalId = setInterval(() => {
       dispatch(fetchNotificationsThunk());
-    }, 3000);
+      dispatch(fetchEstimationHFSThunk());
+      dispatch(fetchPersonalDataThunk());
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
