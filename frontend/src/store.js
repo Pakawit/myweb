@@ -6,8 +6,8 @@ import usersSlice from "./features/usersSlice";
 import selectuserSlice from "./features/selectuserSlice";
 import medicationSlice from "./features/medicationSlice";
 import messageSlice from "./features/messageSlice";
-import estimationSlice from "./features/estimationSlice";
-import notificationsSlice from "./features/notificationsSlice";
+import chatnotificationSlice from "./features/chatnotificationSlice";
+import hfsnotificationSlice from "./features/hfsnotificationSlice";
 import personalSlice from "./features/personalSlice";
 import estimationHFSSlice from "./features/estimationHFSSlice";
 
@@ -17,8 +17,8 @@ const rootReducer = combineReducers({
   selectuser: selectuserSlice,
   medication: medicationSlice,
   message: messageSlice,
-  estimation: estimationSlice,
-  notifications: notificationsSlice,
+  chatnotification: chatnotificationSlice,
+  hfsnotification: hfsnotificationSlice,
   personal: personalSlice,
   estimationHFS: estimationHFSSlice,
 });
@@ -26,7 +26,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: [], 
+  blacklist: ["message"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -37,15 +37,21 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: false,
     }),
-  devTools: process.env.NODE_ENV !== 'production' && {
+  devTools: process.env.NODE_ENV !== "production" && {
     serialize: {
       options: {
-        maxDepth: 2, // กำหนดความลึกสูงสุดของ serialization
+        maxDepth: 2,
       },
     },
-    actionsDenylist: ['SOME_LARGE_ACTION_TYPE'], 
-    stateSanitizer: (state) => state.largeProperty ? { ...state, largeProperty: '<<LARGE_STATE>>' } : state,
-    actionSanitizer: (action) => action.type === 'SOME_LARGE_ACTION_TYPE' ? { ...action, largeProperty: '<<LARGE_ACTION>>' } : action,
+    actionsDenylist: ["SOME_LARGE_ACTION_TYPE"],
+    stateSanitizer: (state) =>
+      state.largeProperty
+        ? { ...state, largeProperty: "<<LARGE_STATE>>" }
+        : state,
+    actionSanitizer: (action) =>
+      action.type === "SOME_LARGE_ACTION_TYPE"
+        ? { ...action, largeProperty: "<<LARGE_ACTION>>" }
+        : action,
   },
 });
 

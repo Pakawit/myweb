@@ -5,12 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { addMessage, fetchMessagesThunk } from "../features/messageSlice";
-import { removeNotificationThunk } from "../features/notificationsSlice";
+import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 
 function Chat() {
   const messages = useSelector((state) => state.message) || [];
   const selectuser = useSelector((state) => state.selectuser);
-  const notifications = useSelector((state) => state.notifications) || [];
+  const chatnotification = useSelector((state) => state.chatnotification) || [];
   const [message, setMessage] = useState("");
   const { API_BASE_URL } = useContext(AppContext);
   const messageEndRef = useRef(null);
@@ -48,18 +48,23 @@ function Chat() {
   }, [dispatch, selectuser]);
 
   useEffect(() => {
-    if (selectuser && notifications.length > 0) {
-      if (previousSelectUser.current !== selectuser) {
-        const notificationToRemove = notifications.find(
+    if (selectuser && chatnotification.length > 0) {
+      if (
+        !previousSelectUser.current ||
+        previousSelectUser.current._id !== selectuser._id
+      ) {
+        const notificationToRemove = chatnotification.find(
           (notification) => notification.from === selectuser._id
         );
+
         if (notificationToRemove) {
-          dispatch(removeNotificationThunk(selectuser._id));
+          dispatch(removeChatNotificationThunk(selectuser._id));
         }
-        previousSelectUser.current = selectuser;
+
+        previousSelectUser.current = selectuser; // อัพเดต selectuser ที่เลือกไว้ก่อนหน้า
       }
     }
-  }, [selectuser, notifications, dispatch]);
+  }, [selectuser, chatnotification, dispatch]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];
@@ -93,12 +98,11 @@ function Chat() {
     const stickerPath = `/img/${stickerName}`;
 
     try {
-
       const response = await fetch(stickerPath);
       const blob = await response.blob();
 
       const formData = new FormData();
-      formData.append("photo", blob, stickerName);  
+      formData.append("photo", blob, stickerName);
       formData.append("from", "admin");
       formData.append("to", selectuser._id);
       formData.append("date", todayDate);
@@ -115,7 +119,7 @@ function Chat() {
     } catch (error) {
       console.error("Error handling sticker selection:", error);
     } finally {
-      setShowStickersModal(false); 
+      setShowStickersModal(false);
     }
   };
 
@@ -224,12 +228,12 @@ function Chat() {
                 hidden
                 accept="image/png, image/jpeg"
                 onChange={validateImg}
-                ref={fileInputRef} 
+                ref={fileInputRef}
               />
 
               <Button
                 variant="outline-dark"
-                onClick={() => fileInputRef.current.click()} 
+                onClick={() => fileInputRef.current.click()}
               >
                 <i className="bi bi-image"></i>
               </Button>

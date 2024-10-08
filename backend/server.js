@@ -13,17 +13,17 @@ const path = require("path");
 const multer = require("multer");
 const upload = multer();
 
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: "2mb" }));
+app.use(express.json({ limit: "2mb" }));
 app.use(cors());
 
 // File paths
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
-const ESTIMATIONS_FILE_PATH = path.join(BASE_PATH, "estimations.json");
 const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, "estimationHFS.json");
 const PERSONAL_FILE_PATH = path.join(BASE_PATH, "personal.json");
+const HFS_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "hfsnotification.json");
 
 // ฟังก์ชันอ่านไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
 const readJSONFile = async (filePath) => {
@@ -46,7 +46,7 @@ const writeJSONFile = async (filePath, data) => {
 };
 
 // Notification helpers
-app.get("/getnotifications", async (req, res) => {
+app.get("/getchatnotification", async (req, res) => {
   try {
     const notifications = await Notification.find();
     res.json(notifications);
@@ -55,7 +55,7 @@ app.get("/getnotifications", async (req, res) => {
   }
 });
 
-const updateNotification = async (from) => {
+const updateChatNotification = async (from) => {
   try {
     const userExists = await User.findById(from);
     if (!userExists) {
@@ -75,7 +75,7 @@ const updateNotification = async (from) => {
   }
 };
 
-app.post("/removeNotification", async (req, res) => {
+app.post("/removechatnotification", async (req, res) => {
   const { userId } = req.body;
   try {
     await Notification.deleteOne({ userId });
@@ -101,7 +101,7 @@ app.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
     const admin = await Admin.findByCredentials(name, password);
-    
+
     await Log.create({
       action: "admin login",
       user: name,
@@ -344,11 +344,16 @@ app.put("/updatemedication", async (req, res) => {
 
 // Estimation
 app.post("/getestimation", async (req, res) => {
+  const { from } = req.body; // รับค่า _id ของ selectuser
+
   try {
-    const estimations = await Estimation.find();
-    await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
+    // ดึงข้อมูลการประเมินตาม _id ของ selectuser
+    const estimations = await Estimation.find({ from });
+
+    // ส่งข้อมูลกลับไปยัง client
     res.json(estimations);
-  } catch (err) {
+  } catch (error) {
+    console.error("Error fetching estimations:", error);
     res.status(500).json({ error: "Error fetching estimations" });
   }
 });
@@ -365,8 +370,20 @@ app.post("/getHFSDetails", async (req, res) => {
 app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
-    const estimations = await Estimation.find();
-    await writeJSONFile(ESTIMATIONS_FILE_PATH, estimations);
+
+    // อ่านไฟล์ hfsnotification.json เพื่ออัปเดตข้อมูลการแจ้งเตือน
+    let notifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
+
+    // เพิ่มการแจ้งเตือนสำหรับการสร้างการประเมินใหม่
+    notifications.push({
+      estimationId: estimation._id,
+      userId: estimation.from,
+      timestamp: new Date().toISOString(),
+    });
+
+    // เขียนข้อมูลการแจ้งเตือนกลับไปที่ไฟล์
+    await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, notifications);
+
     res.json(estimation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -374,7 +391,7 @@ app.post("/createstimation", async (req, res) => {
 });
 
 app.put("/evaluateHFS", async (req, res) => {
-  const { estimationId, user, adminName, hfsLevel } = req.body; // ใช้ estimationId แทน userId
+  const { estimationId, user, adminName, hfsLevel } = req.body;
 
   try {
     // อ่านข้อมูลจาก estimationHFS.json
@@ -395,59 +412,66 @@ app.put("/evaluateHFS", async (req, res) => {
     // ตรวจสอบว่าทั้ง admin1 และ admin2 ประเมินแล้วหรือยัง
     if (admin1?.hfsLevel !== undefined && admin2?.hfsLevel !== undefined) {
       if (admin1.hfsLevel === admin2.hfsLevel) {
-        // ถ้าผลการประเมินตรงกัน ให้แก้ไข hfsLevel ในฐานข้อมูล MongoDB
         const updatedEstimation = await Estimation.findOneAndUpdate(
-          { _id: estimationId }, // ใช้ _id แทนการค้นหาด้วย userId
-          { hfsLevel: admin1.hfsLevel }, // อัปเดตค่า hfsLevel ให้เป็นค่าที่ทั้งคู่เห็นตรงกัน
-          { new: true } // ส่งคืนเอกสารที่ถูกอัปเดตแล้ว
+          { _id: estimationId },
+          { hfsLevel: admin1.hfsLevel },
+          { new: true }
         );
 
-        // ส่งข้อมูลอัปเดตกลับไปยัง client
+        let hfsNotifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
+        hfsNotifications = hfsNotifications.filter(
+          (n) => n.estimationId !== estimationId
+        );
+        await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
+
         res.json({
-          message: `Both admins agreed on HFS level ${admin1.hfsLevel === 5 ? "ไม่พบอาการ" : admin1.hfsLevel}. Estimation updated.`,
+          message: `Both admins agreed on HFS level ${
+            admin1.hfsLevel === 5 ? "ไม่พบอาการ" : admin1.hfsLevel
+          }. Estimation updated.`,
           updatedEstimation,
         });
 
         await Log.create({
           action: "ประเมินอาการ HFS",
           user: adminName,
-          details: `ประเมินอาการโดย ${adminName}`,
+          details: `ประเมินอาการ ${user.name} เสร็จสิ้น`,
         });
 
-        // ลบเฉพาะข้อมูลของ estimationId นี้จาก estimationHFS.json
-        delete estimationsHFS[estimationId]; // ลบข้อมูลเฉพาะ estimationId ที่ทำการประเมินเสร็จแล้ว
+        delete estimationsHFS[estimationId];
 
-        // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
         await Log.create({
           action: "ประเมินอาการ HFS",
-          user: 'admin',
-          details: `ประเมินอาการผิดพลาด`,
+          user: adminName,
+          details: `ประเมินอาการ ${user.name} ผิดพลาด`,
         });
-        // ถ้าผลการประเมินไม่ตรงกัน ให้รีเซ็ตการประเมินของทั้งคู่ในไฟล์ JSON
+
         delete estimation.evaluations.admin1.hfsLevel;
         delete estimation.evaluations.admin2.hfsLevel;
         res.json({ message: "Admins did not agree, please evaluate again." });
       }
     } else {
-      // ถ้าผลการประเมินยังไม่ครบทั้งสองคน
-
       await Log.create({
         action: "ประเมินอาการ HFS",
         user: adminName,
         details: `ประเมินอาการโดย ${adminName}`,
       });
-      
-      const admin1Status = admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : admin1?.hfsLevel;
-      const admin2Status = admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : admin2?.hfsLevel;
+
+      const admin1Status =
+        admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : admin1?.hfsLevel;
+      const admin2Status =
+        admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : admin2?.hfsLevel;
 
       res.json({
-        message: `Waiting for ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} to evaluate. Current: ${admin1?.hfsLevel === undefined ? admin2Status : admin1Status}`,
+        message: `Waiting for ${
+          admin1?.hfsLevel === undefined ? "admin1" : "admin2"
+        } to evaluate. Current: ${
+          admin1?.hfsLevel === undefined ? admin2Status : admin1Status
+        }`,
       });
     }
 
-    // บันทึกการเปลี่ยนแปลงกลับไปที่ estimationHFS.json
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -483,7 +507,7 @@ app.post("/createmessage", async (req, res) => {
       time,
     });
 
-    await updateNotification(from);
+    await updateChatNotification(from);
 
     res.json(newMessage);
   } catch (err) {
@@ -506,7 +530,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
       time,
     });
 
-    await updateNotification(from);
+    await updateChatNotification(from);
 
     res.json(newMessage);
   } catch (error) {

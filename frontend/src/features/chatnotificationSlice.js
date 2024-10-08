@@ -3,11 +3,13 @@ import axios from "axios";
 
 const initialState = [];
 
-export const fetchNotificationsThunk = createAsyncThunk(
-  "notifications/fetchNotifications",
+export const fetchChatNotificationThunk = createAsyncThunk(
+  "chatnotification/fetchChatNotifications",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:4452/getnotifications");
+      const response = await axios.get(
+        "http://localhost:4452/getchatnotification"
+      );
       return response.data;
     } catch (error) {
       return rejectWithValue("Failed to fetch notifications");
@@ -15,15 +17,18 @@ export const fetchNotificationsThunk = createAsyncThunk(
   }
 );
 
-export const removeNotificationThunk = createAsyncThunk(
-  "notifications/removeNotificationThunk",
+export const removeChatNotificationThunk = createAsyncThunk(
+  "chatnotification/removeChatNotificationThunk",
   async (from, { dispatch, rejectWithValue }) => {
     try {
-      const response = await axios.post("http://localhost:4452/removeNotification", {
-        from,
-      });
+      const response = await axios.post(
+        "http://localhost:4452/removechatnotification",
+        {
+          from,
+        }
+      );
       if (response.status === 200) {
-        dispatch(removeNotification(from));
+        dispatch(removeChatNotification(from));
       }
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -31,27 +36,28 @@ export const removeNotificationThunk = createAsyncThunk(
   }
 );
 
-const notificationsSlice = createSlice({
-  name: "notifications",
+const chatnotificationSlice = createSlice({
+  name: "chatnotification",
   initialState,
   reducers: {
-    addNotification: (state, action) => {
+    addChatNotification: (state, action) => {
       return action.payload; // อัปเดตด้วยข้อมูลที่ดึงมา
     },
-    removeNotification: (state, action) => {
+    removeChatNotification: (state, action) => {
       return state.filter((n) => n.from !== action.payload);
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchNotificationsThunk.fulfilled, (state, action) => {
+      .addCase(fetchChatNotificationThunk.fulfilled, (state, action) => {
         return action.payload; // อัปเดตสถานะด้วยข้อมูลที่ดึงมา
       })
-      .addCase(removeNotificationThunk.rejected, (state, action) => {
+      .addCase(removeChatNotificationThunk.rejected, (state, action) => {
         console.error("Failed to remove notification:", action.payload);
       });
   },
 });
 
-export const { addNotification, removeNotification } = notificationsSlice.actions;
-export default notificationsSlice.reducer;
+export const { addChatNotification, removeChatNotification } =
+  chatnotificationSlice.actions;
+export default chatnotificationSlice.reducer;

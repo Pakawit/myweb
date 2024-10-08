@@ -1,5 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Row, Col, Table, Button, Pagination } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Pagination,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -7,8 +14,7 @@ import "./style.css";
 import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
-import { fetchEstimationsThunk } from "../features/estimationSlice";
-import { addNotification } from "../features/notificationsSlice";
+import { fetchHFSNotificationsThunk } from "../features/hfsnotificationSlice"; // Import HFS notification thunk
 import axios from "axios";
 import { AppContext } from "../context/appContext";
 
@@ -16,7 +22,7 @@ function Home() {
   const admin = useSelector((state) => state.admin);
   const users = useSelector((state) => state.users) || [];
   const medication = useSelector((state) => state.medication) || [];
-  const estimation = useSelector((state) => state.estimation) || [];
+  const hfsNotifications = useSelector((state) => state.hfsnotification) || []; // Get notifications from store
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
@@ -30,7 +36,6 @@ function Home() {
         await axios.all([
           axios.get(`${API_BASE_URL}/getusers`),
           axios.post(`${API_BASE_URL}/getmedication`),
-          axios.post(`${API_BASE_URL}/getestimation`),
         ]);
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -38,42 +43,47 @@ function Home() {
     };
 
     dispatch(deleteselectuser());
-    dispatch(addNotification());
     dispatch(fetchUsersThunk());
     dispatch(fetchMedicationsThunk());
-    dispatch(fetchEstimationsThunk());
+    dispatch(fetchHFSNotificationsThunk()); // Dispatch HFS notification
 
     const intervalId = setInterval(() => {
       dispatch(fetchUsersThunk());
       dispatch(fetchMedicationsThunk());
-      dispatch(fetchEstimationsThunk());
+      dispatch(fetchHFSNotificationsThunk()); // Fetch HFS notifications regularly
     }, 5000);
 
-    window.addEventListener('beforeunload', fetchData);
+    window.addEventListener("beforeunload", fetchData);
 
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener('beforeunload', fetchData);
+      window.removeEventListener("beforeunload", fetchData);
     };
   }, [dispatch, API_BASE_URL]);
 
   const getLastMedicationStatus = (userId) => {
     const userMedications = medication.filter((med) => med.from === userId);
-    return userMedications.length > 0 ? userMedications[userMedications.length - 1].status : null;
+    return userMedications.length > 0
+      ? userMedications[userMedications.length - 1].status
+      : null;
   };
 
   const getMsMedicineCount = (userId) => {
-    return medication.filter((med) => med.from === userId && med.status === 0).length;
+    return medication.filter((med) => med.from === userId && med.status === 0)
+      .length;
   };
 
-  const hasEstimation = (userId) => {
-    return Array.isArray(estimation) && estimation.some((est) => est.from === userId && est.hfsLevel === 0);
+  const hasHFSNotification = (userId) => {
+    return (
+      Array.isArray(hfsNotifications) &&
+      hfsNotifications.some((notification) => notification.userId === userId)
+    );
   };
 
   const sortedUsers = users.slice().sort((a, b) => {
     const statusA = getLastMedicationStatus(a._id);
     const statusB = getLastMedicationStatus(b._id);
-    if (statusA === null) return 1; 
+    if (statusA === null) return 1;
     if (statusB === null) return -1;
     return statusA - statusB;
   });
@@ -118,6 +128,10 @@ function Home() {
       }
     }
 
+    const hfsButtonVariant = hasHFSNotification(userData._id)
+      ? "outline-warning"
+      : "outline-success"; // Set button color
+
     return (
       <tr key={userData._id} className={rowClass}>
         <td className="table-center">{userData.name}</td>
@@ -130,10 +144,30 @@ function Home() {
           </Button>
         </td>
         <td className="table-center">
-          <Button variant="outline-success" onClick={() => handleNavigation(userData, "/personal")}>ข้อมูลส่วนบุคคล</Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/medication")}>รายละเอียดการกินยา</Button>
-          <Button variant={hasEstimation(userData._id) ? "outline-warning" : "outline-success"} onClick={() => handleNavigation(userData, "/estimation")}>การประเมินอาการ HFS</Button>
-          <Button variant={`outline-${buttonVariant}`} onClick={() => handleNavigation(userData, "/chat")}>แชท</Button>
+          <Button
+            variant="outline-success"
+            onClick={() => handleNavigation(userData, "/personal")}
+          >
+            ข้อมูลส่วนบุคคล
+          </Button>
+          <Button
+            variant={`outline-${buttonVariant}`}
+            onClick={() => handleNavigation(userData, "/medication")}
+          >
+            รายละเอียดการกินยา
+          </Button>
+          <Button
+            variant={hfsButtonVariant}
+            onClick={() => handleNavigation(userData, "/estimation")}
+          >
+            การประเมินอาการ HFS
+          </Button>
+          <Button
+            variant={`outline-${buttonVariant}`}
+            onClick={() => handleNavigation(userData, "/chat")}
+          >
+            แชท
+          </Button>
         </td>
       </tr>
     );
@@ -144,7 +178,7 @@ function Home() {
       <Navigation />
       <Row>
         <Col>
-          <Table responsive striped bordered hover >
+          <Table responsive striped bordered hover>
             <thead>
               <tr>
                 <th className="table-center">ชื่อ-สกุล</th>
@@ -155,20 +189,34 @@ function Home() {
                 <th>{}</th>
               </tr>
             </thead>
-            <tbody>
-              {paginatedUsers.map(renderUserRows)}
-            </tbody>
+            <tbody>{paginatedUsers.map(renderUserRows)}</tbody>
           </Table>
           <Pagination className="justify-content-end">
-            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
-            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+            <Pagination.First
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+            />
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            />
             {[...Array(totalPages).keys()].map((pageNumber) => (
-              <Pagination.Item key={pageNumber + 1} active={pageNumber + 1 === currentPage} onClick={() => handlePageChange(pageNumber + 1)}>
+              <Pagination.Item
+                key={pageNumber + 1}
+                active={pageNumber + 1 === currentPage}
+                onClick={() => handlePageChange(pageNumber + 1)}
+              >
                 {pageNumber + 1}
               </Pagination.Item>
             ))}
-            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
-            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            />
+            <Pagination.Last
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+            />
           </Pagination>
         </Col>
       </Row>

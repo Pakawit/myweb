@@ -13,22 +13,20 @@ import { useNavigate } from "react-router-dom";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
-import { deleteEstimation } from "../features/estimationSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchNotificationsThunk } from "../features/notificationsSlice";
-import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import { fetchChatNotificationThunk } from "../features/chatnotificationSlice";
 import { fetchPersonalDataThunk } from "../features/personalSlice";
+import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-
 
 function Navigation() {
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser) || {};
   const { API_BASE_URL } = useContext(AppContext);
   const location = useLocation();
-  const notifications = useSelector((state) => state.notifications) || [];
+  const chatnotification = useSelector((state) => state.chatnotification) || [];
   const users = useSelector((state) => state.users) || [];
   const personal = useSelector((state) => state.personal) || {};
   const estimationHFS = useSelector((state) => state.estimationHFS) || {};
@@ -36,14 +34,14 @@ function Navigation() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    dispatch(fetchNotificationsThunk());
-    dispatch(fetchEstimationHFSThunk());
+    dispatch(fetchChatNotificationThunk());
     dispatch(fetchPersonalDataThunk());
+    dispatch(fetchEstimationHFSThunk());
     const intervalId = setInterval(() => {
-      dispatch(fetchNotificationsThunk());
-      dispatch(fetchEstimationHFSThunk());
+      dispatch(fetchChatNotificationThunk());
       dispatch(fetchPersonalDataThunk());
-    }, 5000);
+      dispatch(fetchEstimationHFSThunk());
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
@@ -63,7 +61,6 @@ function Navigation() {
         dispatch(deleteUsers()),
         dispatch(deleteMedication()),
         dispatch(deleteMessage()),
-        dispatch(deleteEstimation()),
         dispatch(deleteAdmin()),
       ]);
 
@@ -82,7 +79,7 @@ function Navigation() {
       const user = users.find((user) => user._id === notification.from);
       if (user) {
         try {
-          dispatch(setselectuser(user)); 
+          dispatch(setselectuser(user));
           navigate("/chat");
         } catch (error) {
           console.error("Error handling notification click:", error);
@@ -94,7 +91,7 @@ function Navigation() {
   const handlePersonalNotificationClick = async (userId) => {
     if (userId && personal[userId]) {
       try {
-        dispatch(setselectuser(personal[userId])); 
+        dispatch(setselectuser(personal[userId]));
         navigate("/personal");
       } catch (error) {
         console.error("Error handling personal notification click:", error);
@@ -105,7 +102,7 @@ function Navigation() {
   const handleHFSNotificationClick = async (estimationId) => {
     if (estimationId && estimationHFS[estimationId]) {
       try {
-        dispatch(setselectuser(estimationHFS[estimationId].user)); 
+        dispatch(setselectuser(estimationHFS[estimationId].user));
         navigate("/estimation");
       } catch (error) {
         console.error("Error handling HFS notification click:", error);
@@ -117,7 +114,10 @@ function Navigation() {
 
   return (
     <Navbar>
-      <Container fluid className="d-flex align-items-center justify-content-between">
+      <Container
+        fluid
+        className="d-flex align-items-center justify-content-between"
+      >
         <Button
           variant="outline-dark"
           onClick={back}
@@ -180,22 +180,19 @@ function Navigation() {
           </Dropdown>
 
           <Dropdown className="me-2">
-            <Dropdown.Toggle
-              variant="outline-dark"
-              id="dropdown-basic"
-            >
+            <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
               <i className="bi bi-bell"></i>
-              {notifications.length > 0 && (
+              {chatnotification.length > 0 && (
                 <Badge pill bg="danger" style={{ marginLeft: "5px" }}>
-                  {notifications.length}
+                  {chatnotification.length}
                 </Badge>
               )}
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {notifications.length === 0 ? (
+              {chatnotification.length === 0 ? (
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
-                notifications.map((notification) => {
+                chatnotification.map((notification) => {
                   if (!notification || !notification.from) return null;
                   const user = users.find(
                     (user) => user._id === notification.from

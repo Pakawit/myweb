@@ -13,16 +13,15 @@ import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { fetchEstimationsThunk } from "../features/estimationSlice";
 import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
 
 function Estimation() {
   const admin = useSelector((state) => state.admin);
   const { API_BASE_URL } = useContext(AppContext);
-  const estimation = useSelector((state) => state.estimation) || [];
   const estimationHFS = useSelector((state) => state.estimationHFS) || {};
-  const selectuser = useSelector((state) => state.selectuser)|| {};
+  const selectuser = useSelector((state) => state.selectuser) || {};
   const dispatch = useDispatch();
+  const [estimations, setEstimations] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
@@ -31,15 +30,28 @@ function Estimation() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
+  const fetchEstimations = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/getestimation`, {
+        from: selectuser._id,
+      });
+      setEstimations(response.data);
+    } catch (error) {
+      console.error("Error fetching estimations:", error);
+    }
+  };
+
   useEffect(() => {
-    dispatch(fetchEstimationsThunk());
     dispatch(fetchEstimationHFSThunk());
+    fetchEstimations();
+
     const intervalId = setInterval(() => {
-      dispatch(fetchEstimationsThunk());
+      fetchEstimations();
       dispatch(fetchEstimationHFSThunk());
-    }, 5000);
+    }, 3000);
+
     return () => clearInterval(intervalId);
-  }, [dispatch]);
+  }, [dispatch, selectuser, API_BASE_URL]);
 
   const handleHfsLevelChange = (estimationId, level) => {
     setHfsLevels((prevLevels) => ({
@@ -49,24 +61,22 @@ function Estimation() {
   };
 
   const handleSubmit = async (estimationId) => {
-    const hfsLevel = hfsLevels[estimationId]; // ใช้ estimationId แทน userId
+    const hfsLevel = hfsLevels[estimationId];
     if (hfsLevel !== undefined && hfsLevel !== 0) {
       try {
         const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
-          estimationId: estimationId, // ส่ง estimationId แทน userId
+          estimationId,
           user: selectuser,
           adminName: admin.name,
           hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
         });
 
-        // แสดงข้อความตอบกลับจากเซิร์ฟเวอร์
         setNotificationMessage(response.data.message);
         setShowNotificationModal(true);
 
-        // ดึงข้อมูลการประเมินล่าสุด
-        dispatch(fetchEstimationsThunk());
+        await fetchEstimations();
+
         dispatch(fetchEstimationHFSThunk());
-        await axios.post(`${API_BASE_URL}/getestimation`);
       } catch (error) {
         console.error("Error submitting evaluation:", error);
       }
@@ -92,13 +102,11 @@ function Estimation() {
     return `${year}-${month}-${day}`;
   };
 
-  const filteredEstimations = estimation
-    .filter((est) => est.from === selectuser._id)
-    .sort((a, b) => {
-      const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
-      const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
-      return dateA < dateB ? 1 : -1;
-    });
+  const filteredEstimations = estimations.sort((a, b) => {
+    const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
+    const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
+    return dateA < dateB ? 1 : -1;
+  });
 
   const totalPages = Math.ceil(filteredEstimations.length / itemsPerPage);
 
@@ -151,22 +159,18 @@ function Estimation() {
     const admin1Level = evaluations.admin1?.hfsLevel;
     const admin2Level = evaluations.admin2?.hfsLevel;
 
-    // ถ้า hfsLevel เป็น 0 จะไม่สนใจ
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
       return { disabled: false, message: "ยืนยัน" };
     }
 
-    // ถ้าทั้งสองคนประเมินแล้วและมีค่าเท่ากัน
     if (Object.keys(evaluations).length === 0) {
       return { disabled: true, message: "ประเมินแล้ว" };
     }
 
-    // ถ้า admin1 ประเมินแล้ว admin1 จะไม่สามารถประเมินได้อีก
     if (admin1Level !== undefined && admin.name === "admin1") {
       return { disabled: true, message: "รอการประเมินจาก Admin2" };
     }
 
-    // ถ้า admin2 ประเมินแล้ว admin2 จะไม่สามารถประเมินได้อีก
     if (admin2Level !== undefined && admin.name === "admin2") {
       return { disabled: true, message: "รอการประเมินจาก Admin1" };
     }
@@ -193,7 +197,7 @@ function Estimation() {
             </thead>
             <tbody>
               {paginatedEstimations.length > 0 ? (
-                paginatedEstimations.map((est, index) => {
+                paginatedEstimations.map((est) => {
                   const { disabled, message } = checkEstimationStatus(
                     est._id,
                     est.hfsLevel
@@ -276,7 +280,7 @@ function Estimation() {
                               ? "outline-secondary"
                               : "outline-success"
                           }
-                          onClick={() => handleSubmit(est._id)} // ใช้ estimationId แทนการส่ง userId
+                          onClick={() => handleSubmit(est._id)}
                           disabled={disabled}
                         >
                           {disabled ? message : "ยืนยัน"}
