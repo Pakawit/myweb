@@ -41,7 +41,7 @@ function Navigation() {
       dispatch(fetchChatNotificationThunk());
       dispatch(fetchPersonalDataThunk());
       dispatch(fetchEstimationHFSThunk());
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
