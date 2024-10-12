@@ -1,16 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-// สถานะเริ่มต้นเป็น array เปล่า
 const initialState = [];
 
-// Thunk สำหรับดึงข้อมูล personal จาก JSON ไฟล์ที่ใช้ Dynamic Import
 export const fetchPersonalDataThunk = createAsyncThunk(
   "personal/fetchPersonalData",
   async (_, { rejectWithValue }) => {
     try {
-      // ดึงข้อมูลจากไฟล์ personal.json
       const personalData = await import('../json/personal.json');
-      return personalData.default; // คืนค่าข้อมูลที่ดึงมา
+      return personalData.default; 
     } catch (error) {
       return rejectWithValue("Failed to fetch personal data");
     }
@@ -26,12 +23,7 @@ export const personalSlice = createSlice({
     },
     deletePersonal: () => {
       return []; // ลบข้อมูลทั้งหมด
-    },
-    updatePersonal: (state, action) => {
-      return state.map(person =>
-        person._id === action.payload._id ? action.payload : person
-      ); // อัพเดตข้อมูลที่มีอยู่
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -44,6 +36,6 @@ export const personalSlice = createSlice({
   },
 });
 
-export const { addPersonal, deletePersonal, updatePersonal } = personalSlice.actions;
+export const { addPersonal, deletePersonal } = personalSlice.actions;
 
 export default personalSlice.reducer;

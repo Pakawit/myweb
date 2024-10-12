@@ -6,15 +6,15 @@ import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchPersonalDataThunk } from "../features/personalSlice"; // Ensure you're importing the personal data slice
+import { fetchPersonalDataThunk } from "../features/personalSlice"; 
 
 function Personal() {
-  const admin = useSelector((state) => state.admin); // ใช้ admin จาก Redux state
-  const selectuser = useSelector((state) => state.selectuser) || {}; // ดึงข้อมูลของผู้ป่วยที่ถูกเลือก
+  const admin = useSelector((state) => state.admin); 
+  const selectuser = useSelector((state) => state.selectuser) || {}; 
   const medication = useSelector((state) => state.medication) || [];
-  const personal = useSelector((state) => state.personal); // Get the personal data state from Redux
+  const personal = useSelector((state) => state.personal); 
   const { API_BASE_URL } = useContext(AppContext);
-  const [member, setMember] = useState(selectuser || {}); // เริ่มต้นให้ member เป็น object ว่าง
+  const [member, setMember] = useState(selectuser || {}); 
   const [errors, setErrors] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -26,8 +26,8 @@ function Personal() {
       try {
         const response = await axios.post(`${API_BASE_URL}/getuser`, { id: selectuser._id });
         const updatedUser = response.data;
-        setMember(updatedUser); // อัปเดต state
-        dispatch(setselectuser(updatedUser)); // เก็บข้อมูลใหม่ใน Redux
+        setMember(updatedUser); 
+        dispatch(setselectuser(updatedUser)); 
       } catch (error) {
         console.error("Error fetching user details:", error);
       }
@@ -36,14 +36,14 @@ function Personal() {
 
   useEffect(() => {
     if (selectuser && selectuser._id && !editMode) {
-      const intervalId = setInterval(fetchUserDetails, 3000); // ดึงข้อมูลทุกๆ 3 วินาที
+      const intervalId = setInterval(fetchUserDetails, 3000); 
       return () => clearInterval(intervalId); // ล้าง interval เมื่อ component ถูก unmount
     }
   }, [selectuser, editMode]);
 
   useEffect(() => {
     dispatch(fetchMedicationsThunk());
-    dispatch(fetchPersonalDataThunk()); // Fetch the personal.json data
+    dispatch(fetchPersonalDataThunk()); 
   }, [dispatch]);
 
   const validate = (name, value) => {

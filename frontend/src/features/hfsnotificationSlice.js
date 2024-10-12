@@ -30,7 +30,7 @@ export const hfsnotificationSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchHFSNotificationsThunk.fulfilled, (state, action) => {
-        return action.payload; // อัพเดตสถานะด้วยข้อมูลที่ดึงมา
+        return action.payload; 
       })
       .addCase(fetchHFSNotificationsThunk.rejected, () => {
         console.error("Failed to fetch HFS notifications");

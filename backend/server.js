@@ -130,7 +130,6 @@ app.post("/admin/logout", async (req, res) => {
 });
 
 // Personal
-
 app.get("/getPendingChanges", async (req, res) => {
   try {
     const pendingChanges = await readJSONFile(PERSONAL_FILE_PATH);
@@ -141,7 +140,7 @@ app.get("/getPendingChanges", async (req, res) => {
 });
 
 app.post("/saveChangesToJson", async (req, res) => {
-  const { changes } = req.body; // รับข้อมูล _id และ changes จาก request
+  const { changes } = req.body;
   try {
     await Log.create({
       action: "แก้ไขข้อมูล",
@@ -149,7 +148,7 @@ app.post("/saveChangesToJson", async (req, res) => {
       details: `แก้ไขข้อมูล ${changes.name}`,
     });
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
-    personalData[changes._id] = changes; // ใช้ _id แทน userId
+    personalData[changes._id] = changes;
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     res.json({ message: "Changes saved to personal.json", changes });
   } catch (error) {
@@ -158,7 +157,7 @@ app.post("/saveChangesToJson", async (req, res) => {
 });
 
 app.post("/confirmChanges", async (req, res) => {
-  const { _id, name } = req.body; // รับ _id แทน userId
+  const { _id, name } = req.body;
   try {
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
     const pendingChange = personalData[_id];
@@ -166,7 +165,6 @@ app.post("/confirmChanges", async (req, res) => {
       return res.status(404).json({ message: "No pending changes found" });
     }
 
-    // อัปเดตข้อมูลในฐานข้อมูล MongoDB
     await User.findByIdAndUpdate(_id, pendingChange, { new: true });
 
     await Log.create({
@@ -175,11 +173,9 @@ app.post("/confirmChanges", async (req, res) => {
       details: `ยืนยันการแก้ไขข้อมูล ${name}`,
     });
 
-    // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
-    personalData[_id] = pendingChange; // ยืนยันการเปลี่ยนแปลง
+    personalData[_id] = pendingChange; // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
 
-    // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
-    delete personalData[_id];
+    delete personalData[_id]; // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     const users = await User.find();
     await writeJSONFile(USERS_FILE_PATH, users);
@@ -193,7 +189,7 @@ app.post("/confirmChanges", async (req, res) => {
 });
 
 app.post("/rejectChanges", async (req, res) => {
-  const { _id, name } = req.body; // ใช้ _id แทน userId
+  const { _id, name } = req.body;
   try {
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
     const pendingChange = personalData[_id];
@@ -344,13 +340,11 @@ app.put("/updatemedication", async (req, res) => {
 
 // Estimation
 app.post("/getestimation", async (req, res) => {
-  const { from } = req.body; // รับค่า _id ของ selectuser
+  const { from } = req.body;
 
   try {
-    // ดึงข้อมูลการประเมินตาม _id ของ selectuser
-    const estimations = await Estimation.find({ from });
+    const estimations = await Estimation.find({ from }); // ดึงข้อมูลการประเมินตาม _id ของ selectuser
 
-    // ส่งข้อมูลกลับไปยัง client
     res.json(estimations);
   } catch (error) {
     console.error("Error fetching estimations:", error);
@@ -371,17 +365,14 @@ app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
 
-    // อ่านไฟล์ hfsnotification.json เพื่ออัปเดตข้อมูลการแจ้งเตือน
     let notifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
 
-    // เพิ่มการแจ้งเตือนสำหรับการสร้างการประเมินใหม่
     notifications.push({
       estimationId: estimation._id,
       userId: estimation.from,
       timestamp: new Date().toISOString(),
-    });
+    }); // เพิ่มการแจ้งเตือนสำหรับการสร้างการประเมินใหม่
 
-    // เขียนข้อมูลการแจ้งเตือนกลับไปที่ไฟล์
     await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, notifications);
 
     res.json(estimation);
@@ -394,17 +385,14 @@ app.put("/evaluateHFS", async (req, res) => {
   const { estimationId, user, adminName, hfsLevel } = req.body;
 
   try {
-    // อ่านข้อมูลจาก estimationHFS.json
     let estimationsHFS = await readJSONFile(ESTIMATIONHFS_FILE_PATH);
 
-    // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
-    let estimation = estimationsHFS[estimationId]; // ใช้ estimationId
+    let estimation = estimationsHFS[estimationId]; // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
     if (!estimation) {
-      estimation = { estimationId, user, evaluations: {} }; // ใช้ estimationId แทน userId
+      estimation = { estimationId, user, evaluations: {} };
       estimationsHFS[estimationId] = estimation;
     }
 
-    // อัปเดตผลการประเมินของแอดมิน
     estimation.evaluations[adminName] = { hfsLevel };
 
     const { admin1, admin2 } = estimation.evaluations;
@@ -425,9 +413,7 @@ app.put("/evaluateHFS", async (req, res) => {
         await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
 
         res.json({
-          message: `Both admins agreed on HFS level ${
-            admin1.hfsLevel === 5 ? "ไม่พบอาการ" : admin1.hfsLevel
-          }. Estimation updated.`,
+          message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,
           updatedEstimation,
         });
 
@@ -449,7 +435,7 @@ app.put("/evaluateHFS", async (req, res) => {
 
         delete estimation.evaluations.admin1.hfsLevel;
         delete estimation.evaluations.admin2.hfsLevel;
-        res.json({ message: "Admins did not agree, please evaluate again." });
+        res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด` });
       }
     } else {
       await Log.create({
@@ -458,17 +444,10 @@ app.put("/evaluateHFS", async (req, res) => {
         details: `ประเมินอาการโดย ${adminName}`,
       });
 
-      const admin1Status =
-        admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : admin1?.hfsLevel;
-      const admin2Status =
-        admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : admin2?.hfsLevel;
-
       res.json({
-        message: `Waiting for ${
+        message: `ประเมินสำเร็จ กำลังรอ ${
           admin1?.hfsLevel === undefined ? "admin1" : "admin2"
-        } to evaluate. Current: ${
-          admin1?.hfsLevel === undefined ? admin2Status : admin1Status
-        }`,
+        } ประเมิน`,
       });
     }
 
@@ -496,7 +475,7 @@ app.post("/getmessage", async (req, res) => {
 
 app.post("/createmessage", async (req, res) => {
   try {
-    const { from, to, date, time, content } = req.body; // รับ selectuser จาก request
+    const { from, to, date, time, content } = req.body;
 
     const newMessage = await Message.create({
       content: content,
@@ -518,7 +497,7 @@ app.post("/createmessage", async (req, res) => {
 
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
-    const { from, to, date, time } = req.body; // รับ selectuser จาก request
+    const { from, to, date, time } = req.body;
     const image = req.file.buffer.toString("base64");
 
     const newMessage = await Message.create({
