@@ -24,19 +24,20 @@ import axios from "axios";
 function Navigation() {
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser) || {};
-  const { API_BASE_URL } = useContext(AppContext);
-  const location = useLocation();
-  const chatnotification = useSelector((state) => state.chatnotification) || [];
+  const chatnotification = useSelector((state) => state.chatnotification) || [];  
   const users = useSelector((state) => state.users) || [];
   const personal = useSelector((state) => state.personal) || {};
   const estimationHFS = useSelector((state) => state.estimationHFS) || {};
   const dispatch = useDispatch();
+  const { API_BASE_URL } = useContext(AppContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     dispatch(fetchChatNotificationThunk());
     dispatch(fetchPersonalDataThunk());
     dispatch(fetchEstimationHFSThunk());
+
     const intervalId = setInterval(() => {
       dispatch(fetchChatNotificationThunk());
       dispatch(fetchPersonalDataThunk());
@@ -193,7 +194,6 @@ function Navigation() {
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
                 chatnotification.map((notification) => {
-                  if (!notification || !notification.from) return null;
                   const user = users.find(
                     (user) => user._id === notification.from
                   );

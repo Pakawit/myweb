@@ -7,13 +7,13 @@ import {
   Button,
   Dropdown,
   Modal,
-  Pagination,
 } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import ReactPaginate from "react-paginate";
 
 function Estimation() {
   const admin = useSelector((state) => state.admin);
@@ -27,8 +27,8 @@ function Estimation() {
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [hfsLevels, setHfsLevels] = useState({});
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 2;
 
   const fetchEstimations = async () => {
     try {
@@ -108,15 +108,13 @@ function Estimation() {
     return dateA < dateB ? 1 : -1;
   });
 
-  const totalPages = Math.ceil(filteredEstimations.length / itemsPerPage);
-
   const paginatedEstimations = filteredEstimations.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected);
   };
 
   const renderPhotos = (photos) => {
@@ -298,33 +296,29 @@ function Estimation() {
               )}
             </tbody>
           </Table>
-          <Pagination className="justify-content-end">
-            <Pagination.First
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
+
+          {/* ซ่อน ReactPaginate เมื่อไม่มีข้อมูลเพียงพอ */}
+          {filteredEstimations.length > itemsPerPage && (
+            <ReactPaginate
+              previousLabel={"<"}
+              nextLabel={">"}
+              breakLabel={"..."}
+              pageCount={Math.ceil(filteredEstimations.length / itemsPerPage)}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={5}
+              onPageChange={handlePageChange}
+              containerClassName={"pagination justify-content-end"}
+              activeClassName={"active"}
+              pageClassName={"page-item"}
+              pageLinkClassName={"page-link"}
+              previousClassName={"page-item"}
+              previousLinkClassName={"page-link"}
+              nextClassName={"page-item"}
+              nextLinkClassName={"page-link"}
+              breakClassName={"page-item"}
+              breakLinkClassName={"page-link"}
             />
-            <Pagination.Prev
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            />
-            {[...Array(totalPages).keys()].map((pageNumber) => (
-              <Pagination.Item
-                key={pageNumber + 1}
-                active={pageNumber + 1 === currentPage}
-                onClick={() => handlePageChange(pageNumber + 1)}
-              >
-                {pageNumber + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            />
-            <Pagination.Last
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-            />
-          </Pagination>
+          )}
         </Col>
       </Row>
       <Modal show={showModal} onHide={handleCloseModal} centered>

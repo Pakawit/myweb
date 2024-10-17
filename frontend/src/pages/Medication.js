@@ -1,91 +1,81 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Row, Col, Table, Button, Pagination } from "react-bootstrap";
+import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
+import ReactPaginate from "react-paginate";
 
 function Medication() {
   const { API_BASE_URL } = useContext(AppContext);
-  const medication = useSelector((state) => state.medication) || [];
-  const selectuser = useSelector((state) => state.selectuser);
+  const medications = useSelector((state) => state.medication) || [];
+  const selectuser = useSelector((state) => state.selectuser) || {};
   const dispatch = useDispatch();
-
-  const [currentPage, setCurrentPage] = useState(1); 
-  const itemsPerPage = 10; 
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchData = () => {
-      axios.post(`${API_BASE_URL}/getmedication`);
-    };
+    const fetchData = () => axios.post(`${API_BASE_URL}/getmedication`);
     dispatch(fetchMedicationsThunk());
+    const intervalId = setInterval(
+      () => dispatch(fetchMedicationsThunk()),
+      5000
+    );
 
-    const intervalId = setInterval(() => {
-      dispatch(fetchMedicationsThunk());
-    }, 5000); 
-    window.addEventListener('beforeunload', fetchData);
-
+    window.addEventListener("beforeunload", fetchData);
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener('beforeunload', fetchData);
-    }
+      window.removeEventListener("beforeunload", fetchData);
+    };
   }, [dispatch, API_BASE_URL]);
 
-  const renderStatusButton = (status) => {
-    switch (status) {
-      case 0:
-        return (
-          <Button variant="danger" disabled>
-            ไม่ได้กิน
-          </Button>
-        );
-      case 1:
-        return (
-          <Button variant="warning" disabled>
-            รอกิน
-          </Button>
-        );
-      case 2:
-        return (
-          <Button variant="success" disabled>
-            กินแล้ว
-          </Button>
-        );
-      default:
-        return null;
-    }
+  const getStatusButton = (status) => {
+    const statusInfo = {
+      0: { variant: "danger", text: "ไม่ได้กิน" },
+      1: { variant: "warning", text: "รอกิน" },
+      2: { variant: "success", text: "กินแล้ว" },
+    };
+    const { variant, text } = statusInfo[status] || {};
+    return (
+      variant && (
+        <Button variant={variant} disabled>
+          {text}
+        </Button>
+      )
+    );
   };
 
-  const convertDate = (dateStr) => {
-    const [day, month, year] = dateStr.split('/');
-    return `${year}-${month}-${day}`;
+  const convertDateTime = (date, time) => {
+    const [day, month, year] = date.split("/");
+    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+      2,
+      "0"
+    )}`;
+    const formattedTime = time.padStart(5, "0");
+    return new Date(`${formattedDate}T${formattedTime}`);
   };
 
-  const filteredMedications = medication
+  const sortedMedications = medications
     .filter((med) => med.from === selectuser._id)
-    .sort((a, b) => {
-      const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
-      const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
-      return dateB - dateA; // Sort by descending date
-    });
+    .sort(
+      (a, b) =>
+        convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)
+    );
 
-  // console.log(filteredMedications); // ตรวจสอบข้อมูลที่ถูกเรียงลำดับ
-
-  const totalPages = Math.ceil(filteredMedications.length / itemsPerPage);
-
-  const paginatedMedications = filteredMedications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const totalPages = Math.ceil(sortedMedications.length / itemsPerPage);
+  const paginatedMedications = sortedMedications.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
+  const handlePageChange = (selectedPage) => {
+    setCurrentPage(selectedPage.selected);
   };
 
   return (
     <Container fluid>
-        <Navigation />
+      <Navigation />
       <Row>
         <h1>รายละเอียดการกินยา</h1>
       </Row>
@@ -94,52 +84,53 @@ function Medication() {
           <Table responsive striped bordered hover>
             <thead>
               <tr>
-                <th className="table-center" style={{ width: "33%" }}>
-                  วัน/เดือน/ปี
-                </th>
-                <th className="table-center" style={{ width: "33%" }}>
-                  เวลา
-                </th>
-                <th className="table-center" style={{ width: "33%" }}>
-                  สถานะ
-                </th>
+                <th className="table-center">วัน/เดือน/ปี</th>
+                <th className="table-center">เวลา</th>
+                <th className="table-center">สถานะ</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedMedications.length > 0 ? (
+              {paginatedMedications.length ? (
                 paginatedMedications.map((med, index) => (
                   <tr key={index}>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {med.date}
-                    </td>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {med.time}
-                    </td>
-                    <td className="table-center" style={{ width: "33%" }}>
-                      {renderStatusButton(med.status)}
+                    <td className="table-center">{med.date}</td>
+                    <td className="table-center">{med.time}</td>
+                    <td className="table-center">
+                      {getStatusButton(med.status)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="table-center" style={{ width: "100%" }}>
+                  <td colSpan={3} className="table-center">
                     ไม่มีข้อมูลการกินยา
                   </td>
                 </tr>
               )}
             </tbody>
           </Table>
-          <Pagination className="justify-content-end">
-            <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
-            <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
-            {[...Array(totalPages).keys()].map((pageNumber) => (
-              <Pagination.Item key={pageNumber + 1} active={pageNumber + 1 === currentPage} onClick={() => handlePageChange(pageNumber + 1)}>
-                {pageNumber + 1}
-              </Pagination.Item>
-            ))}
-            <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
-            <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
-          </Pagination>
+
+          {sortedMedications.length > itemsPerPage && (
+            <ReactPaginate
+              previousLabel={"<"}
+              nextLabel={">"}
+              breakLabel={"..."}
+              pageCount={totalPages}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={5}
+              onPageChange={handlePageChange}
+              containerClassName={"pagination justify-content-end"}
+              activeClassName={"active"}
+              pageClassName={"page-item"}
+              pageLinkClassName={"page-link"}
+              previousClassName={"page-item"}
+              previousLinkClassName={"page-link"}
+              nextClassName={"page-item"}
+              nextLinkClassName={"page-link"}
+              breakClassName={"page-item"}
+              breakLinkClassName={"page-link"}
+            />
+          )}
         </Col>
       </Row>
     </Container>

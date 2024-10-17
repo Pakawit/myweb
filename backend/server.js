@@ -5,7 +5,6 @@ const Admin = require("./models/Admin");
 const Message = require("./models/Message");
 const Medication = require("./models/Medication");
 const Estimation = require("./models/Estimation");
-const Notification = require("./models/Notification");
 const Log = require("./models/Log");
 const cors = require("cors");
 const fs = require("fs");
@@ -21,22 +20,25 @@ app.use(cors());
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
+const CHAT_NOTIFICATION_FILE_PATH = path.join(
+  BASE_PATH,
+  "chatnotification.json"
+);
 const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, "estimationHFS.json");
 const PERSONAL_FILE_PATH = path.join(BASE_PATH, "personal.json");
 const HFS_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "hfsnotification.json");
 
-// ฟังก์ชันอ่านไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
+// ฟังก์ชันอ่านไฟล์ JSON
 const readJSONFile = async (filePath) => {
   try {
     const data = await fs.promises.readFile(filePath, "utf8");
     return JSON.parse(data);
   } catch (err) {
-    // ถ้าไฟล์ยังไม่มีให้คืนค่าว่าง
     return {};
   }
 };
 
-// ฟังก์ชันเขียนไฟล์ JSON (ยืดหยุ่นรับพาธไฟล์)
+// ฟังก์ชันเขียนไฟล์ JSON
 const writeJSONFile = async (filePath, data) => {
   try {
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
@@ -44,46 +46,6 @@ const writeJSONFile = async (filePath, data) => {
     console.error("Error writing to JSON file:", err);
   }
 };
-
-// Notification helpers
-app.get("/getchatnotification", async (req, res) => {
-  try {
-    const notifications = await Notification.find();
-    res.json(notifications);
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching notifications" });
-  }
-});
-
-const updateChatNotification = async (from) => {
-  try {
-    const userExists = await User.findById(from);
-    if (!userExists) {
-      console.log("User not found, notification not created");
-      return;
-    }
-
-    const notification = await Notification.findOne({ from });
-    if (!notification) {
-      await Notification.create({ from });
-    } else {
-      console.log("Notification already exists for this user");
-    }
-    console.log("Notification updated successfully");
-  } catch (error) {
-    console.error("Error updating notification:", error.message);
-  }
-};
-
-app.post("/removechatnotification", async (req, res) => {
-  const { userId } = req.body;
-  try {
-    await Notification.deleteOne({ userId });
-    res.status(200).json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Admin
 app.post("/admin", async (req, res) => {
@@ -129,87 +91,33 @@ app.post("/admin/logout", async (req, res) => {
   }
 });
 
-// Personal
-app.get("/getPendingChanges", async (req, res) => {
+// User
+app.get("/getusers", async (req, res) => {
   try {
-    const pendingChanges = await readJSONFile(PERSONAL_FILE_PATH);
-    res.status(200).json(Object.values(pendingChanges)); // ส่งคืนข้อมูลเป็น array
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching pending changes" });
-  }
-});
-
-app.post("/saveChangesToJson", async (req, res) => {
-  const { changes } = req.body;
-  try {
-    await Log.create({
-      action: "แก้ไขข้อมูล",
-      user: "admin1",
-      details: `แก้ไขข้อมูล ${changes.name}`,
-    });
-    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
-    personalData[changes._id] = changes;
-    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
-    res.json({ message: "Changes saved to personal.json", changes });
-  } catch (error) {
-    res.status(500).json({ error: "Error saving changes to personal.json" });
-  }
-});
-
-app.post("/confirmChanges", async (req, res) => {
-  const { _id, name } = req.body;
-  try {
-    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
-    const pendingChange = personalData[_id];
-    if (!pendingChange) {
-      return res.status(404).json({ message: "No pending changes found" });
-    }
-
-    await User.findByIdAndUpdate(_id, pendingChange, { new: true });
-
-    await Log.create({
-      action: "แก้ไขข้อมูล",
-      user: "admin2",
-      details: `ยืนยันการแก้ไขข้อมูล ${name}`,
-    });
-
-    personalData[_id] = pendingChange; // อัปเดต personal.json ด้วยข้อมูลที่ถูกยืนยัน
-
-    delete personalData[_id]; // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
-    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     const users = await User.find();
     await writeJSONFile(USERS_FILE_PATH, users);
-    res.json({
-      message: "Changes confirmed and saved to database and personal.json",
-      pendingChange,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Error writing JSON file" });
   }
 });
 
-app.post("/rejectChanges", async (req, res) => {
-  const { _id, name } = req.body;
+app.post("/getuser", async (req, res) => {
+  const { id } = req.body;
+
   try {
-    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
-    const pendingChange = personalData[_id];
-    if (!pendingChange) {
-      return res.status(404).json({ message: "No pending changes found" });
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-    await Log.create({
-      action: "แก้ไขข้อมูล",
-      user: "admin2",
-      details: `ยกเลิกการแก้ไขข้อมูล ${name}`,
-    });
-    delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
-    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
-    res.json({ message: "Changes rejected and removed from pending list" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching user" });
   }
 });
 
-// User
 app.post("/user", async (req, res) => {
   try {
     const { name, phone, password, age } = req.body;
@@ -255,44 +163,83 @@ app.delete("/logout", async (req, res) => {
   }
 });
 
-// Users
-app.get("/getusers", async (req, res) => {
+// Personal
+app.get("/getPendingChanges", async (req, res) => {
   try {
-    const users = await User.find();
-    await writeJSONFile(USERS_FILE_PATH, users);
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: "Error writing JSON file" });
+    const pendingChanges = await readJSONFile(PERSONAL_FILE_PATH);
+    res.status(200).json(Object.values(pendingChanges));
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching pending changes" });
   }
 });
 
-app.post("/getuser", async (req, res) => {
-  const { id } = req.body;
-
+app.post("/saveChangesToJson", async (req, res) => {
+  const { changes } = req.body;
   try {
-    const user = await User.findById(id);
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin1",
+      details: `แก้ไขข้อมูล ${changes.name}`,
+    });
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    personalData[changes._id] = changes;
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    res.json({ message: "Changes saved to personal.json", changes });
+  } catch (error) {
+    res.status(500).json({ error: "Error saving changes to personal.json" });
+  }
+});
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+app.post("/confirmChanges", async (req, res) => {
+  const { _id, name } = req.body;
+  try {
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    const pendingChange = personalData[_id];
+    if (!pendingChange) {
+      return res.status(404).json({ message: "No pending changes found" });
     }
 
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: "Error fetching user" });
+    await User.findByIdAndUpdate(_id, pendingChange, { new: true });
+
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin2",
+      details: `ยืนยันการแก้ไขข้อมูล ${name}`,
+    });
+
+    personalData[_id] = pendingChange;
+
+    delete personalData[_id]; // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    const users = await User.find();
+    await writeJSONFile(USERS_FILE_PATH, users);
+    res.json({
+      message: "Changes confirmed and saved to database and personal.json",
+      pendingChange,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.put("/update", async (req, res) => {
+app.post("/rejectChanges", async (req, res) => {
+  const { _id, name } = req.body;
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.body._id, req.body, {
-      new: true,
+    let personalData = await readJSONFile(PERSONAL_FILE_PATH);
+    const pendingChange = personalData[_id];
+    if (!pendingChange) {
+      return res.status(404).json({ message: "No pending changes found" });
+    }
+    await Log.create({
+      action: "แก้ไขข้อมูล",
+      user: "admin2",
+      details: `ยกเลิกการแก้ไขข้อมูล ${name}`,
     });
-
-    const users = await User.find();
-    await writeJSONFile(USERS_FILE_PATH, users);
-    res.json(updatedUser);
-  } catch (err) {
-    res.status(500).json({ error: "Error updating user" });
+    delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
+    await writeJSONFile(PERSONAL_FILE_PATH, personalData);
+    res.json({ message: "Changes rejected and removed from pending list" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -343,7 +290,7 @@ app.post("/getestimation", async (req, res) => {
   const { from } = req.body;
 
   try {
-    const estimations = await Estimation.find({ from }); // ดึงข้อมูลการประเมินตาม _id ของ selectuser
+    const estimations = await Estimation.find({ from });
 
     res.json(estimations);
   } catch (error) {
@@ -371,7 +318,7 @@ app.post("/createstimation", async (req, res) => {
       estimationId: estimation._id,
       userId: estimation.from,
       timestamp: new Date().toISOString(),
-    }); // เพิ่มการแจ้งเตือนสำหรับการสร้างการประเมินใหม่
+    });
 
     await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, notifications);
 
@@ -450,10 +397,54 @@ app.put("/evaluateHFS", async (req, res) => {
         } ประเมิน`,
       });
     }
-
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Chatnotification
+app.get("/getchatnotification", async (req, res) => {
+  try {
+    const notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
+    res.json(notifications);
+  } catch (err) {
+    res.status(500).json({ error: "Error fetching notifications" });
+  }
+});
+
+const updateChatNotification = async (from) => {
+  try {
+    const userExists = await User.findById(from);
+    if (!userExists) {
+      console.log("User not found, notification not created");
+      return;
+    }
+
+    let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
+    const existingNotification = notifications.find((n) => n.from === from);
+
+    if (!existingNotification) {
+      notifications.push({ from, createdAt: new Date().toISOString() });
+      await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
+      console.log("Notification added successfully");
+    } else {
+      console.log("Notification already exists for this user");
+    }
+  } catch (error) {
+    console.error("Error updating notification:", error.message);
+  }
+};
+
+app.post("/removechatnotification", async (req, res) => {
+  const { from } = req.body;
+  try {
+    let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
+    notifications = notifications.filter((n) => n.from !== from);
+    await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -521,7 +512,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
 //log
 app.get("/logs", async (req, res) => {
   try {
-    const logs = await Log.find().sort({ timestamp: -1 }); // ดึง log ทั้งหมดและเรียงตามเวลาล่าสุด
+    const logs = await Log.find().sort({ timestamp: -1 });
     res.json(logs);
   } catch (error) {
     res.status(500).json({ error: error.message });
