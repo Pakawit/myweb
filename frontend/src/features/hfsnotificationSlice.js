@@ -17,16 +17,6 @@ export const fetchHFSNotificationsThunk = createAsyncThunk(
 export const hfsnotificationSlice = createSlice({
   name: "hfsnotification",
   initialState,
-  reducers: {
-    addNotification: (state, action) => {
-      state.push(action.payload);
-    },
-    deleteNotification: (state, action) => {
-      return state.filter(
-        (notification) => notification.estimationId !== action.payload
-      );
-    },
-  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchHFSNotificationsThunk.fulfilled, (state, action) => {
@@ -37,8 +27,5 @@ export const hfsnotificationSlice = createSlice({
       });
   },
 });
-
-export const { addNotification, deleteNotification } =
-  hfsnotificationSlice.actions;
 
 export default hfsnotificationSlice.reducer;

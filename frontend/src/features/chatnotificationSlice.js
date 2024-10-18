@@ -40,9 +40,6 @@ const chatnotificationSlice = createSlice({
   name: "chatnotification",
   initialState,
   reducers: {
-    addChatNotification: (state, action) => {
-      return action.payload; 
-    },
     removeChatNotification: (state, action) => {
       return state.filter((n) => n.from !== action.payload);
     },
@@ -50,7 +47,7 @@ const chatnotificationSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchChatNotificationThunk.fulfilled, (state, action) => {
-        return action.payload; 
+        return action.payload;
       })
       .addCase(removeChatNotificationThunk.rejected, (state, action) => {
         console.error("Failed to remove notification:", action.payload);
@@ -58,6 +55,5 @@ const chatnotificationSlice = createSlice({
   },
 });
 
-export const { addChatNotification, removeChatNotification } =
-  chatnotificationSlice.actions;
+export const { removeChatNotification } = chatnotificationSlice.actions;
 export default chatnotificationSlice.reducer;

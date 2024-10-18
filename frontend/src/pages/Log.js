@@ -1,14 +1,15 @@
 import React, { useContext, useState, useEffect } from "react";
-import { Table, Container, Row, Col, Pagination } from "react-bootstrap";
+import { Table, Container, Row, Col } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
+import ReactPaginate from "react-paginate";
+import "./style.css"; // สไตล์ของ ReactPaginate
 
 const Log = () => {
   const [logs, setLogs] = useState([]);
   const { API_BASE_URL } = useContext(AppContext);
-
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -20,19 +21,15 @@ const Log = () => {
         console.error("Error fetching logs:", error);
       }
     };
-
     fetchLogs();
-  }, []);
+  }, [API_BASE_URL]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = logs.slice(indexOfFirstItem, indexOfLastItem);
+  const handlePageChange = ({ selected }) => setCurrentPage(selected);
 
-  const totalPages = Math.ceil(logs.length / itemsPerPage);
-
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
+  const paginatedLogs = logs.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
 
   return (
     <Container fluid>
@@ -51,10 +48,10 @@ const Log = () => {
               </tr>
             </thead>
             <tbody>
-              {currentLogs.length > 0 ? (
-                currentLogs.map((log, index) => (
+              {paginatedLogs.length > 0 ? (
+                paginatedLogs.map((log, index) => (
                   <tr key={log._id}>
-                    <td>{indexOfFirstItem + index + 1}</td>
+                    <td>{currentPage * itemsPerPage + index + 1}</td>
                     <td>{log.action}</td>
                     <td>{log.user}</td>
                     <td>{log.details || "N/A"}</td>
@@ -71,36 +68,24 @@ const Log = () => {
             </tbody>
           </Table>
 
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-end">
-              <Pagination>
-                <Pagination.First
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                />
-                <Pagination.Prev
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                />
-                {[...Array(totalPages).keys()].map((pageNumber) => (
-                  <Pagination.Item
-                    key={pageNumber + 1}
-                    active={pageNumber + 1 === currentPage}
-                    onClick={() => handlePageChange(pageNumber + 1)}
-                  >
-                    {pageNumber + 1}
-                  </Pagination.Item>
-                ))}
-                <Pagination.Next
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                />
-                <Pagination.Last
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                />
-              </Pagination>
-            </div>
+          {logs.length > itemsPerPage && (
+            <ReactPaginate
+              previousLabel={"<"}
+              nextLabel={">"}
+              breakLabel={"..."}
+              pageCount={Math.ceil(logs.length / itemsPerPage)}
+              onPageChange={handlePageChange}
+              containerClassName={"pagination justify-content-end"}
+              activeClassName={"active"}
+              pageClassName={"page-item"}
+              pageLinkClassName={"page-link"}
+              previousClassName={"page-item"}
+              previousLinkClassName={"page-link"}
+              nextClassName={"page-item"}
+              nextLinkClassName={"page-link"}
+              breakClassName={"page-item"}
+              breakLinkClassName={"page-link"}
+            />
           )}
         </Col>
       </Row>

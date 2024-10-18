@@ -17,25 +17,15 @@ export const fetchPersonalDataThunk = createAsyncThunk(
 export const personalSlice = createSlice({
   name: "personal",
   initialState,
-  reducers: {
-    addPersonal: (state, action) => {
-      state.push(action.payload); // เพิ่มข้อมูลใหม่
-    },
-    deletePersonal: () => {
-      return []; // ลบข้อมูลทั้งหมด
-    }
-  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchPersonalDataThunk.fulfilled, (state, action) => {
-        return action.payload; // อัพเดตสถานะด้วยข้อมูลที่ดึงมา
+        return action.payload; 
       })
       .addCase(fetchPersonalDataThunk.rejected, () => {
         console.error("Failed to fetch personal data");
       });
   },
 });
-
-export const { addPersonal, deletePersonal } = personalSlice.actions;
 
 export default personalSlice.reducer;

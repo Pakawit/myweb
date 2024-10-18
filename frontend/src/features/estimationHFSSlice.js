@@ -17,14 +17,6 @@ export const fetchEstimationHFSThunk = createAsyncThunk(
 export const estimationHFSSlice = createSlice({
   name: "estimationHFS",
   initialState,
-  reducers: {
-    addEstimationHFS: (state, action) => {
-      state.push(action.payload); 
-    },
-    deleteEstimationHFS: () => {
-      return []; 
-    },
-  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchEstimationHFSThunk.fulfilled, (state, action) => {
@@ -35,7 +27,5 @@ export const estimationHFSSlice = createSlice({
       });
   },
 });
-
-export const { addEstimationHFS, deleteEstimationHFS } = estimationHFSSlice.actions;
 
 export default estimationHFSSlice.reducer;

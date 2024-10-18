@@ -6,7 +6,7 @@ export const fetchMedicationsThunk = createAsyncThunk(
   "medication/fetchMedications",
   async (_, { rejectWithValue }) => {
     try {
-      const medicationsData = await import('../json/medications.json'); // ใช้ Dynamic Import
+      const medicationsData = await import('../json/medications.json'); 
       return medicationsData.default;
     } catch (error) {
       return rejectWithValue("Failed to fetch medications");
@@ -18,9 +18,6 @@ export const medicationSlice = createSlice({
   name: "medication",
   initialState,
   reducers: {
-    addMedication: (state, action) => {
-      state.push(action.payload);
-    },
     deleteMedication: () => {
       return [];
     },
@@ -36,6 +33,6 @@ export const medicationSlice = createSlice({
   },
 });
 
-export const { addMedication, deleteMedication } = medicationSlice.actions;
+export const { deleteMedication } = medicationSlice.actions;
 
 export default medicationSlice.reducer;
