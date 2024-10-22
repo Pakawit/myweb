@@ -1,21 +1,38 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+
+const initialState = [];
+
+export const fetchMedicationsThunk = createAsyncThunk(
+  "medication/fetchMedications",
+  async (_, { rejectWithValue }) => {
+    try {
+      const medicationsData = await import('../json/medications.json'); 
+      return medicationsData.default;
+    } catch (error) {
+      return rejectWithValue("Failed to fetch medications");
+    }
+  }
+);
 
 export const medicationSlice = createSlice({
   name: "medication",
-  initialState: null,
+  initialState,
   reducers: {
-    setMedication: (state, action) => {
-      return action.payload;
+    deleteMedication: () => {
+      return [];
     },
-    addMedication: (state, action) => {
-      state.push(action.payload);
-    },
-    deleteMedication: (state, action) => {
-      return null;
-    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchMedicationsThunk.fulfilled, (state, action) => {
+        return action.payload; 
+      })
+      .addCase(fetchMedicationsThunk.rejected, () => {
+        console.error("Failed to fetch medications");
+      });
   },
 });
 
-export const { setMedication, addMedication, deleteMedication } = medicationSlice.actions;
+export const { deleteMedication } = medicationSlice.actions;
 
 export default medicationSlice.reducer;

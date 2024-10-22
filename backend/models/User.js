@@ -33,22 +33,26 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    ms_medicine : {
-      type: Number,
-      default: 0,
-    },
     other_medicine : {
       type: String,
       default: "",
     },
-    laststatus : {
-      type: Number,
-      default: 0,
+    morningTime : {
+      type: String,
+      default: "08:00",
+    },
+    eveningTime : {
+      type: String,
+      default: "20:00",
     },
     taking_capecitabine : {
       type: String,
       default: "",
     },
+    FirstLogin :{
+      type:Boolean,
+      default:true,
+    }
   },
   { timestamps: true, minimize: false }
 );

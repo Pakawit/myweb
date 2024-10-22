@@ -1,222 +1,291 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Container, Button, Form, Row, Col } from "react-bootstrap";
+import React, { useContext, useState, useEffect } from "react";
+import {
+  Container,
+  Button,
+  Form,
+  Row,
+  Col,
+  Modal,
+  Alert,
+  Table,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { updateUsers } from "../features/usersSlice";
+import { fetchMedicationsThunk } from "../features/medicationSlice";
+import { setselectuser } from "../features/selectuserSlice";
+import { fetchPersonalDataThunk } from "../features/personalSlice";
 
 function Personal() {
-  const user = useSelector((state) => state.user);
-  const { member, setMember, API_BASE_URL } = useContext(AppContext);
-  const navigate = useNavigate();
+  const { API_BASE_URL } = useContext(AppContext);
+  const admin = useSelector((state) => state.admin);
+  const selectuser = useSelector((state) => state.selectuser) || {};
+  const personal = useSelector((state) => state.personal) || {};
+  const medication = useSelector((state) => state.medication) || [];
   const dispatch = useDispatch();
+
+  const [member, setMember] = useState(selectuser || {});
   const [editMode, setEditMode] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
 
   useEffect(() => {
-    if (!member._id) {
-      navigate("/");
-    }
-  }, [user, member, setMember, navigate]);
+    dispatch(fetchMedicationsThunk());
+    dispatch(fetchPersonalDataThunk());
+  }, [dispatch]);
 
-  const handleChange = (name, value) => {
-    setMember((prevMember) => ({
-      ...prevMember,
-      [name]: value,
+  useEffect(() => {
+    if (selectuser._id && !editMode) {
+      const intervalId = setInterval(fetchUserDetails, 3000);
+      return () => clearInterval(intervalId);
+    }
+  }, [selectuser, editMode]);
+
+  const fetchUserDetails = async () => {
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/getuser`, {
+        id: selectuser._id,
+      });
+      setMember(data);
+      dispatch(setselectuser(data));
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    }
+  };
+
+  const validate = (name, value) => {
+    const rules = {
+      name: /^[a-zA-Zก-๙\s]{1,30}$/,
+      phone: /^\d{0,10}$/,
+      other_numbers: /^\d{0,10}$/,
+      age: /^\d{1,3}$/,
+      diagnosis: /^.{0,300}$/,
+      taking_capecitabine: /^.{0,300}$/,
+      hospital_number: /^.{0,50}$/,
+      morningTime: /.+/,
+      eveningTime: /.+/,
+    };
+    const isValid = rules[name]?.test(value) ?? true;
+    setErrors((prev) => ({
+      ...prev,
+      [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง`,
     }));
   };
 
+  const handleChange = ({ target: { name, value } }) => {
+    validate(name, value);
+    setMember((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const isFormValid = () => Object.values(errors).every((err) => !err);
+
   const handleSubmit = async () => {
-    if (editMode) {
-      axios
-        .put(`${API_BASE_URL}/update`, member)
-        .then((res) => {
-          dispatch(updateUsers(res.data));
-          setEditMode(false);
-        })
-        .catch((err) => console.log(err));
+    if (isFormValid()) {
+      try {
+        await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
+          changes: member,
+        });
+        setEditMode(false);
+        showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Admin2)");
+      } catch (error) {
+        console.error("Error saving changes:", error);
+      }
+    } else {
+      showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง");
     }
   };
 
-  const handleEditClick = () => {
-    setEditMode(true);
+  const handleAction = async (action, change) => {
+    try {
+      await axios.post(`${API_BASE_URL}/${action}`, {
+        _id: change._id,
+        name: change.name,
+      });
+      showNotification(
+        action === "confirmChanges"
+          ? "ยืนยันการเปลี่ยนแปลงแล้ว"
+          : "ยกเลิกการเปลี่ยนแปลงแล้ว"
+      );
+    } catch (error) {
+      console.error(`Error in ${action}:`, error);
+    }
+  };
+
+  const getMsMedicineCount = (userId) =>
+    medication.filter((med) => med.from === userId && med.status === 0).length;
+
+  const showNotification = (message) => {
+    setNotificationMessage(message);
+    setShowModal(true);
   };
 
   return (
-    <Container>
+    <Container fluid>
       <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
-      <Form onSubmit={handleSubmit}>
-        
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            ชื่อ-สกุล
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              name="name"
-              value={member.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            เบอร์โทรศัพท์
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              name="phone"
-              value={member.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            เบอร์โทรศัพท์ผู้ติดต่อ
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              name="other_numbers"
-              value={member.other_numbers}
-              onChange={(e) => handleChange("other_numbers", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            อายุ
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="number"
-              name="age"
-              value={member.age}
-              onChange={(e) => handleChange("age", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            การวินิจฉัยโรคหลัก
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              as="textarea"
-              name="diagnosis"
-              value={member.diagnosis}
-              onChange={(e) => handleChange("diagnosis", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            การรับประทานยา Capecitabine
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              as="textarea"
-              name="taking_capecitabine"
-              value={member.taking_capecitabine}
-              onChange={(e) =>
-                handleChange("taking_capecitabine", e.target.value)
-              }
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            ยาที่ใช้ร่วม
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              as="textarea"
-              name="other_medicine"
-              value={member.other_medicine}
-              onChange={(e) => handleChange("other_medicine", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            ขาดยา
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              name="ms_medicine"
-              value={member.ms_medicine}
-              onChange={(e) => handleChange("ms_medicine", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column sm="6" style={{ textAlign: "center" }}>
-            เลขโรงพยาบาล
-          </Form.Label>
-          <Col sm="6">
-            <Form.Control
-              type="text"
-              name="hospital_number"
-              value={member.hospital_number}
-              onChange={(e) => handleChange("hospital_number", e.target.value)}
-              disabled={!editMode}
-            />
-          </Col>
-        </Form.Group>
-
-        <Form.Group as={Row} className="mb-3">
-          <Col
-            sm={{ span: 6, offset: 6 }}
-            className="d-flex justify-content-end"
-          >
-            {editMode ? (
-              <Button
-                variant="outline-success"
-                type="button"
-                onClick={handleSubmit}
-              >
-                บันทึก
-              </Button>
-            ) : (
-              <Button
-                variant="outline-dark"
-                type="button"
-                onClick={handleEditClick}
-              >
-                แก้ไข
-              </Button>
-            )}
-          </Col>
-        </Form.Group>
-
+      <Form onSubmit={(e) => e.preventDefault()}>
+        {renderFormFields([
+          { label: "ชื่อ-สกุล", name: "name", type: "text" },
+          { label: "เบอร์โทรศัพท์", name: "phone", type: "text" },
+          {
+            label: "เบอร์โทรศัพท์ผู้ติดต่อ",
+            name: "other_numbers",
+            type: "text",
+          },
+          { label: "อายุ", name: "age", type: "number" },
+          { label: "การวินิจฉัยโรคหลัก", name: "diagnosis", type: "textarea" },
+          {
+            label: "การรับประทานยา Capecitabine",
+            name: "taking_capecitabine",
+            type: "textarea",
+          },
+          {
+            label: "เวลารับประทานยาช่วงเช้า",
+            name: "morningTime",
+            type: "time",
+          },
+          {
+            label: "เวลารับประทานยาช่วงเย็น",
+            name: "eveningTime",
+            type: "time",
+          },
+          { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
+          {
+            label: "ขาดยา",
+            name: "ms_medicine",
+            value: getMsMedicineCount(member._id),
+            disabled: true,
+          },
+        ])}
+        {admin.name === "admin1" && renderAdminButtons()}
       </Form>
+      {admin.name === "admin2" && renderAdmin2Table()}
+      {renderModal()}
     </Container>
   );
+
+  function renderFormFields(fields) {
+    return fields.map(({ label, name, type, value, disabled }) => (
+      <Form.Group as={Row} className="mb-3" key={name}>
+        <Form.Label column sm="6" className="text-center">
+          {label}
+        </Form.Label>
+        <Col sm="6">
+          <Form.Control
+            as={type === "textarea" ? "textarea" : "input"}
+            type={type}
+            name={name}
+            value={value ?? member[name] ?? ""}
+            onChange={handleChange}
+            disabled={disabled || admin.name === "admin2" || !editMode}
+          />
+          {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
+        </Col>
+      </Form.Group>
+    ));
+  }
+
+  function renderAdminButtons() {
+    return (
+      <Row className="mb-3">
+        <Col sm={{ span: 6, offset: 6 }} className="d-flex justify-content-end">
+          {editMode ? (
+            <>
+              <Button variant="outline-success" onClick={handleSubmit}>
+                บันทึก
+              </Button>
+              <Button
+                variant="outline-danger"
+                onClick={() => setEditMode(false)}
+                className="ms-2"
+              >
+                ยกเลิก
+              </Button>
+            </>
+          ) : (
+            <Button variant="outline-dark" onClick={() => setEditMode(true)}>
+              แก้ไข
+            </Button>
+          )}
+        </Col>
+      </Row>
+    );
+  }
+
+  function renderAdmin2Table() {
+    const selectedUser = personal[selectuser._id];
+
+    return (
+      selectedUser && (
+        <Table striped bordered hover>
+          <thead>
+            <tr>
+              {[
+                "ชื่อ-สกุล",
+                "เบอร์โทรศัพท์",
+                "เบอร์โทรศัพท์ผู้ติดต่อ",
+                "อายุ",
+                "การวินิจฉัยโรคหลัก",
+                "การรับประทานยา Capecitabine",
+                "เวลารับประทานยาช่วงเช้า",
+                "เวลารับประทานยาช่วงเย็น",
+                "เลขโรงพยาบาล",
+                "การดำเนินการ",
+              ].map((header) => (
+                <th key={header}>{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{selectedUser.name}</td>
+              <td>{selectedUser.phone}</td>
+              <td>{selectedUser.other_numbers}</td>
+              <td>{selectedUser.age}</td>
+              <td>{selectedUser.diagnosis}</td>
+              <td>{selectedUser.taking_capecitabine}</td>
+              <td>{selectedUser.morningTime}</td>
+              <td>{selectedUser.eveningTime}</td>
+              <td>{selectedUser.hospital_number}</td>
+              <td>
+                <Button
+                  variant="outline-success"
+                  onClick={() => handleAction("confirmChanges", selectedUser)}
+                >
+                  ยืนยัน
+                </Button>
+                <Button
+                  variant="outline-danger"
+                  className="ms-2"
+                  onClick={() => handleAction("rejectChanges", selectedUser)}
+                >
+                  ปฏิเสธ
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      )
+    );
+  }
+
+  function renderModal() {
+    return (
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>แจ้งเตือน</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{notificationMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            ปิด
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  }
 }
 
 export default Personal;
