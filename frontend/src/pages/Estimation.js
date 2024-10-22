@@ -297,7 +297,6 @@ function Estimation() {
             </tbody>
           </Table>
 
-          {/* ซ่อน ReactPaginate เมื่อไม่มีข้อมูลเพียงพอ */}
           {filteredEstimations.length > itemsPerPage && (
             <ReactPaginate
               previousLabel={"<"}

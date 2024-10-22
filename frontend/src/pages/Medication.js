@@ -16,17 +16,30 @@ function Medication() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchData = () => axios.post(`${API_BASE_URL}/getmedication`);
-    dispatch(fetchMedicationsThunk());
-    const intervalId = setInterval(
-      () => dispatch(fetchMedicationsThunk()),
-      5000
-    );
+    const fetchDataOnLoad = async () => {
+      try {
+        await axios.post(`${API_BASE_URL}/getmedication`);
+        dispatch(fetchMedicationsThunk());
+      } catch (error) {
+        console.error("Failed to fetch medications on load:", error);
+      }
+    };
 
-    window.addEventListener("beforeunload", fetchData);
+    fetchDataOnLoad();
+
+    const intervalId = setInterval(() => {
+      dispatch(fetchMedicationsThunk());
+    }, 5000);
+
+    const handleBeforeUnload = () => {
+      fetchDataOnLoad();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener("beforeunload", fetchData);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [dispatch, API_BASE_URL]);
 

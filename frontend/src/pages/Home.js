@@ -25,25 +25,39 @@ function Home() {
   const itemsPerPage = 10;
   const pageCount = Math.ceil(users.length / itemsPerPage);
 
-  const fetchData = async () => {
+  const fetchDataOnPageLoad = async () => {
     try {
       await axios.all([
         axios.get(`${API_BASE_URL}/getusers`),
         axios.post(`${API_BASE_URL}/getmedication`),
       ]);
-      dispatch(fetchUsersThunk());
-      dispatch(fetchMedicationsThunk());
-      dispatch(fetchHFSNotificationsThunk());
     } catch (error) {
-      console.error("Failed to fetch data:", error);
+      console.error("Failed to fetch data on page load:", error);
     }
+  };
+
+  const fetchDataInterval = () => {
+    dispatch(fetchUsersThunk());
+    dispatch(fetchMedicationsThunk());
+    dispatch(fetchHFSNotificationsThunk());
   };
 
   useEffect(() => {
     dispatch(deleteselectuser());
-    fetchData();
-    const intervalId = setInterval(fetchData, 5000);
-    return () => clearInterval(intervalId);
+
+    fetchDataOnPageLoad();
+
+    const intervalId = setInterval(fetchDataInterval, 3000);
+
+    const handleBeforeUnload = () => {
+      fetchDataOnPageLoad();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, [dispatch, API_BASE_URL]);
 
   const handleNavigation = (userData, path) => {
