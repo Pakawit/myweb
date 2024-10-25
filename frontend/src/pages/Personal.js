@@ -1,14 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import {
-  Container,
-  Button,
-  Form,
-  Row,
-  Col,
-  Modal,
-  Alert,
-  Table,
-} from "react-bootstrap";
+import { Container, Button, Form, Row, Col, Modal, Alert, Table } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -173,14 +164,7 @@ function Personal() {
           {label}
         </Form.Label>
         <Col sm="6">
-          <Form.Control
-            as={type === "textarea" ? "textarea" : "input"}
-            type={type}
-            name={name}
-            value={value ?? member[name] ?? ""}
-            onChange={handleChange}
-            disabled={disabled || admin.name === "admin2" || !editMode}
-          />
+          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? member[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "admin2" || !editMode}/>
           {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
         </Col>
       </Form.Group>
@@ -193,21 +177,11 @@ function Personal() {
         <Col sm={{ span: 6, offset: 6 }} className="d-flex justify-content-end">
           {editMode ? (
             <>
-              <Button variant="outline-success" onClick={handleSubmit}>
-                บันทึก
-              </Button>
-              <Button
-                variant="outline-danger"
-                onClick={() => setEditMode(false)}
-                className="ms-2"
-              >
-                ยกเลิก
-              </Button>
+              <Button variant="outline-success" onClick={handleSubmit}>บันทึก</Button>
+              <Button variant="outline-danger" onClick={() => setEditMode(false)} className="ms-2">ยกเลิก</Button>
             </>
           ) : (
-            <Button variant="outline-dark" onClick={() => setEditMode(true)}>
-              แก้ไข
-            </Button>
+            <Button variant="outline-dark" onClick={() => setEditMode(true)}>แก้ไข</Button>
           )}
         </Col>
       </Row>
@@ -250,19 +224,8 @@ function Personal() {
               <td>{selectedUser.eveningTime}</td>
               <td>{selectedUser.hospital_number}</td>
               <td>
-                <Button
-                  variant="outline-success"
-                  onClick={() => handleAction("confirmChanges", selectedUser)}
-                >
-                  ยืนยัน
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  className="ms-2"
-                  onClick={() => handleAction("rejectChanges", selectedUser)}
-                >
-                  ปฏิเสธ
-                </Button>
+                <Button variant="outline-success" onClick={() => handleAction("confirmChanges", selectedUser)}>ยืนยัน</Button>
+                <Button variant="outline-danger" className="ms-2" onClick={() => handleAction("rejectChanges", selectedUser)}>ปฏิเสธ</Button>
               </td>
             </tr>
           </tbody>
@@ -279,9 +242,7 @@ function Personal() {
         </Modal.Header>
         <Modal.Body>{notificationMessage}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            ปิด
-          </Button>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>ปิด</Button>
         </Modal.Footer>
       </Modal>
     );

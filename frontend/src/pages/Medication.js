@@ -52,19 +52,14 @@ function Medication() {
     const { variant, text } = statusInfo[status] || {};
     return (
       variant && (
-        <Button variant={variant} disabled>
-          {text}
-        </Button>
+        <Button variant={variant} disabled>{text}</Button>
       )
     );
   };
 
   const convertDateTime = (date, time) => {
     const [day, month, year] = date.split("/");
-    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
-      2,
-      "0"
-    )}`;
+    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2,"0")}`;
     const formattedTime = time.padStart(5, "0");
     return new Date(`${formattedDate}T${formattedTime}`);
   };

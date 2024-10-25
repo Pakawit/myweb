@@ -36,8 +36,7 @@ function Chat() {
     "nurse_charactor-10.png",
   ];
 
-  const scrollToBottom = () =>
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
     if (selectuser) {
@@ -115,13 +114,7 @@ function Chat() {
         setImage(null);
         fileInputRef.current.value = "";
       } else {
-        const res = await axios.post(`${API_BASE_URL}/createmessage`, {
-          content: message,
-          from: "admin",
-          to: selectuser._id,
-          date: todayDate,
-          time,
-        });
+        const res = await axios.post(`${API_BASE_URL}/createmessage`, {content: message, from: "admin", to: selectuser._id, date: todayDate, time,});
         dispatch(addMessage(res.data));
       }
       setMessage("");
@@ -139,43 +132,21 @@ function Chat() {
     };
   };
 
-  const filteredMessages = messages.filter(
-    (msg) =>
-      (msg.from === "admin" && msg.to === selectuser._id) ||
-      (msg.from === selectuser._id && msg.to === "admin")
-  );
-
   return (
     <Container fluid>
       <Navigation />
       <Row>
         <Col>
           <div className="messages-output">
-            {filteredMessages.map((msg, i) => (
-              <div
-                key={i}
-                className={
-                  msg.from === "admin" ? "incoming-message" : "outgoing-message"
-                }
-              >
+            {messages.map((msg, i) => (
+              <div key={i} className={ msg.from === "admin" ? "incoming-message" : "outgoing-message" }>
                 <div className="message-inner">
                   {msg.contentType === "image" ? (
-                    <img
-                      src={`data:image/jpeg;base64,${msg.content}`}
-                      alt="Chat Image"
-                      className="message-img"
-                      onClick={() => {
-                        setSelectedImage(msg.content);
-                        setShowModal(true);
-                      }}
-                      style={{ cursor: "pointer" }}
-                    />
+                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="Chat Image" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true);}} style={{ cursor: "pointer" }}/>
                   ) : (
                     <div>{msg.content}</div>
                   )}
-                  <div className="message-timestamp-left">
-                    {msg.date} {msg.time}
-                  </div>
+                  <div className="message-timestamp-left">{msg.date} {msg.time}</div>
                 </div>
               </div>
             ))}
@@ -183,39 +154,11 @@ function Chat() {
           </div>
 
           <Form onSubmit={handleSubmit} className="d-flex">
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              ref={fileInputRef}
-              onChange={validateImg}
-            />
-            <Button
-              variant="outline-dark"
-              onClick={() => fileInputRef.current.click()}
-            >
-              <i className="bi bi-image" />
-            </Button>
-            <Button
-              variant="outline-secondary"
-              onClick={() => setShowStickersModal(true)}
-            >
-              <i className="bi bi-emoji-smile" />
-            </Button>
-            <Form.Control
-              type="text"
-              placeholder="Your message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              disabled={!!image}
-              style={{
-                backgroundColor: image ? "#DDDDDD" : "",
-                fontWeight: image ? "bold" : "normal",
-              }}
-            />
-            <Button type="submit" disabled={!message && !image}>
-              <i className="bi bi-send-fill" />
-            </Button>
+            <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg}/>
+            <Button variant="outline-dark" onClick={() => fileInputRef.current.click()}><i className="bi bi-image" /></Button>
+            <Button variant="outline-secondary" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
+            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "",fontWeight: image ? "bold" : "normal",}} />
+            <Button type="submit" disabled={!message && !image}><i className="bi bi-send-fill" /></Button>
           </Form>
         </Col>
       </Row>
@@ -224,11 +167,7 @@ function Chat() {
         <Modal.Header closeButton />
         <Modal.Body>
           {selectedImage && (
-            <img
-              src={`data:image/jpeg;base64,${selectedImage}`}
-              alt="Preview"
-              className="modal-img"
-            />
+            <img src={`data:image/jpeg;base64,${selectedImage}`} alt="Preview" className="modal-img"/>
           )}
         </Modal.Body>
       </Modal>
@@ -240,14 +179,7 @@ function Chat() {
         <Modal.Header closeButton />
         <Modal.Body className="d-flex flex-wrap">
           {stickers.map((sticker, i) => (
-            <img
-              key={i}
-              src={`/img/${sticker}`}
-              alt={`sticker-${i}`}
-              className="sticker"
-              onClick={() => handleStickerSelect(sticker)}
-              style={{ cursor: "pointer", width: 130, margin: 10 }}
-            />
+            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} className="sticker" onClick={() => handleStickerSelect(sticker)} style={{ cursor: "pointer", width: 130, margin: 10 }}/>
           ))}
         </Modal.Body>
       </Modal>

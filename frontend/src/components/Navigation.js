@@ -1,14 +1,7 @@
 import React, { useContext, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  Button,
-  Container,
-  Nav,
-  Navbar,
-  Dropdown,
-  Badge,
-} from "react-bootstrap";
+import { Button, Container, Nav, Navbar, Dropdown, Badge } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
@@ -115,31 +108,18 @@ function Navigation() {
 
   return (
     <Navbar>
-      <Container
-        fluid
-        className="d-flex align-items-center justify-content-between"
-      >
-        <Button
-          variant="outline-dark"
-          onClick={back}
-          style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }}
-          className="me-2"
-        >
+      <Container fluid className="d-flex align-items-center justify-content-between">
+        <Button variant="outline-dark" onClick={back} style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }} className="me-2">
           <i className="bi bi-chevron-left"></i>
         </Button>
 
         {selectuser && selectuser.name && (
-          <Navbar.Brand className="mx-auto fw-bold custom-brand">
-            {selectuser.name}
-          </Navbar.Brand>
+          <Navbar.Brand className="mx-auto fw-bold custom-brand">{selectuser.name}</Navbar.Brand>
         )}
 
         <Nav className="d-flex align-items-center">
           <Dropdown className="me-2">
-            <Dropdown.Toggle
-              variant="outline-dark"
-              id="personal-notification-dropdown"
-            >
+            <Dropdown.Toggle variant="outline-dark" id="personal-notification-dropdown">
               <i className="bi bi-exclamation-triangle"></i>
               {(Object.keys(personal).length > 0 ||
                 Object.keys(estimationHFS).length > 0) && (
@@ -156,23 +136,14 @@ function Navigation() {
               ) : (
                 <>
                   {Object.keys(personal).map((userId) => (
-                    <Dropdown.Item
-                      key={userId}
-                      onClick={() => handlePersonalNotificationClick(userId)}
-                    >
+                    <Dropdown.Item key={userId} onClick={() => handlePersonalNotificationClick(userId)}>
                       แก้ไขข้อมูล {personal[userId]?.name || "Unknown"}
                     </Dropdown.Item>
                   ))}
 
                   {Object.keys(estimationHFS).map((estimationId) => (
-                    <Dropdown.Item
-                      key={estimationId}
-                      onClick={() => handleHFSNotificationClick(estimationId)}
-                    >
-                      ประเมินอาการ{" "}
-                      {estimationHFS[estimationId]?.user?.name
-                        ? estimationHFS[estimationId]?.user?.name
-                        : "Unknown User"}
+                    <Dropdown.Item key={estimationId} onClick={() => handleHFSNotificationClick(estimationId)}>
+                      ประเมินอาการ{" "}{estimationHFS[estimationId]?.user?.name? estimationHFS[estimationId]?.user?.name : "Unknown User"}
                     </Dropdown.Item>
                   ))}
                 </>
@@ -198,10 +169,7 @@ function Navigation() {
                     (user) => user._id === notification.from
                   );
                   return (
-                    <Dropdown.Item
-                      key={notification.from}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
+                    <Dropdown.Item key={notification.from} onClick={() => handleNotificationClick(notification)}>
                       {user ? user.name : "Unknown User"}
                     </Dropdown.Item>
                   );
@@ -210,13 +178,9 @@ function Navigation() {
             </Dropdown.Menu>
           </Dropdown>
 
-          <Button variant="outline-dark" className="me-2" onClick={handLog}>
-            <i className="bi bi-journal"></i>
-          </Button>
+          <Button variant="outline-dark" className="me-2" onClick={handLog}><i className="bi bi-journal"></i></Button>
 
-          <Button variant="outline-dark" onClick={handleLogout}>
-            <i className="bi bi-box-arrow-in-right"></i>
-          </Button>
+          <Button variant="outline-dark" onClick={handleLogout}><i className="bi bi-box-arrow-in-right"></i></Button>
         </Nav>
       </Container>
     </Navbar>

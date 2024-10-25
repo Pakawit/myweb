@@ -20,10 +20,7 @@ app.use(cors());
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
-const CHAT_NOTIFICATION_FILE_PATH = path.join(
-  BASE_PATH,
-  "chatnotification.json"
-);
+const CHAT_NOTIFICATION_FILE_PATH = path.join(BASE_PATH,"chatnotification.json");
 const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, "estimationHFS.json");
 const PERSONAL_FILE_PATH = path.join(BASE_PATH, "personal.json");
 const HFS_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "hfsnotification.json");
@@ -347,11 +344,7 @@ app.put("/evaluateHFS", async (req, res) => {
     // ตรวจสอบว่าทั้ง admin1 และ admin2 ประเมินแล้วหรือยัง
     if (admin1?.hfsLevel !== undefined && admin2?.hfsLevel !== undefined) {
       if (admin1.hfsLevel === admin2.hfsLevel) {
-        const updatedEstimation = await Estimation.findOneAndUpdate(
-          { _id: estimationId },
-          { hfsLevel: admin1.hfsLevel },
-          { new: true }
-        );
+        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId },{ hfsLevel: admin1.hfsLevel },{ new: true });
 
         let hfsNotifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
         hfsNotifications = hfsNotifications.filter(
@@ -359,43 +352,24 @@ app.put("/evaluateHFS", async (req, res) => {
         );
         await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
 
-        res.json({
-          message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,
-          updatedEstimation,
-        });
+        res.json({message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,updatedEstimation,});
 
-        await Log.create({
-          action: "ประเมินอาการ HFS",
-          user: adminName,
-          details: `ประเมินอาการ ${user.name} เสร็จสิ้น`,
-        });
+        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} เสร็จสิ้น`,});
 
         delete estimationsHFS[estimationId];
 
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
-        await Log.create({
-          action: "ประเมินอาการ HFS",
-          user: adminName,
-          details: `ประเมินอาการ ${user.name} ผิดพลาด`,
-        });
+        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} ผิดพลาด`,});
 
         delete estimation.evaluations.admin1.hfsLevel;
         delete estimation.evaluations.admin2.hfsLevel;
         res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด` });
       }
     } else {
-      await Log.create({
-        action: "ประเมินอาการ HFS",
-        user: adminName,
-        details: `ประเมินอาการโดย ${adminName}`,
-      });
+      await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการโดย ${adminName}`,});
 
-      res.json({
-        message: `ประเมินสำเร็จ กำลังรอ ${
-          admin1?.hfsLevel === undefined ? "admin1" : "admin2"
-        } ประเมิน`,
-      });
+      res.json({message: `ประเมินสำเร็จ กำลังรอ ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} ประเมิน`,});
     }
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
   } catch (error) {

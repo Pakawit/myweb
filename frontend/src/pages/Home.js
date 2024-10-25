@@ -98,35 +98,13 @@ function Home() {
         <td className="table-center">{user.age}</td>
         <td className="table-center">{missedCount}</td>
         <td className="table-center">
-          <Button variant={variant} disabled>
-            {text}
-          </Button>
+          <Button variant={variant} disabled>{text}</Button>
         </td>
         <td className="table-center">
-          <Button
-            variant="outline-success"
-            onClick={() => handleNavigation(user, "/personal")}
-          >
-            ข้อมูลส่วนบุคคล
-          </Button>
-          <Button
-            variant={`outline-${variant}`}
-            onClick={() => handleNavigation(user, "/medication")}
-          >
-            รายละเอียดการกินยา
-          </Button>
-          <Button
-            variant={hfsVariant}
-            onClick={() => handleNavigation(user, "/estimation")}
-          >
-            การประเมินอาการ HFS
-          </Button>
-          <Button
-            variant={`outline-${variant}`}
-            onClick={() => handleNavigation(user, "/chat")}
-          >
-            แชท
-          </Button>
+          <Button variant="outline-success" onClick={() => handleNavigation(user, "/personal")}>ข้อมูลส่วนบุคคล</Button>
+          <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/medication")}>รายละเอียดการกินยา</Button>
+          <Button variant={hfsVariant} onClick={() => handleNavigation(user, "/estimation")}>การประเมินอาการ HFS</Button>
+          <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/chat")}>แชท</Button>
         </td>
       </tr>
     );

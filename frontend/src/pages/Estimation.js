@@ -1,13 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Table,
-  Button,
-  Dropdown,
-  Modal,
-} from "react-bootstrap";
+import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
@@ -64,12 +56,7 @@ function Estimation() {
     const hfsLevel = hfsLevels[estimationId];
     if (hfsLevel !== undefined && hfsLevel !== 0) {
       try {
-        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
-          estimationId,
-          user: selectuser,
-          adminName: admin.name,
-          hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
-        });
+        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, { estimationId, user: selectuser, adminName: admin.name, hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,});
 
         setNotificationMessage(response.data.message);
         setShowNotificationModal(true);
@@ -126,12 +113,7 @@ function Estimation() {
         <Row className="g-0">
           {photosArray.map((photo, i) => (
             <Col key={i} xs={6} className="p-1">
-              <img
-                src={`data:image/jpeg;base64,${photo}`}
-                alt={`รูปภาพ ${i}`}
-                style={{ width: "100px", height: "100px", cursor: "pointer" }}
-                onClick={() => handleShowModal(photo)}
-              />
+              <img src={`data:image/jpeg;base64,${photo}`} alt={`รูปภาพ ${i}`} style={{ width: "100px", height: "100px", cursor: "pointer" }} onClick={() => handleShowModal(photo)}/>
             </Col>
           ))}
         </Row>
@@ -201,12 +183,7 @@ function Estimation() {
                     est.hfsLevel
                   );
                   return (
-                    <tr
-                      key={est._id}
-                      className={
-                        est.hfsLevel !== 0 ? "bg-secondary text-white" : ""
-                      }
-                    >
+                    <tr key={est._id} className={ est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
                       <td className="table-center">{est.date}</td>
                       <td className="table-center">{est.time}</td>
                       <td className="table-center">
@@ -215,56 +192,21 @@ function Estimation() {
                       <td className="table-center">{est.painLevel}</td>
                       <td className="table-center">
                         {est.hfsLevel !== 0 ? (
-                          <span>
-                            {est.hfsLevel === 5
-                              ? "ไม่พบอาการ"
-                              : `ระดับที่ ${est.hfsLevel}`}
-                          </span>
+                          <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
                         ) : admin.name === "admin1" &&
                           estimationHFS[est._id]?.evaluations?.admin1
                             ?.hfsLevel !== undefined ? (
-                          <span>{`คุณประเมินว่า: ${
-                            estimationHFS[est._id]?.evaluations?.admin1
-                              ?.hfsLevel === 5
-                              ? "ไม่พบอาการ"
-                              : `ระดับที่ ${
-                                  estimationHFS[est._id]?.evaluations?.admin1
-                                    ?.hfsLevel
-                                }`
-                          }`}</span>
+                          <span>{`คุณประเมินว่า: ${estimationHFS[est._id]?.evaluations?.admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${ estimationHFS[est._id]?.evaluations?.admin1?.hfsLevel}`}`}</span>
                         ) : admin.name === "admin2" &&
                           estimationHFS[est._id]?.evaluations?.admin2
                             ?.hfsLevel !== undefined ? (
-                          <span>{`คุณประเมินว่า: ${
-                            estimationHFS[est._id]?.evaluations?.admin2
-                              ?.hfsLevel === 5
-                              ? "ไม่พบอาการ"
-                              : `ระดับที่ ${
-                                  estimationHFS[est._id]?.evaluations?.admin2
-                                    ?.hfsLevel
-                                }`
-                          }`}</span>
+                          <span>{`คุณประเมินว่า: ${estimationHFS[est._id]?.evaluations?.admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${ estimationHFS[est._id]?.evaluations?.admin2?.hfsLevel}`}`}</span>
                         ) : (
                           <Dropdown>
-                            <Dropdown.Toggle
-                              variant="outline-success"
-                              id="dropdown-basic"
-                            >
-                              ระดับที่{" "}
-                              {hfsLevels[est._id] !== undefined
-                                ? hfsLevels[est._id]
-                                : ""}
-                            </Dropdown.Toggle>
+                            <Dropdown.Toggle variant="outline-success" id="dropdown-basic">ระดับที่{" "}{hfsLevels[est._id] !== undefined ? hfsLevels[est._id]: ""}</Dropdown.Toggle>
                             <Dropdown.Menu>
                               {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
-                                <Dropdown.Item
-                                  key={idx}
-                                  onClick={() =>
-                                    handleHfsLevelChange(est._id, level)
-                                  }
-                                >
-                                  {level}
-                                </Dropdown.Item>
+                                <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>{level}</Dropdown.Item>
                               ))}
                             </Dropdown.Menu>
                           </Dropdown>
@@ -272,17 +214,7 @@ function Estimation() {
                       </td>
 
                       <td>
-                        <Button
-                          variant={
-                            est.hfsLevel !== 0
-                              ? "outline-secondary"
-                              : "outline-success"
-                          }
-                          onClick={() => handleSubmit(est._id)}
-                          disabled={disabled}
-                        >
-                          {disabled ? message : "ยืนยัน"}
-                        </Button>
+                        <Button variant={ est.hfsLevel !== 0 ? "outline-secondary" : "outline-success" } onClick={() => handleSubmit(est._id)} disabled={disabled}> {disabled ? message : "ยืนยัน"}</Button>
                       </td>
                     </tr>
                   );
@@ -324,34 +256,18 @@ function Estimation() {
         <Modal.Header closeButton />
         <Modal.Body>
           {selectedImage && (
-            <img
-              src={`data:image/jpeg;base64,${selectedImage}`}
-              alt="รูปภาพ"
-              style={{
-                width: "auto",
-                height: "auto",
-                maxWidth: "100%",
-                maxHeight: "80vh",
-                margin: "0 auto",
-                display: "block",
-              }}
+            <img src={`data:image/jpeg;base64,${selectedImage}`} alt="รูปภาพ" style={{ width: "auto", height: "auto", maxWidth: "100%", maxHeight: "80vh", margin: "0 auto", display: "block",}}
             />
           )}
         </Modal.Body>
       </Modal>
-      <Modal
-        show={showNotificationModal}
-        onHide={handleCloseNotificationModal}
-        centered
-      >
+      <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>ผลการประเมิน</Modal.Title>
         </Modal.Header>
         <Modal.Body>{notificationMessage}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseNotificationModal}>
-            ปิด
-          </Button>
+          <Button variant="secondary" onClick={handleCloseNotificationModal}>ปิด</Button>
         </Modal.Footer>
       </Modal>
     </Container>

@@ -60,10 +60,8 @@ const UserSchema = new mongoose.Schema(
 UserSchema.pre("save", function (next) {
   const user = this;
   
-  // ตรวจสอบว่ามีการเปลี่ยนแปลงรหัสผ่านหรือไม่
   if (!user.isModified("password")) return next();
 
-  // สร้าง salt และ hash รหัสผ่านเฉพาะเมื่อมีการเปลี่ยนแปลงรหัสผ่าน
   bcrypt.genSalt(10, function (err, salt) {
     if (err) return next(err);
 
@@ -75,7 +73,6 @@ UserSchema.pre("save", function (next) {
     });
   });
 });
-
 
 UserSchema.methods.toJSON = function () {
   const user = this;
