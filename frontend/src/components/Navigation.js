@@ -16,11 +16,11 @@ import axios from "axios";
 
 function Navigation() {
   const admin = useSelector((state) => state.admin);
-  const selectuser = useSelector((state) => state.selectuser) || {};
-  const chatnotification = useSelector((state) => state.chatnotification) || [];  
-  const users = useSelector((state) => state.users) || [];
-  const personal = useSelector((state) => state.personal) || {};
-  const estimationHFS = useSelector((state) => state.estimationHFS) || {};
+  const selectuser = useSelector((state) => state.selectuser);
+  const chatnotification = useSelector((state) => state.chatnotification);  
+  const users = useSelector((state) => state.users);
+  const personal = useSelector((state) => state.personal);
+  const estimationHFS = useSelector((state) => state.estimationHFS);
   const dispatch = useDispatch();
   const { API_BASE_URL } = useContext(AppContext);
   const navigate = useNavigate();

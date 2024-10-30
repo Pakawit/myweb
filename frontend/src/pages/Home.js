@@ -17,9 +17,9 @@ function Home() {
   const navigate = useNavigate();
   const { API_BASE_URL } = useContext(AppContext);
   const admin = useSelector((state) => state.admin);
-  const users = useSelector((state) => state.users) || [];
-  const medication = useSelector((state) => state.medication) || [];
-  const hfsNotifications = useSelector((state) => state.hfsnotification) || [];
+  const users = useSelector((state) => state.users);
+  const medication = useSelector((state) => state.medication);
+  const hfsNotifications = useSelector((state) => state.hfsnotification);
   const [currentPage, setCurrentPage] = useState(0);
 
   const itemsPerPage = 10;
@@ -43,6 +43,7 @@ function Home() {
   };
 
   useEffect(() => {
+    fetchDataInterval();
     dispatch(deleteselectuser());
 
     fetchDataOnPageLoad();

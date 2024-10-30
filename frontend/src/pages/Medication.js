@@ -9,8 +9,8 @@ import ReactPaginate from "react-paginate";
 
 function Medication() {
   const { API_BASE_URL } = useContext(AppContext);
-  const medications = useSelector((state) => state.medication) || [];
-  const selectuser = useSelector((state) => state.selectuser) || {};
+  const medications = useSelector((state) => state.medication);
+  const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;

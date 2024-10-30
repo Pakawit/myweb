@@ -10,9 +10,9 @@ import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 function Chat() {
   const { API_BASE_URL } = useContext(AppContext);
   const dispatch = useDispatch();
-  const messages = useSelector((state) => state.message) || [];
-  const selectuser = useSelector((state) => state.selectuser) || {};
-  const chatnotification = useSelector((state) => state.chatnotification) || [];
+  const messages = useSelector((state) => state.message);
+  const selectuser = useSelector((state) => state.selectuser);
+  const chatnotification = useSelector((state) => state.chatnotification);
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -36,13 +36,14 @@ function Chat() {
     "nurse_charactor-10.png",
   ];
 
-  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = () => 
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
     if (selectuser) {
-      const fetchMessages = () =>
-        dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
+      const fetchMessages = () => dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
       fetchMessages();
+      scrollToBottom();
       const intervalId = setInterval(fetchMessages, 3000);
       return () => clearInterval(intervalId);
     }
@@ -56,11 +57,10 @@ function Chat() {
       if (notification && previousSelectUser.current !== selectuser._id) {
         dispatch(removeChatNotificationThunk(selectuser._id));
         previousSelectUser.current = selectuser._id;
+        scrollToBottom();
       }
     }
   }, [chatnotification, selectuser, dispatch]);
-
-  useEffect(scrollToBottom, [messages]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];

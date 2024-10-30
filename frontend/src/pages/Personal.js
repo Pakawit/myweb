@@ -11,12 +11,12 @@ import { fetchPersonalDataThunk } from "../features/personalSlice";
 function Personal() {
   const { API_BASE_URL } = useContext(AppContext);
   const admin = useSelector((state) => state.admin);
-  const selectuser = useSelector((state) => state.selectuser) || {};
-  const personal = useSelector((state) => state.personal) || {};
-  const medication = useSelector((state) => state.medication) || [];
+  const selectuser = useSelector((state) => state.selectuser);
+  const personal = useSelector((state) => state.personal);
+  const medication = useSelector((state) => state.medication);
   const dispatch = useDispatch();
 
-  const [member, setMember] = useState(selectuser || {});
+  const [member, setMember] = useState(selectuser);
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState({});
   const [showModal, setShowModal] = useState(false);
@@ -190,10 +190,10 @@ function Personal() {
 
   function renderAdmin2Table() {
     const selectedUser = personal[selectuser._id];
-
+  
     return (
       selectedUser && (
-        <Table striped bordered hover>
+        <Table striped bordered hover responsive="md">
           <thead>
             <tr>
               {[
@@ -208,7 +208,7 @@ function Personal() {
                 "เลขโรงพยาบาล",
                 "การดำเนินการ",
               ].map((header) => (
-                <th key={header}>{header}</th>
+                <th key={header} className="text-center">{header}</th>
               ))}
             </tr>
           </thead>
@@ -216,23 +216,23 @@ function Personal() {
             <tr>
               <td>{selectedUser.name}</td>
               <td>{selectedUser.phone}</td>
-              <td>{selectedUser.other_numbers}</td>
-              <td>{selectedUser.age}</td>
-              <td>{selectedUser.diagnosis}</td>
-              <td>{selectedUser.taking_capecitabine}</td>
-              <td>{selectedUser.morningTime}</td>
-              <td>{selectedUser.eveningTime}</td>
-              <td>{selectedUser.hospital_number}</td>
-              <td>
-                <Button variant="outline-success" onClick={() => handleAction("confirmChanges", selectedUser)}>ยืนยัน</Button>
-                <Button variant="outline-danger" className="ms-2" onClick={() => handleAction("rejectChanges", selectedUser)}>ปฏิเสธ</Button>
+              <td>{selectedUser.other_numbers || "N/A"}</td>
+              <td>{selectedUser.age || "N/A"}</td>
+              <td>{selectedUser.diagnosis || "N/A"}</td>
+              <td>{selectedUser.taking_capecitabine || "N/A"}</td>
+              <td>{selectedUser.morningTime || "N/A"}</td>
+              <td>{selectedUser.eveningTime || "N/A"}</td>
+              <td>{selectedUser.hospital_number || "N/A"}</td>
+              <td className="text-center">
+                <Button variant="outline-success" size="sm" onClick={() => handleAction("confirmChanges", selectedUser)} className="mx-1"> ยืนยัน </Button>
+                <Button variant="outline-danger" size="sm" onClick={() => handleAction("rejectChanges", selectedUser)} className="mx-1"> ปฏิเสธ </Button>
               </td>
             </tr>
           </tbody>
         </Table>
       )
     );
-  }
+  }  
 
   function renderModal() {
     return (

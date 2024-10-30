@@ -10,8 +10,8 @@ import ReactPaginate from "react-paginate";
 function Estimation() {
   const admin = useSelector((state) => state.admin);
   const { API_BASE_URL } = useContext(AppContext);
-  const estimationHFS = useSelector((state) => state.estimationHFS) || {};
-  const selectuser = useSelector((state) => state.selectuser) || {};
+  const estimationHFS = useSelector((state) => state.estimationHFS);
+  const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [estimations, setEstimations] = useState([]);
   const [showModal, setShowModal] = useState(false);
