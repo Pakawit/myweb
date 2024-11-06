@@ -11,6 +11,7 @@ import { setselectuser } from "../features/selectuserSlice";
 import { fetchChatNotificationThunk } from "../features/chatnotificationSlice";
 import { fetchPersonalDataThunk } from "../features/personalSlice";
 import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 
@@ -74,6 +75,7 @@ function Navigation() {
       if (user) {
         try {
           dispatch(setselectuser(user));
+          dispatch(removeChatNotificationThunk(user._id));
           navigate("/chat");
         } catch (error) {
           console.error("Error handling notification click:", error);

@@ -8,6 +8,7 @@ import { fetchUsersThunk } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { fetchMedicationsThunk } from "../features/medicationSlice";
 import { fetchHFSNotificationsThunk } from "../features/hfsnotificationSlice";
+import { deleteMessage } from "../features/messageSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
 import "./style.css";
@@ -45,6 +46,7 @@ function Home() {
   useEffect(() => {
     fetchDataInterval();
     dispatch(deleteselectuser());
+    dispatch(deleteMessage());
 
     fetchDataOnPageLoad();
 
@@ -78,17 +80,11 @@ function Home() {
   const renderUserRow = (user) => {
     if (user._id === admin._id) return null;
 
-    const lastStatus = medication
-      .filter((med) => med.from === user._id)
-      .at(-1)?.status;
-    const missedCount = medication.filter(
-      (med) => med.from === user._id && med.status === 0
-    ).length;
-    const hfsVariant = hfsNotifications.some(
-      (notif) => notif.userId === user._id
-    )
-      ? "outline-warning"
-      : "outline-success";
+    const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;
+
+    const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;
+    
+    const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id)? "outline-warning" : "outline-success";
 
     const { variant, text } = getStatusButton(lastStatus);
 

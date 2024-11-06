@@ -64,14 +64,12 @@ function Medication() {
     return new Date(`${formattedDate}T${formattedTime}`);
   };
 
-  const sortedMedications = medications
-    .filter((med) => med.from === selectuser._id)
-    .sort(
-      (a, b) =>
-        convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)
+  const sortedMedications = medications.filter((med) => med.from === selectuser._id).sort( (a, b) =>
+     convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)
     );
 
   const totalPages = Math.ceil(sortedMedications.length / itemsPerPage);
+  
   const paginatedMedications = sortedMedications.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage

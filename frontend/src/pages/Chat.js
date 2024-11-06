@@ -22,7 +22,8 @@ function Chat() {
   const messageEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const previousSelectUser = useRef(null);
-
+  const previousMessageCount = useRef(messages.length); 
+  
   const stickers = [
     "nurse_charactor-01.png",
     "nurse_charactor-02.png",
@@ -50,17 +51,26 @@ function Chat() {
   }, [dispatch, selectuser]);
 
   useEffect(() => {
-    if (selectuser && chatnotification.length > 0) {
+    if (messages.length > previousMessageCount.current) {
       const notification = chatnotification.find(
         (n) => n.from === selectuser._id
       );
-      if (notification && previousSelectUser.current !== selectuser._id) {
+      if (notification) {
         dispatch(removeChatNotificationThunk(selectuser._id));
         previousSelectUser.current = selectuser._id;
-        scrollToBottom();
-      }
+      }   
+      scrollToBottom();
     }
-  }, [chatnotification, selectuser, dispatch]);
+    previousMessageCount.current = messages.length;
+  }, [messages, chatnotification, selectuser, dispatch]);
+  
+
+  useEffect(() => {
+    if (messages.length > previousMessageCount.current) {
+      scrollToBottom();
+    }
+    previousMessageCount.current = messages.length;
+  }, [messages]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];
@@ -86,11 +96,11 @@ function Chat() {
 
       const res = await axios.post(`${API_BASE_URL}/chatphoto`, formData);
       dispatch(addMessage(res.data));
-      scrollToBottom();
     } catch (error) {
       console.error(error);
     } finally {
       setShowStickersModal(false);
+      scrollToBottom();
     }
   };
 
@@ -114,7 +124,7 @@ function Chat() {
         setImage(null);
         fileInputRef.current.value = "";
       } else {
-        const res = await axios.post(`${API_BASE_URL}/createmessage`, {content: message, from: "admin", to: selectuser._id, date: todayDate, time,});
+        const res = await axios.post(`${API_BASE_URL}/createmessage`, {content: message, from: "admin", to: selectuser._id, date: todayDate, time});
         dispatch(addMessage(res.data));
       }
       setMessage("");
@@ -157,7 +167,7 @@ function Chat() {
             <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg}/>
             <Button variant="outline-dark" onClick={() => fileInputRef.current.click()}><i className="bi bi-image" /></Button>
             <Button variant="outline-secondary" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
-            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "",fontWeight: image ? "bold" : "normal",}} />
+            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "",fontWeight: image ? "bold" : "normal"}} />
             <Button type="submit" disabled={!message && !image}><i className="bi bi-send-fill" /></Button>
           </Form>
         </Col>
