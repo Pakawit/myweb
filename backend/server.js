@@ -161,21 +161,12 @@ app.delete("/logout", async (req, res) => {
 });
 
 // Personal
-app.get("/getPendingChanges", async (req, res) => {
-  try {
-    const pendingChanges = await readJSONFile(PERSONAL_FILE_PATH);
-    res.status(200).json(Object.values(pendingChanges));
-  } catch (error) {
-    res.status(500).json({ error: "Error fetching pending changes" });
-  }
-});
-
 app.post("/saveChangesToJson", async (req, res) => {
   const { changes } = req.body;
   try {
     await Log.create({
       action: "แก้ไขข้อมูล",
-      user: "admin1",
+      user: "Apatnipa",
       details: `แก้ไขข้อมูล ${changes.name}`,
     });
     let personalData = await readJSONFile(PERSONAL_FILE_PATH);
@@ -200,7 +191,7 @@ app.post("/confirmChanges", async (req, res) => {
 
     await Log.create({
       action: "แก้ไขข้อมูล",
-      user: "admin2",
+      user: "Chureeporn",
       details: `ยืนยันการแก้ไขข้อมูล ${name}`,
     });
 
@@ -229,7 +220,7 @@ app.post("/rejectChanges", async (req, res) => {
     }
     await Log.create({
       action: "แก้ไขข้อมูล",
-      user: "admin2",
+      user: "Chureeporn",
       details: `ยกเลิกการแก้ไขข้อมูล ${name}`,
     });
     delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
@@ -284,12 +275,22 @@ app.put("/updatemedication", async (req, res) => {
 
 // Estimation
 app.post("/getestimation", async (req, res) => {
-  const { from } = req.body;
+  const { from, page = 0, limit = 10 } = req.body;
 
   try {
-    const estimations = await Estimation.find({ from });
+    const estimations = await Estimation.find({ from })
+      .sort({ date: -1, time: -1 })
+      .skip(page * limit)
+      .limit(limit);
 
-    res.json(estimations);
+    const totalEstimations = await Estimation.countDocuments({ from });
+
+    res.json({
+      data: estimations,
+      total: totalEstimations,
+      page: page,
+      limit: limit,
+    });
   } catch (error) {
     console.error("Error fetching estimations:", error);
     res.status(500).json({ error: "Error fetching estimations" });
@@ -339,12 +340,12 @@ app.put("/evaluateHFS", async (req, res) => {
 
     estimation.evaluations[adminName] = { hfsLevel };
 
-    const { admin1, admin2 } = estimation.evaluations;
+    const { Apatnipa, Chureeporn } = estimation.evaluations;
 
-    // ตรวจสอบว่าทั้ง admin1 และ admin2 ประเมินแล้วหรือยัง
-    if (admin1?.hfsLevel !== undefined && admin2?.hfsLevel !== undefined) {
-      if (admin1.hfsLevel === admin2.hfsLevel) {
-        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId },{ hfsLevel: admin1.hfsLevel },{ new: true });
+    // ตรวจสอบว่าทั้ง Apatnipa และ Chureeporn ประเมินแล้วหรือยัง
+    if (Apatnipa?.hfsLevel !== undefined && Chureeporn?.hfsLevel !== undefined) {
+      if (Apatnipa.hfsLevel === Chureeporn.hfsLevel) {
+        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId },{ hfsLevel: Apatnipa.hfsLevel },{ new: true });//ส่งกลับหลัง update
 
         let hfsNotifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
         hfsNotifications = hfsNotifications.filter(
@@ -352,24 +353,24 @@ app.put("/evaluateHFS", async (req, res) => {
         );
         await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
 
-        res.json({message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,updatedEstimation,});
+        res.json({message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,updatedEstimation});
 
-        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} เสร็จสิ้น`,});
+        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} เสร็จสิ้น`});
 
         delete estimationsHFS[estimationId];
 
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
-        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} ผิดพลาด`,});
+        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} ผิดพลาด`});
 
-        delete estimation.evaluations.admin1.hfsLevel;
-        delete estimation.evaluations.admin2.hfsLevel;
-        res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด` });
+        delete estimation.evaluations.Apatnipa.hfsLevel;
+        delete estimation.evaluations.Chureeporn.hfsLevel;
+        res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด`});
       }
     } else {
-      await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการโดย ${adminName}`,});
+      await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการโดย ${adminName}`});
 
-      res.json({message: `ประเมินสำเร็จ กำลังรอ ${admin1?.hfsLevel === undefined ? "admin1" : "admin2"} ประเมิน`,});
+      res.json({message: `ประเมินสำเร็จ กำลังรอ ${Apatnipa?.hfsLevel === undefined ? "Apatnipa" : "Chureeporn"} ประเมิน`});
     }
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
   } catch (error) {

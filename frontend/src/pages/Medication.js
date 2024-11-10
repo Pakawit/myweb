@@ -59,17 +59,29 @@ function Medication() {
 
   const convertDateTime = (date, time) => {
     const [day, month, year] = date.split("/");
-    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2,"0")}`;
+    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     const formattedTime = time.padStart(5, "0");
     return new Date(`${formattedDate}T${formattedTime}`);
+  };  
+
+  const formatTimeRange = (time) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes);
+
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 6);
+
+    const formatTime = (date) => date.toTimeString().slice(0, 5); 
+    return `${formatTime(startDate)}-${formatTime(endDate)}`;
   };
 
-  const sortedMedications = medications.filter((med) => med.from === selectuser._id).sort( (a, b) =>
-     convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)
-    );
+  const sortedMedications = medications
+    .filter((med) => med.from === selectuser._id)
+    .sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time));
 
   const totalPages = Math.ceil(sortedMedications.length / itemsPerPage);
-  
+
   const paginatedMedications = sortedMedications.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
@@ -100,7 +112,7 @@ function Medication() {
                 paginatedMedications.map((med, index) => (
                   <tr key={index}>
                     <td className="table-center">{med.date}</td>
-                    <td className="table-center">{med.time}</td>
+                    <td className="table-center">{formatTimeRange(med.time)}</td> 
                     <td className="table-center">
                       {getStatusButton(med.status)}
                     </td>

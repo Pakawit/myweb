@@ -16,7 +16,7 @@ const AdminSchema = new mongoose.Schema(
   },
   { timestamps: true, minimize: false }
 );
-
+// ทำงานก่อนการบันทึก
 AdminSchema.pre("save", function (next) {
   const admin = this;
   
@@ -35,15 +35,14 @@ AdminSchema.pre("save", function (next) {
     });
   });
 });
-
-
+// ทำงานก่อนส่ง response
 AdminSchema.methods.toJSON = function () {
   const admin = this;
   const userObject = admin.toObject();
   delete userObject.password;
   return userObject;
 };
-
+//ตรวจสอบสิทธิ์
 AdminSchema.statics.findByCredentials = async function (name, password) {
   const admin = await Admin.findOne({ name });
   if (!admin) throw new Error("invalid username or password");

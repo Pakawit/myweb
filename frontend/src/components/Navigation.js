@@ -17,7 +17,6 @@ import axios from "axios";
 
 function Navigation() {
   const admin = useSelector((state) => state.admin);
-  const selectuser = useSelector((state) => state.selectuser);
   const chatnotification = useSelector((state) => state.chatnotification);  
   const users = useSelector((state) => state.users);
   const personal = useSelector((state) => state.personal);
@@ -36,17 +35,13 @@ function Navigation() {
       dispatch(fetchChatNotificationThunk());
       dispatch(fetchPersonalDataThunk());
       dispatch(fetchEstimationHFSThunk());
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);
 
   const back = () => {
     navigate("/");
-  };
-
-  const handLog = () => {
-    navigate("/log");
   };
 
   const handleLogout = async (e) => {
@@ -106,34 +101,44 @@ function Navigation() {
     }
   };
 
+  const totalPersonalNotifications = Object.keys(personal).length + Object.keys(estimationHFS).length;
+
   const shouldHideBackButton = location.pathname === "/";
 
   return (
     <Navbar>
-      <Container fluid className="d-flex align-items-center justify-content-between">
-        <Button variant="outline-dark" onClick={back} style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }} className="me-2">
-          <i className="bi bi-chevron-left"></i>
-        </Button>
+      <Container fluid>
+        <div className="d-flex align-items-center">
+          <Button
+            variant="outline-dark"
+            onClick={back}
+            style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }}
+            className="me-2"
+          >
+            <i className="bi bi-chevron-left"></i>
+          </Button>
 
-        {selectuser && selectuser.name && (
-          <Navbar.Brand className="mx-auto fw-bold custom-brand">{selectuser.name}</Navbar.Brand>
-        )}
+          {/* แสดงชื่อ admin ที่เข้าสู่ระบบ ชิดซ้าย */}
+          {admin && admin.name && (
+            <Navbar.Text className="border border-secondary rounded px-3 py-1 fw-bold text-secondary">
+              {admin.name}
+            </Navbar.Text>
+          )}
+        </div>
 
-        <Nav className="d-flex align-items-center">
+        {/* ส่วนของปุ่มอื่นๆ ชิดขวา */}
+        <Nav className="ms-auto d-flex align-items-center">
           <Dropdown className="me-2">
             <Dropdown.Toggle variant="outline-dark" id="personal-notification-dropdown">
               <i className="bi bi-exclamation-triangle"></i>
-              {(Object.keys(personal).length > 0 ||
-                Object.keys(estimationHFS).length > 0) && (
+              {totalPersonalNotifications > 0 && (
                 <Badge pill bg="warning" style={{ marginLeft: "5px" }}>
-                  {Object.keys(personal).length +
-                    Object.keys(estimationHFS).length}
+                  {totalPersonalNotifications}
                 </Badge>
               )}
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {Object.keys(personal).length === 0 &&
-              Object.keys(estimationHFS).length === 0 ? (
+              {totalPersonalNotifications === 0 ? (
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
                 <>
@@ -145,7 +150,8 @@ function Navigation() {
 
                   {Object.keys(estimationHFS).map((estimationId) => (
                     <Dropdown.Item key={estimationId} onClick={() => handleHFSNotificationClick(estimationId)}>
-                      ประเมินอาการ{" "}{estimationHFS[estimationId]?.user?.name? estimationHFS[estimationId]?.user?.name : "Unknown User"}
+                      ประเมินอาการ{" "}
+                      {estimationHFS[estimationId]?.user?.name ? estimationHFS[estimationId]?.user?.name : "Unknown User"}
                     </Dropdown.Item>
                   ))}
                 </>
@@ -167,9 +173,7 @@ function Navigation() {
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
                 chatnotification.map((notification) => {
-                  const user = users.find(
-                    (user) => user._id === notification.from
-                  );
+                  const user = users.find((user) => user._id === notification.from);
                   return (
                     <Dropdown.Item key={notification.from} onClick={() => handleNotificationClick(notification)}>
                       {user ? user.name : "Unknown User"}
@@ -180,9 +184,13 @@ function Navigation() {
             </Dropdown.Menu>
           </Dropdown>
 
-          <Button variant="outline-dark" className="me-2" onClick={handLog}><i className="bi bi-journal"></i></Button>
+          <Button variant="outline-dark" className="me-2" onClick={() => navigate("/log")}>
+            <i className="bi bi-journal"></i>
+          </Button>
 
-          <Button variant="outline-dark" onClick={handleLogout}><i className="bi bi-box-arrow-in-right"></i></Button>
+          <Button variant="outline-dark" onClick={handleLogout}>
+            <i className="bi bi-box-arrow-in-right"></i>
+          </Button>
         </Nav>
       </Container>
     </Navbar>

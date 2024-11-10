@@ -14,36 +14,35 @@ function Estimation() {
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [estimations, setEstimations] = useState([]);
+  const [totalEstimations, setTotalEstimations] = useState(0); // เก็บจำนวนข้อมูลทั้งหมด
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notification, setNotification] = useState({ show: false, message: "" });
   const [hfsLevels, setHfsLevels] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 2;
+  const itemsPerPage = 1; // แสดงผลเพียง 1 แถวต่อหน้า
 
-  const fetchEstimations = async () => {
+  const fetchEstimations = async (page = 0) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
+        page,
+        limit: itemsPerPage, // ดึงข้อมูลจำนวนที่กำหนดต่อหน้า
       });
-      setEstimations(response.data);
+      setEstimations(response.data.data); // ตั้งค่าเฉพาะข้อมูลใน data
+      setTotalEstimations(response.data.total); // ตั้งค่าจำนวนข้อมูลทั้งหมด
     } catch (error) {
       console.error("Error fetching estimations:", error);
     }
   };
 
   useEffect(() => {
+    fetchEstimations(currentPage); // ดึงข้อมูลเฉพาะหน้าปัจจุบัน
+  }, [currentPage, selectuser, API_BASE_URL]);
+
+  useEffect(() => {
     dispatch(fetchEstimationHFSThunk());
-    fetchEstimations();
-
-    const intervalId = setInterval(() => {
-      fetchEstimations();
-      dispatch(fetchEstimationHFSThunk());
-    }, 3000);
-
-    return () => clearInterval(intervalId);
-  }, [dispatch, selectuser, API_BASE_URL]);
+  }, [dispatch]);
 
   const handleHfsLevelChange = (estimationId, level) => {
     setHfsLevels((prevLevels) => ({
@@ -56,13 +55,15 @@ function Estimation() {
     const hfsLevel = hfsLevels[estimationId];
     if (hfsLevel !== undefined && hfsLevel !== 0) {
       try {
-        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, { estimationId, user: selectuser, adminName: admin.name, hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,});
+        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
+          estimationId,
+          user: selectuser,
+          adminName: admin.name,
+          hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
+        });
 
-        setNotificationMessage(response.data.message);
-        setShowNotificationModal(true);
-
-        await fetchEstimations();
-
+        setNotification({ show: true, message: response.data.message });
+        await fetchEstimations(currentPage); // รีเฟรชข้อมูลเฉพาะหน้าปัจจุบัน
         dispatch(fetchEstimationHFSThunk());
       } catch (error) {
         console.error("Error submitting evaluation:", error);
@@ -81,53 +82,36 @@ function Estimation() {
   };
 
   const handleCloseNotificationModal = () => {
-    setShowNotificationModal(false);
-  };
-
-  const convertDate = (dateStr) => {
-    const [day, month, year] = dateStr.split("/");
-    return `${year}-${month}-${day}`;
-  };
-
-  const filteredEstimations = estimations.sort((a, b) => {
-    const dateA = new Date(`${convertDate(a.date)} ${a.time}`);
-    const dateB = new Date(`${convertDate(b.date)} ${b.time}`);
-    return dateA < dateB ? 1 : -1;
-  });
-
-  const paginatedEstimations = filteredEstimations.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
-  );
-
-  const handlePageChange = ({ selected }) => {
-    setCurrentPage(selected);
+    setNotification({ show: false, message: "" });
   };
 
   const renderPhotos = (photos) => {
     const leftPhotos = [photos[0], photos[1], photos[4], photos[5]];
     const rightPhotos = [photos[2], photos[3], photos[6], photos[7]];
 
-    const createGrid = (photosArray) => {
-      return (
-        <Row className="g-0">
-          {photosArray.map((photo, i) => (
-            <Col key={i} xs={6} className="p-1">
-              <img src={`data:image/jpeg;base64,${photo}`} alt={`รูปภาพ ${i}`} style={{ width: "100px", height: "100px", cursor: "pointer" }} onClick={() => handleShowModal(photo)}/>
-            </Col>
-          ))}
-        </Row>
-      );
-    };
+    const createGrid = (photosArray) => (
+      <Row className="g-0">
+        {photosArray.map((photo, i) => (
+          <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
+            <img
+              src={`data:image/jpeg;base64,${photo}`}
+              alt={`รูปภาพ ${i}`}
+              style={{ width: "100px", height: "100px", cursor: "pointer" }}
+              onClick={() => handleShowModal(photo)}
+            />
+          </Col>
+        ))}
+      </Row>
+    );
 
     return (
       <Row>
         <Col>
-          <h5 className="fw-bold">รูปฝั่งซ้าย</h5>
+          <h5 className="fw-bold text-center">รูปฝั่งซ้าย</h5>
           {createGrid(leftPhotos)}
         </Col>
         <Col>
-          <h5 className="fw-bold">รูปฝั่งขวา</h5>
+          <h5 className="fw-bold text-center">รูปฝั่งขวา</h5>
           {createGrid(rightPhotos)}
         </Col>
       </Row>
@@ -136,8 +120,8 @@ function Estimation() {
 
   const checkEstimationStatus = (estimationId, hfsLevel) => {
     const evaluations = estimationHFS[estimationId]?.evaluations || {};
-    const admin1Level = evaluations.admin1?.hfsLevel;
-    const admin2Level = evaluations.admin2?.hfsLevel;
+    const ApatnipaLevel = evaluations.Apatnipa?.hfsLevel;
+    const ChureepornLevel = evaluations.Chureeporn?.hfsLevel;
 
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
       return { disabled: false, message: "ยืนยัน" };
@@ -147,15 +131,42 @@ function Estimation() {
       return { disabled: true, message: "ประเมินแล้ว" };
     }
 
-    if (admin1Level !== undefined && admin.name === "admin1") {
-      return { disabled: true, message: "รอการประเมินจาก Admin2" };
+    if (ApatnipaLevel !== undefined && admin.name === "Apatnipa") {
+      return { disabled: true, message: "รอการประเมินจาก Chureeporn" };
     }
 
-    if (admin2Level !== undefined && admin.name === "admin2") {
-      return { disabled: true, message: "รอการประเมินจาก Admin1" };
+    if (ChureepornLevel !== undefined && admin.name === "Chureeporn") {
+      return { disabled: true, message: "รอการประเมินจาก Apatnipa" };
     }
 
     return { disabled: false, message: "ยืนยัน" };
+  };
+
+  const renderHfsLevel = (est) => {
+    const adminEvaluatedLevel = estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel;
+    const userEvaluation = adminEvaluatedLevel !== undefined ? `คุณประเมินว่า: ${adminEvaluatedLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${adminEvaluatedLevel}`}` : null;
+
+    if (est.hfsLevel !== 0) return <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>;
+    if (userEvaluation) return <span>{userEvaluation}</span>;
+
+    return (
+      <Dropdown>
+        <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
+          ระดับที่ {hfsLevels[est._id] ?? ""}
+        </Dropdown.Toggle>
+        <Dropdown.Menu>
+          {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
+            <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>
+              {level}
+            </Dropdown.Item>
+          ))}
+        </Dropdown.Menu>
+      </Dropdown>
+    );
+  };
+
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected);
   };
 
   return (
@@ -172,49 +183,30 @@ function Estimation() {
                 <th className="table-center">รูป</th>
                 <th className="table-center">ระดับความเจ็บปวด</th>
                 <th className="table-center">การประเมินอาการ HFS</th>
-                <th className="table-center">{}</th>
+                <th className="table-center">การดำเนินการ</th>
               </tr>
             </thead>
             <tbody>
-              {paginatedEstimations.length > 0 ? (
-                paginatedEstimations.map((est) => {
-                  const { disabled, message } = checkEstimationStatus(
-                    est._id,
-                    est.hfsLevel
-                  );
+              {estimations.length > 0 ? (
+                estimations.map((est) => {
+                  const { disabled, message } = checkEstimationStatus(est._id, est.hfsLevel);
                   return (
-                    <tr key={est._id} className={ est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
+                    <tr key={est._id} className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
                       <td className="table-center">{est.date}</td>
                       <td className="table-center">{est.time}</td>
-                      <td className="table-center">
-                        {renderPhotos(est.photos)}
-                      </td>
+                      <td className="table-center">{renderPhotos(est.photos)}</td>
                       <td className="table-center">{est.painLevel}</td>
+                      <td className="table-center">{renderHfsLevel(est)}</td>
                       <td className="table-center">
-                        {est.hfsLevel !== 0 ? (
-                          <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
-                        ) : admin.name === "admin1" &&
-                          estimationHFS[est._id]?.evaluations?.admin1
-                            ?.hfsLevel !== undefined ? (
-                          <span>{`คุณประเมินว่า: ${estimationHFS[est._id]?.evaluations?.admin1?.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${ estimationHFS[est._id]?.evaluations?.admin1?.hfsLevel}`}`}</span>
-                        ) : admin.name === "admin2" &&
-                          estimationHFS[est._id]?.evaluations?.admin2
-                            ?.hfsLevel !== undefined ? (
-                          <span>{`คุณประเมินว่า: ${estimationHFS[est._id]?.evaluations?.admin2?.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${ estimationHFS[est._id]?.evaluations?.admin2?.hfsLevel}`}`}</span>
-                        ) : (
-                          <Dropdown>
-                            <Dropdown.Toggle variant="outline-success" id="dropdown-basic">ระดับที่{" "}{hfsLevels[est._id] !== undefined ? hfsLevels[est._id]: ""}</Dropdown.Toggle>
-                            <Dropdown.Menu>
-                              {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
-                                <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>{level}</Dropdown.Item>
-                              ))}
-                            </Dropdown.Menu>
-                          </Dropdown>
-                        )}
-                      </td>
-
-                      <td>
-                        <Button variant={ est.hfsLevel !== 0 ? "outline-secondary" : "outline-success" } onClick={() => handleSubmit(est._id)} disabled={disabled}> {disabled ? message : "ยืนยัน"}</Button>
+                        <div className="d-flex justify-content-center">
+                          <Button
+                            variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
+                            onClick={() => handleSubmit(est._id)}
+                            disabled={disabled}
+                          >
+                            {disabled ? message : "ยืนยัน"}
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -229,12 +221,12 @@ function Estimation() {
             </tbody>
           </Table>
 
-          {filteredEstimations.length > itemsPerPage && (
+          {totalEstimations > itemsPerPage && (
             <ReactPaginate
               previousLabel={"<"}
               nextLabel={">"}
               breakLabel={"..."}
-              pageCount={Math.ceil(filteredEstimations.length / itemsPerPage)}
+              pageCount={Math.ceil(totalEstimations / itemsPerPage)}
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageChange}
@@ -252,22 +244,29 @@ function Estimation() {
           )}
         </Col>
       </Row>
+
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton />
         <Modal.Body>
           {selectedImage && (
-            <img src={`data:image/jpeg;base64,${selectedImage}`} alt="รูปภาพ" style={{ width: "auto", height: "auto", maxWidth: "100%", maxHeight: "80vh", margin: "0 auto", display: "block",}}
+            <img
+              src={`data:image/jpeg;base64,${selectedImage}`}
+              alt="รูปภาพ"
+              style={{ width: "auto", height: "auto", maxWidth: "100%", maxHeight: "80vh", margin: "0 auto", display: "block" }}
             />
           )}
         </Modal.Body>
       </Modal>
-      <Modal show={showNotificationModal} onHide={handleCloseNotificationModal} centered>
+
+      <Modal show={notification.show} onHide={handleCloseNotificationModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>ผลการประเมิน</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{notificationMessage}</Modal.Body>
+        <Modal.Body>{notification.message}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseNotificationModal}>ปิด</Button>
+          <Button variant="secondary" onClick={handleCloseNotificationModal}>
+            ปิด
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>

@@ -11,6 +11,7 @@ import hfsnotificationSlice from "./features/hfsnotificationSlice";
 import personalSlice from "./features/personalSlice";
 import estimationHFSSlice from "./features/estimationHFSSlice";
 
+// รวม reducers ทั้งหมดใน rootReducer
 const rootReducer = combineReducers({
   admin: adminSlice,
   users: usersSlice,
@@ -26,33 +27,19 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: ["message"],
+  blacklist: ["message"], // ระบุ slice ที่ไม่ต้องการเก็บใน local storage
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
+// ตั้งค่า store
 const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: false, 
     }),
-  devTools: process.env.NODE_ENV !== "production" && {
-    serialize: {
-      options: {
-        maxDepth: 2,
-      },
-    },
-    actionsDenylist: ["SOME_LARGE_ACTION_TYPE"],
-    stateSanitizer: (state) =>
-      state.largeProperty
-        ? { ...state, largeProperty: "<<LARGE_STATE>>" }
-        : state,
-    actionSanitizer: (action) =>
-      action.type === "SOME_LARGE_ACTION_TYPE"
-        ? { ...action, largeProperty: "<<LARGE_ACTION>>" }
-        : action,
-  },
+  devTools: process.env.NODE_ENV !== "production", 
 });
 
 export default store;

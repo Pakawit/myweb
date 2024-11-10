@@ -111,7 +111,9 @@ function Home() {
     setCurrentPage(selectedItem.selected);
   };
 
-  const paginatedUsers = users.slice(
+  const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));   // เรียงลำดับข้อมูลผู้ป่วยตามวันที่เวลาสร้างจากล่าสุดไปเก่าสุด
+
+  const paginatedUsers = sortedUsers.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );

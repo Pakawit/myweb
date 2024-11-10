@@ -13,6 +13,7 @@ function Chat() {
   const messages = useSelector((state) => state.message);
   const selectuser = useSelector((state) => state.selectuser);
   const chatnotification = useSelector((state) => state.chatnotification);
+
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -21,9 +22,8 @@ function Chat() {
 
   const messageEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const previousSelectUser = useRef(null);
-  const previousMessageCount = useRef(messages.length); 
-  
+  const previousMessagesLength = useRef(messages.length);
+
   const stickers = [
     "nurse_charactor-01.png",
     "nurse_charactor-02.png",
@@ -37,40 +37,28 @@ function Chat() {
     "nurse_charactor-10.png",
   ];
 
-  const scrollToBottom = () => 
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
   useEffect(() => {
     if (selectuser) {
       const fetchMessages = () => dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
       fetchMessages();
-      scrollToBottom();
+      scrollToBottom(); // เลื่อนไปด้านล่างเมื่อโหลดข้อมูลครั้งแรก
+
       const intervalId = setInterval(fetchMessages, 3000);
+
       return () => clearInterval(intervalId);
     }
   }, [dispatch, selectuser]);
 
   useEffect(() => {
-    if (messages.length > previousMessageCount.current) {
-      const notification = chatnotification.find(
-        (n) => n.from === selectuser._id
-      );
-      if (notification) {
-        dispatch(removeChatNotificationThunk(selectuser._id));
-        previousSelectUser.current = selectuser._id;
-      }   
-      scrollToBottom();
+    if (messages.length > previousMessagesLength.current) {
+      scrollToBottom();       // เลื่อนลงไปที่ข้อความล่าสุดเฉพาะเมื่อมีข้อความใหม่เพิ่มเข้ามา
+      const notification = chatnotification.find((n) => n.from === selectuser._id);
+      if (notification) dispatch(removeChatNotificationThunk(selectuser._id));
     }
-    previousMessageCount.current = messages.length;
+    previousMessagesLength.current = messages.length;
   }, [messages, chatnotification, selectuser, dispatch]);
-  
-
-  useEffect(() => {
-    if (messages.length > previousMessageCount.current) {
-      scrollToBottom();
-    }
-    previousMessageCount.current = messages.length;
-  }, [messages]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];
@@ -124,7 +112,7 @@ function Chat() {
         setImage(null);
         fileInputRef.current.value = "";
       } else {
-        const res = await axios.post(`${API_BASE_URL}/createmessage`, {content: message, from: "admin", to: selectuser._id, date: todayDate, time});
+        const res = await axios.post(`${API_BASE_URL}/createmessage`, { content: message, from: "admin", to: selectuser._id, date: todayDate, time });
         dispatch(addMessage(res.data));
       }
       setMessage("");
@@ -152,7 +140,7 @@ function Chat() {
               <div key={i} className={ msg.from === "admin" ? "incoming-message" : "outgoing-message" }>
                 <div className="message-inner">
                   {msg.contentType === "image" ? (
-                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="Chat Image" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true);}} style={{ cursor: "pointer" }}/>
+                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="Chat Image" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true); }} style={{ cursor: "pointer" }} />
                   ) : (
                     <div>{msg.content}</div>
                   )}
@@ -164,10 +152,10 @@ function Chat() {
           </div>
 
           <Form onSubmit={handleSubmit} className="d-flex">
-            <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg}/>
+            <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg} />
             <Button variant="outline-dark" onClick={() => fileInputRef.current.click()}><i className="bi bi-image" /></Button>
             <Button variant="outline-secondary" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
-            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "",fontWeight: image ? "bold" : "normal"}} />
+            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "", fontWeight: image ? "bold" : "normal" }} />
             <Button type="submit" disabled={!message && !image}><i className="bi bi-send-fill" /></Button>
           </Form>
         </Col>
@@ -176,20 +164,15 @@ function Chat() {
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton />
         <Modal.Body>
-          {selectedImage && (
-            <img src={`data:image/jpeg;base64,${selectedImage}`} alt="Preview" className="modal-img"/>
-          )}
+          {selectedImage && <img src={`data:image/jpeg;base64,${selectedImage}`} alt="Preview" className="modal-img" />}
         </Modal.Body>
       </Modal>
 
-      <Modal
-        show={showStickersModal}
-        onHide={() => setShowStickersModal(false)}
-      >
+      <Modal show={showStickersModal} onHide={() => setShowStickersModal(false)} centered>
         <Modal.Header closeButton />
         <Modal.Body className="d-flex flex-wrap">
           {stickers.map((sticker, i) => (
-            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} className="sticker" onClick={() => handleStickerSelect(sticker)} style={{ cursor: "pointer", width: 130, margin: 10 }}/>
+            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} className="sticker" onClick={() => handleStickerSelect(sticker)} style={{ cursor: "pointer", width: 130, margin: 10 }} />
           ))}
         </Modal.Body>
       </Modal>

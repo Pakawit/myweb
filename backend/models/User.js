@@ -56,7 +56,7 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true, minimize: false }
 );
-
+// ทำงานก่อนการบันทึก
 UserSchema.pre("save", function (next) {
   const user = this;
   
@@ -73,14 +73,14 @@ UserSchema.pre("save", function (next) {
     });
   });
 });
-
+// ทำงานก่อนส่ง response
 UserSchema.methods.toJSON = function () {
   const user = this;
   const userObject = user.toObject();
   delete userObject.password;
   return userObject;
 };
-
+//ตรวจสอบสิทธิ์
 UserSchema.statics.findByCredentials = async function (name, password) {
   const user = await User.findOne({ name });
   if (!user) throw new Error("invalid username or password");

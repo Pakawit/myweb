@@ -3,9 +3,9 @@
     "_id": "66c705b9df4e2286dbe282a9",
     "name": "AW WP",
     "phone": "0000000000",
-    "other_numbers": "0000000007",
-    "age": 99,
-    "diagnosis": "",
+    "other_numbers": "0998474561",
+    "age": 103,
+    "diagnosis": "เจ็บใจ",
     "hospital_number": "11234687",
     "other_medicine": "",
     "morningTime": "08:00",
@@ -13,7 +13,7 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:32:41.030Z",
-    "updatedAt": "2024-10-28T08:31:11.838Z",
+    "updatedAt": "2024-11-08T12:54:38.810Z",
     "__v": 0
   },
   {
@@ -21,7 +21,7 @@
     "name": "AA AA",
     "phone": "0812345675",
     "other_numbers": "",
-    "age": 0,
+    "age": 11,
     "diagnosis": "",
     "hospital_number": "",
     "other_medicine": "",
@@ -30,7 +30,7 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:32:55.437Z",
-    "updatedAt": "2024-10-06T11:19:39.589Z",
+    "updatedAt": "2024-11-08T12:51:50.781Z",
     "__v": 0
   },
   {

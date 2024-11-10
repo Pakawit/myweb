@@ -16,11 +16,9 @@ function Personal() {
   const medication = useSelector((state) => state.medication);
   const dispatch = useDispatch();
 
-  const [member, setMember] = useState(selectuser);
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState({});
-  const [showModal, setShowModal] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [notification, setNotification] = useState({ message: "", show: false });
 
   useEffect(() => {
     dispatch(fetchMedicationsThunk());
@@ -39,7 +37,6 @@ function Personal() {
       const { data } = await axios.post(`${API_BASE_URL}/getuser`, {
         id: selectuser._id,
       });
-      setMember(data);
       dispatch(setselectuser(data));
     } catch (error) {
       console.error("Error fetching user details:", error);
@@ -59,15 +56,12 @@ function Personal() {
       eveningTime: /.+/,
     };
     const isValid = rules[name]?.test(value) ?? true;
-    setErrors((prev) => ({
-      ...prev,
-      [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง`,
-    }));
+    setErrors((prev) => ({ ...prev, [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง` }));
   };
 
   const handleChange = ({ target: { name, value } }) => {
     validate(name, value);
-    setMember((prev) => ({ ...prev, [name]: value }));
+    dispatch(setselectuser({ ...selectuser, [name]: value }));
   };
 
   const isFormValid = () => Object.values(errors).every((err) => !err);
@@ -76,10 +70,11 @@ function Personal() {
     if (isFormValid()) {
       try {
         await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
-          changes: member,
+          changes: selectuser,
         });
         setEditMode(false);
-        showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Admin2)");
+        showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Chureeporn)");
+        fetchUserDetails();
       } catch (error) {
         console.error("Error saving changes:", error);
       }
@@ -90,15 +85,8 @@ function Personal() {
 
   const handleAction = async (action, change) => {
     try {
-      await axios.post(`${API_BASE_URL}/${action}`, {
-        _id: change._id,
-        name: change.name,
-      });
-      showNotification(
-        action === "confirmChanges"
-          ? "ยืนยันการเปลี่ยนแปลงแล้ว"
-          : "ยกเลิกการเปลี่ยนแปลงแล้ว"
-      );
+      await axios.post(`${API_BASE_URL}/${action}`, { _id: change._id, name: change.name });
+      showNotification(action === "confirmChanges" ? "ยืนยันการเปลี่ยนแปลงแล้ว" : "ยกเลิกการเปลี่ยนแปลงแล้ว");
     } catch (error) {
       console.error(`Error in ${action}:`, error);
     }
@@ -108,8 +96,7 @@ function Personal() {
     medication.filter((med) => med.from === userId && med.status === 0).length;
 
   const showNotification = (message) => {
-    setNotificationMessage(message);
-    setShowModal(true);
+    setNotification({ message, show: true });
   };
 
   return (
@@ -120,39 +107,18 @@ function Personal() {
         {renderFormFields([
           { label: "ชื่อ-สกุล", name: "name", type: "text" },
           { label: "เบอร์โทรศัพท์", name: "phone", type: "text" },
-          {
-            label: "เบอร์โทรศัพท์ผู้ติดต่อ",
-            name: "other_numbers",
-            type: "text",
-          },
+          { label: "เบอร์โทรศัพท์ผู้ติดต่อ", name: "other_numbers", type: "text" },
           { label: "อายุ", name: "age", type: "number" },
           { label: "การวินิจฉัยโรคหลัก", name: "diagnosis", type: "textarea" },
-          {
-            label: "การรับประทานยา Capecitabine",
-            name: "taking_capecitabine",
-            type: "textarea",
-          },
-          {
-            label: "เวลารับประทานยาช่วงเช้า",
-            name: "morningTime",
-            type: "time",
-          },
-          {
-            label: "เวลารับประทานยาช่วงเย็น",
-            name: "eveningTime",
-            type: "time",
-          },
+          { label: "การรับประทานยา Capecitabine", name: "taking_capecitabine", type: "textarea" },
+          { label: "เวลารับประทานยาช่วงเช้า", name: "morningTime", type: "time" },
+          { label: "เวลารับประทานยาช่วงเย็น", name: "eveningTime", type: "time" },
           { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
-          {
-            label: "ขาดยา",
-            name: "ms_medicine",
-            value: getMsMedicineCount(member._id),
-            disabled: true,
-          },
+          { label: "ขาดยา", name: "ms_medicine", value: getMsMedicineCount(selectuser._id), disabled: true },
         ])}
-        {admin.name === "admin1" && renderAdminButtons()}
+        {admin.name === "Apatnipa" && renderAdminButtons()}
       </Form>
-      {admin.name === "admin2" && renderAdmin2Table()}
+      {admin.name === "Chureeporn" && renderAdmin2Table()}
       {renderModal()}
     </Container>
   );
@@ -164,7 +130,7 @@ function Personal() {
           {label}
         </Form.Label>
         <Col sm="6">
-          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? member[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "admin2" || !editMode}/>
+          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? selectuser[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "Chureeporn" || !editMode}/>
           {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
         </Col>
       </Form.Group>
@@ -196,18 +162,7 @@ function Personal() {
         <Table striped bordered hover responsive="md">
           <thead>
             <tr>
-              {[
-                "ชื่อ-สกุล",
-                "เบอร์โทรศัพท์",
-                "เบอร์โทรศัพท์ผู้ติดต่อ",
-                "อายุ",
-                "การวินิจฉัยโรคหลัก",
-                "การรับประทานยา Capecitabine",
-                "เวลารับประทานยาช่วงเช้า",
-                "เวลารับประทานยาช่วงเย็น",
-                "เลขโรงพยาบาล",
-                "การดำเนินการ",
-              ].map((header) => (
+              {["ชื่อ-สกุล", "เบอร์โทรศัพท์", "เบอร์โทรศัพท์ผู้ติดต่อ", "อายุ", "การวินิจฉัยโรคหลัก", "การรับประทานยา Capecitabine", "เวลารับประทานยาช่วงเช้า", "เวลารับประทานยาช่วงเย็น", "เลขโรงพยาบาล", "การดำเนินการ"].map((header) => (
                 <th key={header} className="text-center">{header}</th>
               ))}
             </tr>
@@ -224,25 +179,25 @@ function Personal() {
               <td>{selectedUser.eveningTime || "N/A"}</td>
               <td>{selectedUser.hospital_number || "N/A"}</td>
               <td className="text-center">
-                <Button variant="outline-success" size="sm" onClick={() => handleAction("confirmChanges", selectedUser)} className="mx-1"> ยืนยัน </Button>
-                <Button variant="outline-danger" size="sm" onClick={() => handleAction("rejectChanges", selectedUser)} className="mx-1"> ปฏิเสธ </Button>
+                <Button variant="outline-success" size="sm" onClick={() => handleAction("confirmChanges", selectedUser)} className="mx-1">ยืนยัน</Button>
+                <Button variant="outline-danger" size="sm" onClick={() => handleAction("rejectChanges", selectedUser)} className="mx-1">ปฏิเสธ</Button>
               </td>
             </tr>
           </tbody>
         </Table>
       )
     );
-  }  
+  }
 
   function renderModal() {
     return (
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal show={notification.show} onHide={() => setNotification({ message: "", show: false })} centered>
         <Modal.Header closeButton>
           <Modal.Title>แจ้งเตือน</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{notificationMessage}</Modal.Body>
+        <Modal.Body>{notification.message}</Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>ปิด</Button>
+          <Button variant="secondary" onClick={() => setNotification({ message: "", show: false })}>ปิด</Button>
         </Modal.Footer>
       </Modal>
     );
