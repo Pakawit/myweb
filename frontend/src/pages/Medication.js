@@ -16,7 +16,6 @@ function Medication() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-
     const fetchDataOnLoad = async () => {
       try {
         await axios.post(`${API_BASE_URL}/getmedication`);
@@ -31,11 +30,11 @@ function Medication() {
       dispatch(loadMedicationsData());
     }, 5000);
 
-    window.addEventListener("beforeunload",  fetchDataOnLoad);
+    window.addEventListener("beforeunload", fetchDataOnLoad);
 
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener("beforeunload",  fetchDataOnLoad);
+      window.removeEventListener("beforeunload", fetchDataOnLoad);
     };
   }, [dispatch, API_BASE_URL]);
 
@@ -58,7 +57,7 @@ function Medication() {
     const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     const formattedTime = time.padStart(5, "0");
     return new Date(`${formattedDate}T${formattedTime}`);
-  };  
+  };
 
   const formatTimeRange = (time) => {
     const [hours, minutes] = time.split(":").map(Number);
@@ -68,7 +67,7 @@ function Medication() {
     const endDate = new Date(startDate);
     endDate.setHours(startDate.getHours() + 6);
 
-    const formatTime = (date) => date.toTimeString().slice(0, 5); 
+    const formatTime = (date) => date.toTimeString().slice(0, 5);
     return `${formatTime(startDate)}-${formatTime(endDate)}`;
   };
 
@@ -98,25 +97,25 @@ function Medication() {
           <Table responsive striped bordered hover>
             <thead>
               <tr>
-                <th className="table-center">วัน/เดือน/ปี</th>
-                <th className="table-center">เวลา</th>
-                <th className="table-center">สถานะ</th>
+                <th className="text-center">วัน/เดือน/ปี</th>
+                <th className="text-center">เวลา</th>
+                <th className="text-center">สถานะ</th>
               </tr>
             </thead>
             <tbody>
               {paginatedMedications.length ? (
                 paginatedMedications.map((med, index) => (
                   <tr key={index}>
-                    <td className="table-center">{med.date}</td>
-                    <td className="table-center">{formatTimeRange(med.time)}</td> 
-                    <td className="table-center">
+                    <td className="text-center">{med.date}</td>
+                    <td className="text-center">{formatTimeRange(med.time)}</td>
+                    <td className="text-center">
                       {getStatusButton(med.status)}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="table-center">
+                  <td colSpan={3} className="text-center">
                     ไม่มีข้อมูลการกินยา
                   </td>
                 </tr>

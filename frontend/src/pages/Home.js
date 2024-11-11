@@ -11,7 +11,6 @@ import { loadHFSNotifications } from "../features/hfsnotificationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
-import "./style.css";
 
 function Home() {
   const dispatch = useDispatch();
@@ -47,18 +46,18 @@ function Home() {
     fetchDataInterval();
     dispatch(deleteselectuser());
     dispatch(deleteMessage());
-  
+
     fetchDataOnPageLoad();
-  
+
     const intervalId = setInterval(fetchDataInterval, 5000);
-  
+
     window.addEventListener("beforeunload", fetchDataOnPageLoad);
-  
+
     return () => {
       clearInterval(intervalId);
       window.removeEventListener("beforeunload", fetchDataOnPageLoad);
     };
-  }, [dispatch, API_BASE_URL]);  
+  }, [dispatch, API_BASE_URL]);
 
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));
@@ -78,23 +77,20 @@ function Home() {
     if (user._id === admin._id) return null;
 
     const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;
-
     const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;
-    
-    const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id)? "outline-warning" : "outline-success";
-
+    const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id) ? "outline-warning" : "outline-success";
     const { variant, text } = getStatusButton(lastStatus);
 
     return (
-      <tr key={user._id} className={`row-${variant}`}>
-        <td className="table-center">{user.name}</td>
-        <td className="table-center">{user.phone}</td>
-        <td className="table-center">{user.age}</td>
-        <td className="table-center">{missedCount}</td>
-        <td className="table-center">
+      <tr key={user._id}>
+        <td className="text-center">{user.name}</td>
+        <td className="text-center">{user.phone}</td>
+        <td className="text-center">{user.age}</td>
+        <td className="text-center">{missedCount}</td>
+        <td className="text-center">
           <Button variant={variant} disabled>{text}</Button>
         </td>
-        <td className="table-center">
+        <td className="text-center">
           <Button variant="outline-success" onClick={() => handleNavigation(user, "/personal")}>ข้อมูลส่วนบุคคล</Button>
           <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/medication")}>รายละเอียดการกินยา</Button>
           <Button variant={hfsVariant} onClick={() => handleNavigation(user, "/estimation")}>การประเมินอาการ HFS</Button>
@@ -108,8 +104,7 @@ function Home() {
     setCurrentPage(selectedItem.selected);
   };
 
-  const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));   // เรียงลำดับข้อมูลผู้ป่วยตามวันที่เวลาสร้างจากล่าสุดไปเก่าสุด
-
+  const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   const paginatedUsers = sortedUsers.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
@@ -123,11 +118,11 @@ function Home() {
           <Table responsive striped bordered hover>
             <thead>
               <tr>
-                <th className="table-center">ชื่อ-สกุล</th>
-                <th className="table-center">เบอร์โทรศัพท์</th>
-                <th className="table-center">อายุ</th>
-                <th className="table-center">ขาดยา</th>
-                <th className="table-center">สถานะการกินยา</th>
+                <th className="text-center">ชื่อ-สกุล</th>
+                <th className="text-center">เบอร์โทรศัพท์</th>
+                <th className="text-center">อายุ</th>
+                <th className="text-center">ขาดยา</th>
+                <th className="text-center">สถานะการกินยา</th>
                 <th />
               </tr>
             </thead>

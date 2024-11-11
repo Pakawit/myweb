@@ -132,7 +132,7 @@ function Personal() {
           {label}
         </Form.Label>
         <Col sm="6">
-          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? selectuser[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "Chureeporn" || !editMode}/>
+          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? selectuser[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "Chureeporn" || !editMode} />
           {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
         </Col>
       </Form.Group>
@@ -158,7 +158,7 @@ function Personal() {
 
   function renderAdmin2Table() {
     const selectedUser = personal[selectuser._id];
-  
+
     return (
       selectedUser && (
         <Table striped bordered hover responsive="md">

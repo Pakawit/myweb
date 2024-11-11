@@ -14,7 +14,7 @@ function Estimation() {
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [estimations, setEstimations] = useState([]);
-  const [totalEstimations, setTotalEstimations] = useState(0); 
+  const [totalEstimations, setTotalEstimations] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "" });
@@ -27,24 +27,24 @@ function Estimation() {
       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
         page,
-        limit: itemsPerPage, 
+        limit: itemsPerPage,
       });
-      setEstimations(response.data.data); 
-      setTotalEstimations(response.data.total); 
+      setEstimations(response.data.data);
+      setTotalEstimations(response.data.total);
     } catch (error) {
       console.error("Error fetching estimations:", error);
     }
   };
 
   useEffect(() => {
-    fetchEstimations(currentPage); // เรียก fetch ครั้งแรก
-  
+    fetchEstimations(currentPage);
+
     const intervalId = setInterval(() => {
-      fetchEstimations(currentPage); // ส่งการอ้างอิงฟังก์ชันไปที่ setInterval
+      fetchEstimations(currentPage);
     }, 10000);
-  
-    return () => clearInterval(intervalId);    // ทำความสะอาดการตั้งเวลาเมื่อคอมโพเนนต์ถูกยกเลิกหรือ dependencies เปลี่ยน
-  }, [currentPage, selectuser._id, API_BASE_URL]);  
+
+    return () => clearInterval(intervalId);
+  }, [currentPage, selectuser._id, API_BASE_URL]);
 
   useEffect(() => {
     dispatch(loadEstimationHFSData());
@@ -69,7 +69,7 @@ function Estimation() {
         });
 
         setNotification({ show: true, message: response.data.message });
-        await fetchEstimations(currentPage); // รีเฟรชข้อมูลเฉพาะหน้าปัจจุบัน
+        await fetchEstimations(currentPage);
         dispatch(loadEstimationHFSData());
       } catch (error) {
         console.error("Error submitting evaluation:", error);
@@ -102,7 +102,8 @@ function Estimation() {
             <img
               src={`data:image/jpeg;base64,${photo}`}
               alt={`รูปภาพ ${i}`}
-              style={{ width: "100px", height: "100px", cursor: "pointer" }}
+              className="img-fluid"
+              style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
               onClick={() => handleShowModal(photo)}
             />
           </Col>
@@ -184,12 +185,12 @@ function Estimation() {
           <Table responsive striped bordered hover>
             <thead>
               <tr>
-                <th className="table-center">วัน/เดือน/ปี</th>
-                <th className="table-center">เวลา</th>
-                <th className="table-center">รูป</th>
-                <th className="table-center">ระดับความเจ็บปวด</th>
-                <th className="table-center">การประเมินอาการ HFS</th>
-                <th className="table-center">การดำเนินการ</th>
+                <th className="text-center">วัน/เดือน/ปี</th>
+                <th className="text-center">เวลา</th>
+                <th className="text-center">รูป</th>
+                <th className="text-center">ระดับความเจ็บปวด</th>
+                <th className="text-center">การประเมินอาการ HFS</th>
+                <th className="text-center">การดำเนินการ</th>
               </tr>
             </thead>
             <tbody>
@@ -198,12 +199,12 @@ function Estimation() {
                   const { disabled, message } = checkEstimationStatus(est._id, est.hfsLevel);
                   return (
                     <tr key={est._id} className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
-                      <td className="table-center">{est.date}</td>
-                      <td className="table-center">{est.time}</td>
-                      <td className="table-center">{renderPhotos(est.photos)}</td>
-                      <td className="table-center">{est.painLevel}</td>
-                      <td className="table-center">{renderHfsLevel(est)}</td>
-                      <td className="table-center">
+                      <td className="text-center">{est.date}</td>
+                      <td className="text-center">{est.time}</td>
+                      <td className="text-center">{renderPhotos(est.photos)}</td>
+                      <td className="text-center">{est.painLevel}</td>
+                      <td className="text-center">{renderHfsLevel(est)}</td>
+                      <td className="text-center">
                         <div className="d-flex justify-content-center">
                           <Button
                             variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
@@ -219,7 +220,7 @@ function Estimation() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="table-center">
+                  <td colSpan="6" className="text-center">
                     ไม่มีข้อมูล
                   </td>
                 </tr>
@@ -258,7 +259,8 @@ function Estimation() {
             <img
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="รูปภาพ"
-              style={{ width: "auto", height: "auto", maxWidth: "100%", maxHeight: "80vh", margin: "0 auto", display: "block" }}
+              className="img-fluid"
+              style={{ maxHeight: "80vh", margin: "0 auto", display: "block" }}
             />
           )}
         </Modal.Body>

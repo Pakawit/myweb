@@ -4,7 +4,6 @@ import Navigation from "../components/Navigation";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
 import ReactPaginate from "react-paginate";
-import "./style.css"; 
 
 const Log = () => {
   const [logs, setLogs] = useState([]);

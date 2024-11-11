@@ -55,7 +55,7 @@ function Chat() {
     if (selectuser._id) {
       fetchMessages();
       scrollToBottom();
-      
+
       const intervalId = setInterval(fetchMessages, 3000);
 
       return () => clearInterval(intervalId);
@@ -146,28 +146,44 @@ function Chat() {
       <Navigation />
       <Row>
         <Col>
-          <div className="messages-output">
+          <div className="d-flex flex-column mb-3" style={{ overflowY: "auto", height: "80vh", border: "1px solid lightgray" }}>
             {messages.map((msg, i) => (
-              <div key={i} className={ msg.from === "admin" ? "incoming-message" : "outgoing-message" }>
-                <div className="message-inner">
+              <div key={i} className={`d-flex ${msg.from === "admin" ? "justify-content-end" : "justify-content-start"} my-2`}>
+                <div
+                  className="p-3 rounded"
+                  style={{
+                    backgroundColor: msg.from === "admin" ? "#78E378" : "#E5E5E5",
+                    maxWidth: "70%",
+                    fontSize: "1.2em",
+                    padding: "15px 20px",
+                    textAlign: "center",
+                    margin: "0 15px 0 15px",
+                  }}
+                >
                   {msg.contentType === "image" ? (
-                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true); }} style={{ cursor: "pointer" }} />
+                    <img
+                      src={`data:image/jpeg;base64,${msg.content}`}
+                      alt=""
+                      className="img-fluid rounded"
+                      onClick={() => { setSelectedImage(msg.content); setShowModal(true); }}
+                      style={{ cursor: "pointer", width: "200px", height: "auto" }}
+                    />
                   ) : (
                     <div>{msg.content}</div>
                   )}
-                  <div className="message-timestamp-left">{msg.date} {msg.time}</div>
+                  <div className="small text-muted mt-2" >{msg.date} {msg.time}</div>
                 </div>
               </div>
             ))}
             <div ref={messageEndRef} />
           </div>
 
-          <Form onSubmit={handleSubmit} className="d-flex">
+          <Form onSubmit={handleSubmit} className="d-flex align-items-center">
             <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg} />
             <Button variant="outline-dark" onClick={() => fileInputRef.current.click()}><i className="bi bi-image" /></Button>
-            <Button variant="outline-secondary" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
+            <Button variant="outline-secondary mx-2" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
             <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "", fontWeight: image ? "bold" : "normal" }} />
-            <Button type="submit" disabled={!message && !image}><i className="bi bi-send-fill" /></Button>
+            <Button type="submit" disabled={!message && !image} className="ms-2"><i className="bi bi-send-fill" /></Button>
           </Form>
         </Col>
       </Row>
@@ -175,15 +191,15 @@ function Chat() {
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton />
         <Modal.Body>
-          {selectedImage && <img src={`data:image/jpeg;base64,${selectedImage}`} alt="Preview" className="modal-img" />}
+          {selectedImage && <img src={`data:image/jpeg;base64,${selectedImage}`} alt="Preview" className="img-fluid" />}
         </Modal.Body>
       </Modal>
 
       <Modal show={showStickersModal} onHide={() => setShowStickersModal(false)} centered>
         <Modal.Header closeButton />
-        <Modal.Body className="d-flex flex-wrap">
+        <Modal.Body className="d-flex flex-wrap justify-content-center">
           {stickers.map((sticker, i) => (
-            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} className="sticker" onClick={() => handleStickerSelect(sticker)} style={{ cursor: "pointer", width: 130, margin: 10 }} />
+            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} onClick={() => handleStickerSelect(sticker)} className="img-fluid m-1" style={{ cursor: "pointer", width: "100px" }} />
           ))}
         </Modal.Body>
       </Modal>
