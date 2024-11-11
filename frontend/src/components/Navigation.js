@@ -9,8 +9,8 @@ import { deleteMessage } from "../features/messageSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
 import { fetchChatNotificationThunk } from "../features/chatnotificationSlice";
-import { fetchPersonalDataThunk } from "../features/personalSlice";
-import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
+import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
@@ -19,7 +19,7 @@ function Navigation() {
   const admin = useSelector((state) => state.admin);
   const chatnotification = useSelector((state) => state.chatnotification);  
   const users = useSelector((state) => state.users);
-  const personal = useSelector((state) => state.personal);
+  const personal = useSelector((state) => state.personalnotification);
   const estimationHFS = useSelector((state) => state.estimationHFS);
   const dispatch = useDispatch();
   const { API_BASE_URL } = useContext(AppContext);
@@ -28,14 +28,14 @@ function Navigation() {
 
   useEffect(() => {
     dispatch(fetchChatNotificationThunk());
-    dispatch(fetchPersonalDataThunk());
-    dispatch(fetchEstimationHFSThunk());
+    dispatch(loadPersonalnotificationData());
+    dispatch(loadEstimationHFSData());
 
     const intervalId = setInterval(() => {
       dispatch(fetchChatNotificationThunk());
-      dispatch(fetchPersonalDataThunk());
-      dispatch(fetchEstimationHFSThunk());
-    }, 5000);
+      dispatch(loadPersonalnotificationData());
+      dispatch(loadEstimationHFSData());
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [dispatch]);

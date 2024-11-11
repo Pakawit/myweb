@@ -1,31 +1,31 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
+import estimationHFSData from "../json/estimationHFS.json"; 
 
-const initialState = [];
-
-export const fetchEstimationHFSThunk = createAsyncThunk(
-  "estimationHFS/fetchEstimationHFS",
-  async (_, { rejectWithValue }) => {
-    try {
-      const estimationHFSData = await import("../json/estimationHFS.json");
-      return estimationHFSData.default; 
-    } catch (error) {
-      return rejectWithValue("Failed to fetch estimation HFS data");
-    }
-  }
-);
+const initialState = {};
 
 export const estimationHFSSlice = createSlice({
   name: "estimationHFS",
   initialState,
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchEstimationHFSThunk.fulfilled, (state, action) => {
-        return action.payload; 
-      })
-      .addCase(fetchEstimationHFSThunk.rejected, (state, action) => {
-        console.error(action.payload || "Failed to fetch estimation HFS data");
-      });
+  reducers: {
+    setEstimationHFS(state, action) {
+      return {...action.payload}; 
+    },
+    clearEstimationHFS: () => {
+      return {};
+    }
   },
 });
+
+export const loadEstimationHFSData = () => async (dispatch) => {
+  try {
+    dispatch(clearEstimationHFS());
+    const data = estimationHFSData; 
+    dispatch(setEstimationHFS(data));
+  } catch (error) {
+    console.error("ไม่สามารถโหลดแจ้งเตือนการประเมิน HFS ระหว่าง admin ได้", error);
+  }
+};
+
+export const { setEstimationHFS, clearEstimationHFS } = estimationHFSSlice.actions;
 
 export default estimationHFSSlice.reducer;

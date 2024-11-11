@@ -1,31 +1,30 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
+import notificationsData from "../json/hfsnotification.json"; 
 
 const initialState = [];
-
-export const fetchHFSNotificationsThunk = createAsyncThunk(
-  "hfsnotification/fetchNotifications",
-  async (_, { rejectWithValue }) => {
-    try {
-      const notificationsData = await import("../json/hfsnotification.json");
-      return notificationsData.default;
-    } catch (error) {
-      return rejectWithValue("Failed to fetch HFS notifications");
-    }
-  }
-);
 
 export const hfsnotificationSlice = createSlice({
   name: "hfsnotification",
   initialState,
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchHFSNotificationsThunk.fulfilled, (state, action) => {
-        return action.payload; 
-      })
-      .addCase(fetchHFSNotificationsThunk.rejected, () => {
-        console.error("Failed to fetch HFS notifications");
-      });
+  reducers: {
+    setHfsNotifications(state, action) {
+      return [...action.payload]; 
+    },
+    clearNotifications: () => {
+      return [];
+    },
   },
 });
+
+export const loadHFSNotifications = () => async (dispatch) => {
+  try {
+    const data = notificationsData; 
+    dispatch(setHfsNotifications(data)); 
+  } catch (error) {
+    console.error("ไม่สามารถโหลดข้อมูลการแจ้งเตือน HFS ได้", error);
+  }
+};
+
+export const { setHfsNotifications, clearNotifications } = hfsnotificationSlice.actions;
 
 export default hfsnotificationSlice.reducer;

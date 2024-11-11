@@ -4,7 +4,7 @@ import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { addMessage, fetchMessagesThunk } from "../features/messageSlice";
+import { addMessage, setMessages } from "../features/messageSlice";
 import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 
 function Chat() {
@@ -39,26 +39,37 @@ function Chat() {
 
   const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  useEffect(() => {
-    if (selectuser) {
-      const fetchMessages = () => dispatch(fetchMessagesThunk({ from: "admin", to: selectuser._id }));
-      fetchMessages();
-      scrollToBottom(); // เลื่อนไปด้านล่างเมื่อโหลดข้อมูลครั้งแรก
+  const fetchMessages = async () => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/getmessage`, {
+        from: "admin",
+        to: selectuser._id,
+      });
+      dispatch(setMessages(response.data));
+    } catch (error) {
+      console.error("Failed to fetch messages:", error);
+    }
+  };
 
+  useEffect(() => {
+    if (selectuser._id) {
+      fetchMessages();
+      scrollToBottom();
+      
       const intervalId = setInterval(fetchMessages, 3000);
 
       return () => clearInterval(intervalId);
     }
-  }, [dispatch, selectuser]);
+  }, [dispatch, selectuser._id]);
 
   useEffect(() => {
     if (messages.length > previousMessagesLength.current) {
-      scrollToBottom();       // เลื่อนลงไปที่ข้อความล่าสุดเฉพาะเมื่อมีข้อความใหม่เพิ่มเข้ามา
+      scrollToBottom();
       const notification = chatnotification.find((n) => n.from === selectuser._id);
       if (notification) dispatch(removeChatNotificationThunk(selectuser._id));
     }
     previousMessagesLength.current = messages.length;
-  }, [messages, chatnotification, selectuser, dispatch]);
+  }, [messages, chatnotification, selectuser._id, dispatch]);
 
   const validateImg = (e) => {
     const file = e.target.files[0];
@@ -140,7 +151,7 @@ function Chat() {
               <div key={i} className={ msg.from === "admin" ? "incoming-message" : "outgoing-message" }>
                 <div className="message-inner">
                   {msg.contentType === "image" ? (
-                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="Chat Image" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true); }} style={{ cursor: "pointer" }} />
+                    <img src={`data:image/jpeg;base64,${msg.content}`} alt="" className="message-img" onClick={() => { setSelectedImage(msg.content); setShowModal(true); }} style={{ cursor: "pointer" }} />
                   ) : (
                     <div>{msg.content}</div>
                   )}

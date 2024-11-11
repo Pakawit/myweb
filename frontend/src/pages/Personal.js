@@ -4,33 +4,21 @@ import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { fetchMedicationsThunk } from "../features/medicationSlice";
+import { loadMedicationsData } from "../features/medicationSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchPersonalDataThunk } from "../features/personalSlice";
+import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
 
 function Personal() {
   const { API_BASE_URL } = useContext(AppContext);
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser);
-  const personal = useSelector((state) => state.personal);
+  const personal = useSelector((state) => state.personalnotification);
   const medication = useSelector((state) => state.medication);
   const dispatch = useDispatch();
 
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState({ message: "", show: false });
-
-  useEffect(() => {
-    dispatch(fetchMedicationsThunk());
-    dispatch(fetchPersonalDataThunk());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (selectuser._id && !editMode) {
-      const intervalId = setInterval(fetchUserDetails, 3000);
-      return () => clearInterval(intervalId);
-    }
-  }, [selectuser, editMode]);
 
   const fetchUserDetails = async () => {
     try {
@@ -42,6 +30,18 @@ function Personal() {
       console.error("Error fetching user details:", error);
     }
   };
+
+  useEffect(() => {
+    dispatch(loadMedicationsData());
+    dispatch(loadPersonalnotificationData());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectuser._id && !editMode) {
+      fetchUserDetails();
+    }
+  }, [selectuser._id, editMode]);
+
 
   const validate = (name, value) => {
     const rules = {
@@ -87,6 +87,7 @@ function Personal() {
     try {
       await axios.post(`${API_BASE_URL}/${action}`, { _id: change._id, name: change.name });
       showNotification(action === "confirmChanges" ? "ยืนยันการเปลี่ยนแปลงแล้ว" : "ยกเลิกการเปลี่ยนแปลงแล้ว");
+      loadPersonalnotificationData();
     } catch (error) {
       console.error(`Error in ${action}:`, error);
     }
@@ -115,6 +116,7 @@ function Personal() {
           { label: "เวลารับประทานยาช่วงเย็น", name: "eveningTime", type: "time" },
           { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
           { label: "ขาดยา", name: "ms_medicine", value: getMsMedicineCount(selectuser._id), disabled: true },
+          { label: "วันที่ลงทะเบียน", name: "createdAt", type: "text", value: new Date(selectuser.createdAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), disabled: true },
         ])}
         {admin.name === "Apatnipa" && renderAdminButtons()}
       </Form>

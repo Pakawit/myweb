@@ -4,7 +4,7 @@ import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMedicationsThunk } from "../features/medicationSlice";
+import { loadMedicationsData } from "../features/medicationSlice";
 import ReactPaginate from "react-paginate";
 
 function Medication() {
@@ -16,10 +16,10 @@ function Medication() {
   const itemsPerPage = 10;
 
   useEffect(() => {
+
     const fetchDataOnLoad = async () => {
       try {
         await axios.post(`${API_BASE_URL}/getmedication`);
-        dispatch(fetchMedicationsThunk());
       } catch (error) {
         console.error("Failed to fetch medications on load:", error);
       }
@@ -28,18 +28,14 @@ function Medication() {
     fetchDataOnLoad();
 
     const intervalId = setInterval(() => {
-      dispatch(fetchMedicationsThunk());
+      dispatch(loadMedicationsData());
     }, 5000);
 
-    const handleBeforeUnload = () => {
-      fetchDataOnLoad();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("beforeunload",  fetchDataOnLoad);
 
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("beforeunload",  fetchDataOnLoad);
     };
   }, [dispatch, API_BASE_URL]);
 

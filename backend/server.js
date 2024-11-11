@@ -299,7 +299,17 @@ app.post("/getestimation", async (req, res) => {
 
 app.post("/getHFSDetails", async (req, res) => {
   try {
-    const estimations = await Estimation.find({ hfsLevel: { $ne: 0 } });
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const estimations = await Estimation.find(
+      { from: userId, hfsLevel: { $ne: 0 } },
+      { photos: 0 } 
+    );
+    
     res.json(estimations);
   } catch (err) {
     res.status(500).json({ error: "Error fetching estimations" });
@@ -452,7 +462,9 @@ app.post("/createmessage", async (req, res) => {
       time,
     });
 
-    await updateChatNotification(from);
+    if (from !== "admin") {
+      await updateChatNotification(from);
+    }
 
     res.json(newMessage);
   } catch (err) {
@@ -475,7 +487,9 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
       time,
     });
 
-    await updateChatNotification(from);
+    if (from !== "admin") {
+      await updateChatNotification(from);
+    }
 
     res.json(newMessage);
   } catch (error) {

@@ -4,7 +4,7 @@ import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { fetchEstimationHFSThunk } from "../features/estimationHFSSlice";
+import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import ReactPaginate from "react-paginate";
 
 function Estimation() {
@@ -14,34 +14,40 @@ function Estimation() {
   const selectuser = useSelector((state) => state.selectuser);
   const dispatch = useDispatch();
   const [estimations, setEstimations] = useState([]);
-  const [totalEstimations, setTotalEstimations] = useState(0); // เก็บจำนวนข้อมูลทั้งหมด
+  const [totalEstimations, setTotalEstimations] = useState(0); 
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "" });
   const [hfsLevels, setHfsLevels] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 1; // แสดงผลเพียง 1 แถวต่อหน้า
+  const itemsPerPage = 1;
 
   const fetchEstimations = async (page = 0) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
         page,
-        limit: itemsPerPage, // ดึงข้อมูลจำนวนที่กำหนดต่อหน้า
+        limit: itemsPerPage, 
       });
-      setEstimations(response.data.data); // ตั้งค่าเฉพาะข้อมูลใน data
-      setTotalEstimations(response.data.total); // ตั้งค่าจำนวนข้อมูลทั้งหมด
+      setEstimations(response.data.data); 
+      setTotalEstimations(response.data.total); 
     } catch (error) {
       console.error("Error fetching estimations:", error);
     }
   };
 
   useEffect(() => {
-    fetchEstimations(currentPage); // ดึงข้อมูลเฉพาะหน้าปัจจุบัน
-  }, [currentPage, selectuser, API_BASE_URL]);
+    fetchEstimations(currentPage); // เรียก fetch ครั้งแรก
+  
+    const intervalId = setInterval(() => {
+      fetchEstimations(currentPage); // ส่งการอ้างอิงฟังก์ชันไปที่ setInterval
+    }, 10000);
+  
+    return () => clearInterval(intervalId);    // ทำความสะอาดการตั้งเวลาเมื่อคอมโพเนนต์ถูกยกเลิกหรือ dependencies เปลี่ยน
+  }, [currentPage, selectuser._id, API_BASE_URL]);  
 
   useEffect(() => {
-    dispatch(fetchEstimationHFSThunk());
+    dispatch(loadEstimationHFSData());
   }, [dispatch]);
 
   const handleHfsLevelChange = (estimationId, level) => {
@@ -64,7 +70,7 @@ function Estimation() {
 
         setNotification({ show: true, message: response.data.message });
         await fetchEstimations(currentPage); // รีเฟรชข้อมูลเฉพาะหน้าปัจจุบัน
-        dispatch(fetchEstimationHFSThunk());
+        dispatch(loadEstimationHFSData());
       } catch (error) {
         console.error("Error submitting evaluation:", error);
       }

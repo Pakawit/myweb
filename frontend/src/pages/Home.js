@@ -4,10 +4,10 @@ import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import ReactPaginate from "react-paginate";
-import { fetchUsersThunk } from "../features/usersSlice";
+import { loadUsersData } from "../features/usersSlice";
 import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
-import { fetchMedicationsThunk } from "../features/medicationSlice";
-import { fetchHFSNotificationsThunk } from "../features/hfsnotificationSlice";
+import { loadMedicationsData } from "../features/medicationSlice";
+import { loadHFSNotifications } from "../features/hfsnotificationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
@@ -38,30 +38,27 @@ function Home() {
   };
 
   const fetchDataInterval = () => {
-    dispatch(fetchUsersThunk());
-    dispatch(fetchMedicationsThunk());
-    dispatch(fetchHFSNotificationsThunk());
+    dispatch(loadUsersData());
+    dispatch(loadMedicationsData());
+    dispatch(loadHFSNotifications());
   };
 
   useEffect(() => {
     fetchDataInterval();
     dispatch(deleteselectuser());
     dispatch(deleteMessage());
-
+  
     fetchDataOnPageLoad();
-
-    const intervalId = setInterval(fetchDataInterval, 3000);
-
-    const handleBeforeUnload = () => {
-      fetchDataOnPageLoad();
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
+  
+    const intervalId = setInterval(fetchDataInterval, 5000);
+  
+    window.addEventListener("beforeunload", fetchDataOnPageLoad);
+  
     return () => {
       clearInterval(intervalId);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("beforeunload", fetchDataOnPageLoad);
     };
-  }, [dispatch, API_BASE_URL]);
+  }, [dispatch, API_BASE_URL]);  
 
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));

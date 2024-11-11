@@ -1,38 +1,30 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
+import usersData from "../json/users.json"; 
 
 const initialState = [];
-
-export const fetchUsersThunk = createAsyncThunk(
-  "users/fetchUsers",
-  async (_, { rejectWithValue }) => {
-    try {
-      const usersData = await import('../json/users.json');
-      return usersData.default; 
-    } catch (error) {
-      return rejectWithValue("Failed to fetch users");
-    }
-  }
-);
 
 export const usersSlice = createSlice({
   name: "users",
   initialState,
   reducers: {
-    deleteUsers: () => {
-      return [];
+    setUsers(state, action) {
+      return [...action.payload]; 
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(fetchUsersThunk.fulfilled, (state, action) => {
-        return action.payload; 
-      })
-      .addCase(fetchUsersThunk.rejected, () => {
-        console.error("Failed to fetch users");
-      });
+    deleteUsers: () => {
+      return []; 
+    },
   },
 });
 
-export const { deleteUsers } = usersSlice.actions;
+export const loadUsersData = () => async (dispatch) => {
+  try {
+    const data = usersData; 
+    dispatch(setUsers(data)); 
+  } catch (error) {
+    console.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้", error);
+  }
+};
+
+export const { setUsers, deleteUsers } = usersSlice.actions;
 
 export default usersSlice.reducer;

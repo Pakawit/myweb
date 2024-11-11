@@ -8,7 +8,7 @@ import medicationSlice from "./features/medicationSlice";
 import messageSlice from "./features/messageSlice";
 import chatnotificationSlice from "./features/chatnotificationSlice";
 import hfsnotificationSlice from "./features/hfsnotificationSlice";
-import personalSlice from "./features/personalSlice";
+import personalnotificationSlice from "./features/personalnotificationSlice";
 import estimationHFSSlice from "./features/estimationHFSSlice";
 
 // รวม reducers ทั้งหมดใน rootReducer
@@ -20,7 +20,7 @@ const rootReducer = combineReducers({
   message: messageSlice,
   chatnotification: chatnotificationSlice,
   hfsnotification: hfsnotificationSlice,
-  personal: personalSlice,
+  personalnotification: personalnotificationSlice,
   estimationHFS: estimationHFSSlice,
 });
 
