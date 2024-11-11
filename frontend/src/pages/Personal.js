@@ -83,15 +83,26 @@ function Personal() {
     }
   };
 
-  const handleAction = async (action, change) => {
+  const handleConfirmChanges = async (change) => {
     try {
-      await axios.post(`${API_BASE_URL}/${action}`, { _id: change._id, name: change.name });
-      showNotification(action === "confirmChanges" ? "ยืนยันการเปลี่ยนแปลงแล้ว" : "ยกเลิกการเปลี่ยนแปลงแล้ว");
-      loadPersonalnotificationData();
+      await axios.post(`${API_BASE_URL}/confirmChanges`, { _id: change._id, name: change.name });
+      showNotification("ยืนยันการเปลี่ยนแปลงแล้ว");
+      dispatch(loadPersonalnotificationData());
     } catch (error) {
-      console.error(`Error in ${action}:`, error);
+      console.error("Error in confirmChanges:", error);
     }
   };
+
+  const handleRejectChanges = async (change) => {
+    try {
+      await axios.post(`${API_BASE_URL}/rejectChanges`, { _id: change._id, name: change.name });
+      showNotification("ยกเลิกการเปลี่ยนแปลงแล้ว");
+      dispatch(loadPersonalnotificationData());
+    } catch (error) {
+      console.error("Error in rejectChanges:", error);
+    }
+  };
+
 
   const getMsMedicineCount = (userId) =>
     medication.filter((med) => med.from === userId && med.status === 0).length;
@@ -140,6 +151,16 @@ function Personal() {
   }
 
   function renderAdminButtons() {
+    const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id);
+  
+    if (isPendingApproval) {
+      return (
+        <Alert variant="info" className="text-center">
+          กำลังรอการยืนยันจาก Chureeporn
+        </Alert>
+      );
+    }
+  
     return (
       <Row className="mb-3">
         <Col sm={{ span: 6, offset: 6 }} className="d-flex justify-content-end">
@@ -154,7 +175,7 @@ function Personal() {
         </Col>
       </Row>
     );
-  }
+  }  
 
   function renderAdmin2Table() {
     const selectedUser = personal[selectuser._id];
@@ -181,8 +202,22 @@ function Personal() {
               <td>{selectedUser.eveningTime || "N/A"}</td>
               <td>{selectedUser.hospital_number || "N/A"}</td>
               <td className="text-center">
-                <Button variant="outline-success" size="sm" onClick={() => handleAction("confirmChanges", selectedUser)} className="mx-1">ยืนยัน</Button>
-                <Button variant="outline-danger" size="sm" onClick={() => handleAction("rejectChanges", selectedUser)} className="mx-1">ปฏิเสธ</Button>
+                <Button
+                  variant="outline-success"
+                  size="sm"
+                  onClick={() => handleConfirmChanges(selectedUser)}
+                  className="mx-1"
+                >
+                  ยืนยัน
+                </Button>
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={() => handleRejectChanges(selectedUser)}
+                  className="mx-1"
+                >
+                  ปฏิเสธ
+                </Button>
               </td>
             </tr>
           </tbody>

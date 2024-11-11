@@ -38,9 +38,9 @@ AdminSchema.pre("save", function (next) {
 // ทำงานก่อนส่ง response
 AdminSchema.methods.toJSON = function () {
   const admin = this;
-  const userObject = admin.toObject();
-  delete userObject.password;
-  return userObject;
+  const adminObject = admin.toObject();
+  delete adminObject.password;
+  return adminObject;
 };
 //ตรวจสอบสิทธิ์
 AdminSchema.statics.findByCredentials = async function (name, password) {
