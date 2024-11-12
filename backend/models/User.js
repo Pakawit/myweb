@@ -15,7 +15,7 @@ const UserSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      default: "",
+      required: [true, "Can't be blank"],
     },
     other_numbers: {
       type: String,
@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-      default: 0,
+      required: [true, "Can't be blank"],
     },
     diagnosis: {
       type: String,

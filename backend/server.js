@@ -20,7 +20,7 @@ app.use(cors());
 const BASE_PATH = path.join(__dirname, "..", "frontend", "src", "json");
 const USERS_FILE_PATH = path.join(BASE_PATH, "users.json");
 const MEDICATIONS_FILE_PATH = path.join(BASE_PATH, "medications.json");
-const CHAT_NOTIFICATION_FILE_PATH = path.join(BASE_PATH,"chatnotification.json");
+const CHAT_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "chatnotification.json");
 const ESTIMATIONHFS_FILE_PATH = path.join(BASE_PATH, "estimationHFS.json");
 const PERSONAL_FILE_PATH = path.join(BASE_PATH, "personal.json");
 const HFS_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "hfsnotification.json");
@@ -300,16 +300,16 @@ app.post("/getestimation", async (req, res) => {
 app.post("/getHFSDetails", async (req, res) => {
   try {
     const { userId } = req.body;
-    
+
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
 
     const estimations = await Estimation.find(
       { from: userId, hfsLevel: { $ne: 0 } },
-      { photos: 0 } 
+      { photos: 0 }
     );
-    
+
     res.json(estimations);
   } catch (err) {
     res.status(500).json({ error: "Error fetching estimations" });
@@ -355,7 +355,7 @@ app.put("/evaluateHFS", async (req, res) => {
     // ตรวจสอบว่าทั้ง Apatnipa และ Chureeporn ประเมินแล้วหรือยัง
     if (Apatnipa?.hfsLevel !== undefined && Chureeporn?.hfsLevel !== undefined) {
       if (Apatnipa.hfsLevel === Chureeporn.hfsLevel) {
-        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId },{ hfsLevel: Apatnipa.hfsLevel },{ new: true });//ส่งกลับหลัง update
+        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId }, { hfsLevel: Apatnipa.hfsLevel }, { new: true });//ส่งกลับหลัง update
 
         let hfsNotifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
         hfsNotifications = hfsNotifications.filter(
@@ -363,24 +363,24 @@ app.put("/evaluateHFS", async (req, res) => {
         );
         await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
 
-        res.json({message: `ประเมินอาการ ${user.name} เสร็จสิ้น`,updatedEstimation});
+        res.json({ message: `ประเมินอาการ ${user.name} เสร็จสิ้น`, updatedEstimation });
 
-        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} เสร็จสิ้น`});
+        await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการ ${user.name} เสร็จสิ้น` });
 
         delete estimationsHFS[estimationId];
 
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
-        await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการ ${user.name} ผิดพลาด`});
+        await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการ ${user.name} ผิดพลาด` });
 
         delete estimation.evaluations.Apatnipa.hfsLevel;
         delete estimation.evaluations.Chureeporn.hfsLevel;
-        res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด`});
+        res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด` });
       }
     } else {
-      await Log.create({action: "ประเมินอาการ HFS",user: adminName,details: `ประเมินอาการโดย ${adminName}`});
+      await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการโดย ${adminName}` });
 
-      res.json({message: `ประเมินสำเร็จ กำลังรอ ${Apatnipa?.hfsLevel === undefined ? "Apatnipa" : "Chureeporn"} ประเมิน`});
+      res.json({ message: `ประเมินสำเร็จ กำลังรอ ${Apatnipa?.hfsLevel === undefined ? "Apatnipa" : "Chureeporn"} ประเมิน` });
     }
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
   } catch (error) {
@@ -523,7 +523,7 @@ app.get("/video", (req, res) => {
     }
 
     const videoSize = stats.size;
-    const CHUNK_SIZE = 10 ** 6; 
+    const CHUNK_SIZE = 10 ** 6;
     const start = Number(range.replace(/\D/g, ""));
     const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
 

@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
 const EstimationSchema = new mongoose.Schema({
-  painLevel: Number,
-  photos: [String], 
-  hfsLevel: {type: Number ,default: 0},
-  from: String,
+  painLevel: { type: Number, required: true },
+  photos: { type: [String], required: true }, 
+  hfsLevel: { type: Number ,default: 0  },
+  from: { type: String, required: true },
   time: String,
   date: String,
-  to: String,
+  to: { type: String, required: true },
 });
 
 const Estimation = mongoose.model("Estimation", EstimationSchema);

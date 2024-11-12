@@ -42,7 +42,6 @@ function Personal() {
     }
   }, [selectuser._id, editMode]);
 
-
   const validate = (name, value) => {
     const rules = {
       name: /^[a-zA-Zก-๙\s]{1,30}$/,
@@ -64,22 +63,17 @@ function Personal() {
     dispatch(setselectuser({ ...selectuser, [name]: value }));
   };
 
-  const isFormValid = () => Object.values(errors).every((err) => !err);
-
   const handleSubmit = async () => {
-    if (isFormValid()) {
-      try {
-        await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
-          changes: selectuser,
-        });
-        setEditMode(false);
-        showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Chureeporn)");
-        fetchUserDetails();
-      } catch (error) {
-        console.error("Error saving changes:", error);
-      }
-    } else {
-      showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง");
+    if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง");
+    try {
+      await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
+        changes: selectuser,
+      });
+      setEditMode(false);
+      showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Chureeporn)");
+      fetchUserDetails();
+    } catch (error) {
+      console.error("Error saving changes:", error);
     }
   };
 
@@ -103,12 +97,87 @@ function Personal() {
     }
   };
 
+  const showNotification = (message) => setNotification({ message, show: true });
 
-  const getMsMedicineCount = (userId) =>
-    medication.filter((med) => med.from === userId && med.status === 0).length;
+  const renderFormFields = (fields) =>
+    fields.map(({ label, name, type, value, disabled }) => (
+      <Form.Group as={Row} className="mb-3" key={name}>
+        <Form.Label column sm="6" className="text-center">
+          {label}
+        </Form.Label>
+        <Col sm="6">
+          <Form.Control
+            as={type === "textarea" ? "textarea" : "input"}
+            type={type}
+            name={name}
+            value={value ?? selectuser[name] ?? ""}
+            onChange={handleChange}
+            disabled={disabled || admin.name === "Chureeporn" || !editMode}
+          />
+          {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
+        </Col>
+      </Form.Group>
+    ));
 
-  const showNotification = (message) => {
-    setNotification({ message, show: true });
+  const renderAdminButtons = () => {
+    const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id);
+
+    if (isPendingApproval) {
+      return (
+        <Alert variant="info" className="text-center">
+          กำลังรอการยืนยันจาก Chureeporn
+        </Alert>
+      );
+    }
+
+    return (
+      <Row className="mb-3">
+        <Col sm={{ span: 6, offset: 6 }} className="d-flex justify-content-end">
+          {editMode ? (
+            <>
+              <Button variant="outline-success" onClick={handleSubmit}>บันทึก</Button>
+              <Button variant="outline-danger" onClick={() => setEditMode(false)} className="ms-2">ยกเลิก</Button>
+            </>
+          ) : (
+            <Button variant="outline-dark" onClick={() => setEditMode(true)}>แก้ไข</Button>
+          )}
+        </Col>
+      </Row>
+    );
+  };
+
+  const renderAdmin2Table = () => {
+    const selectedUser = personal[selectuser._id];
+    return (
+      selectedUser && (
+        <Table striped bordered hover responsive="md" className="text-center">
+          <thead>
+            <tr>
+              {["ชื่อ-สกุล", "เบอร์โทรศัพท์", "เบอร์โทรศัพท์ผู้ติดต่อ", "อายุ", "การวินิจฉัยโรคหลัก", "การรับประทานยา Capecitabine", "เวลารับประทานยาช่วงเช้า", "เวลารับประทานยาช่วงเย็น", "เลขโรงพยาบาล", "การดำเนินการ"].map((header) => (
+                <th key={header} className="text-center">{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{selectedUser.name || "N/A"}</td>
+              <td>{selectedUser.phone || "N/A"}</td>
+              <td>{selectedUser.other_numbers || "N/A"}</td>
+              <td>{selectedUser.age}</td>
+              <td>{selectedUser.diagnosis || "N/A"}</td>
+              <td>{selectedUser.taking_capecitabine || "N/A"}</td>
+              <td>{selectedUser.morningTime || "N/A"}</td>
+              <td>{selectedUser.eveningTime || "N/A"}</td>
+              <td>{selectedUser.hospital_number || "N/A"}</td>
+              <td className="text-center">
+                <Button variant="outline-success" size="sm" onClick={() => handleConfirmChanges(selectedUser)} className="mx-1">ยืนยัน</Button>
+                <Button variant="outline-danger" size="sm" onClick={() => handleRejectChanges(selectedUser)} className="mx-1">ปฏิเสธ</Button>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      )
+    );
   };
 
   return (
@@ -126,119 +195,19 @@ function Personal() {
           { label: "เวลารับประทานยาช่วงเช้า", name: "morningTime", type: "time" },
           { label: "เวลารับประทานยาช่วงเย็น", name: "eveningTime", type: "time" },
           { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
-          { label: "ขาดยา", name: "ms_medicine", value: getMsMedicineCount(selectuser._id), disabled: true },
+          { label: "ขาดยา", name: "ms_medicine", value: medication.filter((med) => med.from === selectuser._id && med.status === 0).length, disabled: true },
           { label: "วันที่ลงทะเบียน", name: "createdAt", type: "text", value: new Date(selectuser.createdAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), disabled: true },
         ])}
         {admin.name === "Apatnipa" && renderAdminButtons()}
       </Form>
       {admin.name === "Chureeporn" && renderAdmin2Table()}
-      {renderModal()}
+      <Modal show={notification.show} onHide={() => setNotification({ message: "", show: false })} centered>
+        <Modal.Header closeButton><Modal.Title>แจ้งเตือน</Modal.Title></Modal.Header>
+        <Modal.Body>{notification.message}</Modal.Body>
+        <Modal.Footer><Button variant="secondary" onClick={() => setNotification({ message: "", show: false })}>ปิด</Button></Modal.Footer>
+      </Modal>
     </Container>
   );
-
-  function renderFormFields(fields) {
-    return fields.map(({ label, name, type, value, disabled }) => (
-      <Form.Group as={Row} className="mb-3" key={name}>
-        <Form.Label column sm="6" className="text-center">
-          {label}
-        </Form.Label>
-        <Col sm="6">
-          <Form.Control as={type === "textarea" ? "textarea" : "input"} type={type} name={name} value={value ?? selectuser[name] ?? ""} onChange={handleChange} disabled={disabled || admin.name === "Chureeporn" || !editMode} />
-          {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
-        </Col>
-      </Form.Group>
-    ));
-  }
-
-  function renderAdminButtons() {
-    const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id);
-  
-    if (isPendingApproval) {
-      return (
-        <Alert variant="info" className="text-center">
-          กำลังรอการยืนยันจาก Chureeporn
-        </Alert>
-      );
-    }
-  
-    return (
-      <Row className="mb-3">
-        <Col sm={{ span: 6, offset: 6 }} className="d-flex justify-content-end">
-          {editMode ? (
-            <>
-              <Button variant="outline-success" onClick={handleSubmit}>บันทึก</Button>
-              <Button variant="outline-danger" onClick={() => setEditMode(false)} className="ms-2">ยกเลิก</Button>
-            </>
-          ) : (
-            <Button variant="outline-dark" onClick={() => setEditMode(true)}>แก้ไข</Button>
-          )}
-        </Col>
-      </Row>
-    );
-  }  
-
-  function renderAdmin2Table() {
-    const selectedUser = personal[selectuser._id];
-
-    return (
-      selectedUser && (
-        <Table striped bordered hover responsive="md">
-          <thead>
-            <tr>
-              {["ชื่อ-สกุล", "เบอร์โทรศัพท์", "เบอร์โทรศัพท์ผู้ติดต่อ", "อายุ", "การวินิจฉัยโรคหลัก", "การรับประทานยา Capecitabine", "เวลารับประทานยาช่วงเช้า", "เวลารับประทานยาช่วงเย็น", "เลขโรงพยาบาล", "การดำเนินการ"].map((header) => (
-                <th key={header} className="text-center">{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{selectedUser.name}</td>
-              <td>{selectedUser.phone}</td>
-              <td>{selectedUser.other_numbers || "N/A"}</td>
-              <td>{selectedUser.age || "N/A"}</td>
-              <td>{selectedUser.diagnosis || "N/A"}</td>
-              <td>{selectedUser.taking_capecitabine || "N/A"}</td>
-              <td>{selectedUser.morningTime || "N/A"}</td>
-              <td>{selectedUser.eveningTime || "N/A"}</td>
-              <td>{selectedUser.hospital_number || "N/A"}</td>
-              <td className="text-center">
-                <Button
-                  variant="outline-success"
-                  size="sm"
-                  onClick={() => handleConfirmChanges(selectedUser)}
-                  className="mx-1"
-                >
-                  ยืนยัน
-                </Button>
-                <Button
-                  variant="outline-danger"
-                  size="sm"
-                  onClick={() => handleRejectChanges(selectedUser)}
-                  className="mx-1"
-                >
-                  ปฏิเสธ
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </Table>
-      )
-    );
-  }
-
-  function renderModal() {
-    return (
-      <Modal show={notification.show} onHide={() => setNotification({ message: "", show: false })} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>แจ้งเตือน</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>{notification.message}</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setNotification({ message: "", show: false })}>ปิด</Button>
-        </Modal.Footer>
-      </Modal>
-    );
-  }
 }
 
 export default Personal;

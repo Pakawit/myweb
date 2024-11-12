@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const MedicationSchema = new mongoose.Schema({
-  status: Number,
-  from: String,
+  status: { type: Number, required: true },
+  from: { type: String, required: true },
   time: String,
   date: String,
 });
