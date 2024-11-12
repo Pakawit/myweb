@@ -74,7 +74,6 @@ function Home() {
   };
 
   const renderUserRow = (user) => {
-    if (user._id === admin._id) return null;
 
     const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;
     const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;
