@@ -12,6 +12,9 @@ const path = require("path");
 const multer = require("multer");
 const upload = multer();
 
+const swaggerSetup = require('./swagger');
+swaggerSetup(app);
+
 app.use(express.urlencoded({ extended: true, limit: "750kb" }));
 app.use(express.json({ limit: "750kb" }));
 app.use(cors());
@@ -44,7 +47,41 @@ const writeJSONFile = async (filePath, data) => {
   }
 };
 
-// Admin
+/**
+ * @swagger
+ * /admin:
+ *   post:
+ *     summary: Create a new admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: admin1
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       201:
+ *         description: Admin created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: admin1
+ *                 _id:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *       400:
+ *         description: Error creating admin
+ */
 app.post("/admin", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -56,6 +93,41 @@ app.post("/admin", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /admin/login:
+ *   post:
+ *     summary: Login as an admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: admin1
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: admin1
+ *                 password:
+ *                   type: string
+ *                   example: 123456
+ *       400:
+ *         description: Invalid credentials
+ */
 app.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -72,6 +144,27 @@ app.post("/admin/login", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /admin/logout:
+ *   post:
+ *     summary: Logout as an admin
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: admin1
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       400:
+ *         description: Logout failed
+ */
 app.post("/admin/logout", async (req, res) => {
   try {
     const { name } = req.body;
@@ -88,7 +181,33 @@ app.post("/admin/logout", async (req, res) => {
   }
 });
 
-// User
+/**
+ * @swagger
+ * /getusers:
+ *   get:
+ *     summary: Get all users
+ *     responses:
+ *       200:
+ *         description: A list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                     example: John Doe
+ *                   phone:
+ *                     type: string
+ *                     example: "123456789"
+ *                   age:
+ *                     type: number
+ *                     example: 25
+ *       500:
+ *         description: Error retrieving users
+ */
 app.get("/getusers", async (req, res) => {
   try {
     const users = await User.find();
@@ -99,6 +218,43 @@ app.get("/getusers", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /getuser:
+ *   post:
+ *     summary: Get a specific user by ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *     responses:
+ *       200:
+ *         description: User found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: John Doe
+ *                 phone:
+ *                   type: string
+ *                   example: "123456789"
+ *                 age:
+ *                   type: number
+ *                   example: 25
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Error fetching user
+ */
 app.post("/getuser", async (req, res) => {
   const { id } = req.body;
 
@@ -115,6 +271,53 @@ app.post("/getuser", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /user:
+ *   post:
+ *     summary: Create a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *               phone:
+ *                 type: string
+ *                 example: "123456789"
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *               age:
+ *                 type: number
+ *                 example: 25
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                   example: John Doe
+ *                 phone:
+ *                   type: string
+ *                   example: "123456789"
+ *                 age:
+ *                   type: number
+ *                   example: 25
+ *                 _id:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *       400:
+ *         description: Error creating user
+ */
 app.post("/user", async (req, res) => {
   try {
     const { name, phone, password, age } = req.body;
@@ -130,6 +333,52 @@ app.post("/user", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /user/login:
+ *   post:
+ *     summary: User login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *               password:
+ *                 type: string
+ *                 example: password123
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                       example: John Doe
+ *                     phone:
+ *                       type: string
+ *                       example: "123456789"
+ *                     age:
+ *                       type: number
+ *                       example: 25
+ *                 isFirstLogin:
+ *                   type: boolean
+ *                   example: true
+ *       401:
+ *         description: Invalid credentials
+ *       400:
+ *         description: Error logging in
+ */
 app.post("/user/login", async (req, res) => {
   try {
     const { name, password } = req.body;
@@ -150,6 +399,27 @@ app.post("/user/login", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /logout:
+ *   delete:
+ *     summary: Delete a user and logout
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *     responses:
+ *       200:
+ *         description: User deleted and logged out successfully
+ *       400:
+ *         description: Error deleting user or logging out
+ */
 app.delete("/logout", async (req, res) => {
   try {
     const { _id } = req.body;
@@ -161,6 +431,33 @@ app.delete("/logout", async (req, res) => {
 });
 
 // Personal
+/**
+ * @swagger
+ * /saveChangesToJson:
+ *   post:
+ *     summary: Save changes to personal.json
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               changes:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 1234567890abcdef
+ *                   name:
+ *                     type: string
+ *                     example: John Doe
+ *     responses:
+ *       200:
+ *         description: Changes saved successfully
+ *       500:
+ *         description: Error saving changes
+ */
 app.post("/saveChangesToJson", async (req, res) => {
   const { changes } = req.body;
   try {
@@ -178,6 +475,42 @@ app.post("/saveChangesToJson", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /confirmChanges:
+ *   post:
+ *     summary: Confirm changes to a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *     responses:
+ *       200:
+ *         description: Changes confirmed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Changes confirmed successfully
+ *                 pendingChange:
+ *                   type: object
+ *       404:
+ *         description: No pending changes found
+ *       500:
+ *         description: Error confirming changes
+ */
 app.post("/confirmChanges", async (req, res) => {
   const { _id, name } = req.body;
   try {
@@ -210,6 +543,40 @@ app.post("/confirmChanges", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /rejectChanges:
+ *   post:
+ *     summary: Reject changes to a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               name:
+ *                 type: string
+ *                 example: John Doe
+ *     responses:
+ *       200:
+ *         description: Changes rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Changes rejected successfully
+ *       404:
+ *         description: No pending changes found
+ *       500:
+ *         description: Error rejecting changes
+ */
 app.post("/rejectChanges", async (req, res) => {
   const { _id, name } = req.body;
   try {
@@ -232,6 +599,33 @@ app.post("/rejectChanges", async (req, res) => {
 });
 
 // Medication
+/**
+ * @swagger
+ * /getmedication:
+ *   post:
+ *     summary: Get all medications
+ *     responses:
+ *       200:
+ *         description: List of medications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 1234567890abcdef
+ *                   name:
+ *                     type: string
+ *                     example: Paracetamol
+ *                   dosage:
+ *                     type: string
+ *                     example: 500mg
+ *       500:
+ *         description: Error retrieving medications
+ */
 app.post("/getmedication", async (req, res) => {
   try {
     const medications = await Medication.find();
@@ -242,6 +636,44 @@ app.post("/getmedication", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /createmedication:
+ *   post:
+ *     summary: Create a new medication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Paracetamol
+ *               dosage:
+ *                 type: string
+ *                 example: 500mg
+ *     responses:
+ *       201:
+ *         description: Medication created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *                 name:
+ *                   type: string
+ *                   example: Paracetamol
+ *                 dosage:
+ *                   type: string
+ *                   example: 500mg
+ *       500:
+ *         description: Error creating medication
+ */
 app.post("/createmedication", async (req, res) => {
   try {
     const medication = await Medication.create(req.body);
@@ -253,6 +685,47 @@ app.post("/createmedication", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /updatemedication:
+ *   put:
+ *     summary: Update medication status
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               status:
+ *                 type: string
+ *                 example: Taken
+ *               time:
+ *                 type: string
+ *                 example: 08:00 AM
+ *               date:
+ *                 type: string
+ *                 example: 2024-11-01
+ *     responses:
+ *       200:
+ *         description: Medication status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *                 status:
+ *                   type: string
+ *                   example: Taken
+ *       500:
+ *         description: Error updating medication status
+ */
 app.put("/updatemedication", async (req, res) => {
   try {
     const { from, status, time, date } = req.body;
@@ -274,6 +747,51 @@ app.put("/updatemedication", async (req, res) => {
 });
 
 // Estimation
+/**
+ * @swagger
+ * /getestimation:
+ *   post:
+ *     summary: Get estimations for a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               page:
+ *                 type: integer
+ *                 example: 0
+ *               limit:
+ *                 type: integer
+ *                 example: 10
+ *     responses:
+ *       200:
+ *         description: List of estimations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 total:
+ *                   type: integer
+ *                   example: 20
+ *                 page:
+ *                   type: integer
+ *                   example: 0
+ *                 limit:
+ *                   type: integer
+ *                   example: 10
+ *       500:
+ *         description: Error fetching estimations
+ */
 app.post("/getestimation", async (req, res) => {
   const { from, page = 0, limit = 10 } = req.body;
 
@@ -297,6 +815,42 @@ app.post("/getestimation", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /getHFSDetails:
+ *   post:
+ *     summary: Get HFS details for a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *     responses:
+ *       200:
+ *         description: List of HFS details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   hfsLevel:
+ *                     type: integer
+ *                     example: 2
+ *                   date:
+ *                     type: string
+ *                     example: 2024-11-01
+ *       400:
+ *         description: User ID is required
+ *       500:
+ *         description: Error fetching HFS details
+ */
 app.post("/getHFSDetails", async (req, res) => {
   try {
     const { userId } = req.body;
@@ -316,6 +870,38 @@ app.post("/getHFSDetails", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /createstimation:
+ *   post:
+ *     summary: Create a new estimation
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               data:
+ *                 type: object
+ *                 example: {}
+ *     responses:
+ *       201:
+ *         description: Estimation created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *       500:
+ *         description: Error creating estimation
+ */
 app.post("/createstimation", async (req, res) => {
   try {
     const estimation = await Estimation.create(req.body);
@@ -336,6 +922,44 @@ app.post("/createstimation", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /evaluateHFS:
+ *   put:
+ *     summary: Evaluate HFS for a user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               estimationId:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               user:
+ *                 type: object
+ *                 example: {"name": "John Doe"}
+ *               adminName:
+ *                 type: string
+ *                 example: Apatnipa
+ *               hfsLevel:
+ *                 type: integer
+ *                 example: 2
+ *     responses:
+ *       200:
+ *         description: HFS evaluation completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: HFS evaluation completed successfully
+ *       500:
+ *         description: Error evaluating HFS
+ */
 app.put("/evaluateHFS", async (req, res) => {
   const { estimationId, user, adminName, hfsLevel } = req.body;
 
@@ -389,6 +1013,30 @@ app.put("/evaluateHFS", async (req, res) => {
 });
 
 // Chatnotification
+/**
+ * @swagger
+ * /getchatnotification:
+ *   get:
+ *     summary: Get chat notifications
+ *     responses:
+ *       200:
+ *         description: List of chat notifications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   from:
+ *                     type: string
+ *                     example: 1234567890abcdef
+ *                   createdAt:
+ *                     type: string
+ *                     example: 2024-11-01T10:00:00Z
+ *       500:
+ *         description: Error fetching chat notifications
+ */
 app.get("/getchatnotification", async (req, res) => {
   try {
     const notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
@@ -421,6 +1069,27 @@ const updateChatNotification = async (from) => {
   }
 };
 
+/**
+ * @swagger
+ * /removechatnotification:
+ *   post:
+ *     summary: Remove a chat notification
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *     responses:
+ *       200:
+ *         description: Chat notification removed successfully
+ *       500:
+ *         description: Error removing chat notification
+ */
 app.post("/removechatnotification", async (req, res) => {
   const { from } = req.body;
   try {
@@ -434,6 +1103,52 @@ app.post("/removechatnotification", async (req, res) => {
 });
 
 // Chat
+/**
+ * @swagger
+ * /getmessage:
+ *   post:
+ *     summary: Get chat messages between two users
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               to:
+ *                 type: string
+ *                 example: 0987654321fedcba
+ *     responses:
+ *       200:
+ *         description: List of chat messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   from:
+ *                     type: string
+ *                     example: 1234567890abcdef
+ *                   to:
+ *                     type: string
+ *                     example: 0987654321fedcba
+ *                   content:
+ *                     type: string
+ *                     example: Hello!
+ *                   date:
+ *                     type: string
+ *                     example: 2024-11-01
+ *                   time:
+ *                     type: string
+ *                     example: 10:00 AM
+ *       500:
+ *         description: Error fetching chat messages
+ */
 app.post("/getmessage", async (req, res) => {
   try {
     const { from, to } = req.body;
@@ -448,6 +1163,60 @@ app.post("/getmessage", async (req, res) => {
     res.status(500).json({ error: "Error fetching messages" });
   }
 });
+
+/**
+ * @swagger
+ * /createmessage:
+ *   post:
+ *     summary: Create a new chat message
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               to:
+ *                 type: string
+ *                 example: 0987654321fedcba
+ *               content:
+ *                 type: string
+ *                 example: Hello!
+ *               date:
+ *                 type: string
+ *                 example: 2024-11-01
+ *               time:
+ *                 type: string
+ *                 example: 10:00 AM
+ *     responses:
+ *       201:
+ *         description: Chat message created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 from:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *                 to:
+ *                   type: string
+ *                   example: 0987654321fedcba
+ *                 content:
+ *                   type: string
+ *                   example: Hello!
+ *                 date:
+ *                   type: string
+ *                   example: 2024-11-01
+ *                 time:
+ *                   type: string
+ *                   example: 10:00 AM
+ *       500:
+ *         description: Error creating chat message
+ */
 
 app.post("/createmessage", async (req, res) => {
   try {
@@ -473,6 +1242,59 @@ app.post("/createmessage", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /chatphoto:
+ *   post:
+ *     summary: Upload a chat photo
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               from:
+ *                 type: string
+ *                 example: 1234567890abcdef
+ *               to:
+ *                 type: string
+ *                 example: 0987654321fedcba
+ *               date:
+ *                 type: string
+ *                 example: 2024-11-01
+ *               time:
+ *                 type: string
+ *                 example: 10:00 AM
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Chat photo uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 from:
+ *                   type: string
+ *                   example: 1234567890abcdef
+ *                 to:
+ *                   type: string
+ *                   example: 0987654321fedcba
+ *                 date:
+ *                   type: string
+ *                   example: 2024-11-01
+ *                 time:
+ *                   type: string
+ *                   example: 10:00 AM
+ *                 content:
+ *                   type: string
+ *                   format: binary
+ *       500:
+ *         description: Error uploading chat photo
+ */
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
     const { from, to, date, time } = req.body;
@@ -499,6 +1321,36 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
 });
 
 //log
+/**
+ * @swagger
+ * /logs:
+ *   get:
+ *     summary: Get all logs
+ *     responses:
+ *       200:
+ *         description: List of logs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   action:
+ *                     type: string
+ *                     example: admin login
+ *                   user:
+ *                     type: string
+ *                     example: admin1
+ *                   details:
+ *                     type: string
+ *                     example: Admin logged in
+ *                   timestamp:
+ *                     type: string
+ *                     example: 2024-11-01T10:00:00Z
+ *       500:
+ *         description: Error fetching logs
+ */
 app.get("/logs", async (req, res) => {
   try {
     const logs = await Log.find().sort({ timestamp: -1 });
@@ -508,6 +1360,24 @@ app.get("/logs", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /video:
+ *   get:
+ *     summary: Stream a video
+ *     responses:
+ *       206:
+ *         description: Video stream
+ *         content:
+ *           video/mp4:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Video not found
+ *       416:
+ *         description: Range header required
+ */
 app.get("/video", (req, res) => {
   const videoPath = path.join(__dirname, "video", "VDO_nurse_final.mp4");
 
