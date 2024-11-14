@@ -18,6 +18,7 @@ function Navigation() {
   const admin = useSelector((state) => state.admin);
   const chatnotification = useSelector((state) => state.chatnotification);
   const users = useSelector((state) => state.users);
+  const selectuser = useSelector((state) => state.selectuser);
   const personal = useSelector((state) => state.personalnotification);
   const estimationHFS = useSelector((state) => state.estimationHFS);
   const dispatch = useDispatch();
@@ -68,7 +69,7 @@ function Navigation() {
       dispatch(setselectuser(selectedUser));
       dispatch(removeChatNotificationThunk(notification.from));
       navigate("/chat");
-    } 
+    }
   };
 
   const handlePersonalNotificationClick = (userId) => {
@@ -114,6 +115,12 @@ function Navigation() {
             <Navbar.Text className="border border-secondary rounded px-3 py-1 fw-bold text-secondary">
               {admin.name}
             </Navbar.Text>
+          )}
+        </div>
+
+        <div className="d-flex flex-grow-1 justify-content-center">
+          {selectuser && selectuser.name && (
+            <Navbar.Text className="fw-bold fs-5">{selectuser.name}</Navbar.Text>
           )}
         </div>
 
