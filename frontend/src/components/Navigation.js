@@ -25,15 +25,6 @@ function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const processedChatNotifications = chatnotification.map((notification) => {
-    const user = users.find((user) => user._id === notification.from);
-    return {
-      ...notification,
-      userName: user ? user.name : "Unknown User",
-      user,
-    };
-  });
-
   useEffect(() => {
     dispatch(fetchChatNotificationThunk());
     dispatch(loadPersonalnotificationData());
@@ -72,29 +63,38 @@ function Navigation() {
   };
 
   const handleChatNotificationClick = async (notification) => {
-    if (notification.user) {
-      dispatch(setselectuser(notification.user));
-      dispatch(removeChatNotificationThunk(notification.user._id));
+    const selectedUser = users.find((user) => user._id === notification.from);
+    if (selectedUser) {
+      dispatch(setselectuser(selectedUser));
+      dispatch(removeChatNotificationThunk(notification.from));
       navigate("/chat");
-    }
+    } 
   };
 
   const handlePersonalNotificationClick = (userId) => {
     if (userId && personal[userId]) {
-      dispatch(setselectuser(personal[userId]));
-      navigate("/personal");
+      const selectedUser = users.find((user) => user._id === userId);
+      if (selectedUser) {
+        dispatch(setselectuser(selectedUser));
+        navigate("/personal");
+      }
     }
   };
 
   const handleHFSNotificationClick = (estimationId) => {
     if (estimationId && estimationHFS[estimationId]) {
-      dispatch(setselectuser(estimationHFS[estimationId].user));
-      navigate("/estimation");
+      const estimationUser = estimationHFS[estimationId].user;
+      if (estimationUser) {
+        const selectedUser = users.find((user) => user._id === estimationUser._id);
+        if (selectedUser) {
+          dispatch(setselectuser(selectedUser));
+          navigate("/estimation");
+        }
+      }
     }
   };
 
   const totalPersonalNotifications = Object.keys(personal).length + Object.keys(estimationHFS).length;
-
   const shouldHideBackButton = location.pathname === "/";
 
   return (
@@ -161,11 +161,17 @@ function Navigation() {
               {chatnotification.length === 0 ? (
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
-                processedChatNotifications.map((notification) => (
-                  <Dropdown.Item key={notification.from} onClick={() => handleChatNotificationClick(notification)}>
-                    {notification.userName}
-                  </Dropdown.Item>
-                ))
+                chatnotification.map((notification) => {
+                  const user = users.find((user) => user._id === notification.from);
+                  return (
+                    <Dropdown.Item
+                      key={notification.from}
+                      onClick={() => handleChatNotificationClick(notification)}
+                    >
+                      {user ? user.name : "Unknown User"}
+                    </Dropdown.Item>
+                  );
+                })
               )}
             </Dropdown.Menu>
           </Dropdown>

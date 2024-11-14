@@ -32,17 +32,18 @@ function Personal() {
   };
 
   useEffect(() => {
-    dispatch(loadMedicationsData());
-    dispatch(loadPersonalnotificationData());
-  }, [dispatch]);
+    const fetchInitialData = async () => {
+      dispatch(loadMedicationsData());
+      dispatch(loadPersonalnotificationData());
+      if (selectuser._id && !editMode) {
+        await fetchUserDetails();
+      }
+    };
 
-  useEffect(() => {
-    if (selectuser._id && !editMode) {
-      fetchUserDetails();
-    }
-  }, [selectuser._id, editMode]);
+    fetchInitialData();
+  }, [dispatch, selectuser._id, editMode]);
 
-  const validate = (name, value) => {
+  const handleChange = ({ target: { name, value } }) => {
     const rules = {
       name: /^[a-zA-Zก-๙\s]{1,30}$/,
       phone: /^\d{0,10}$/,
@@ -54,14 +55,13 @@ function Personal() {
       morningTime: /.+/,
       eveningTime: /.+/,
     };
+
     const isValid = rules[name]?.test(value) ?? true;
     setErrors((prev) => ({ ...prev, [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง` }));
-  };
 
-  const handleChange = ({ target: { name, value } }) => {
-    validate(name, value);
     dispatch(setselectuser({ ...selectuser, [name]: value }));
   };
+
 
   const handleSubmit = async () => {
     if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง");
@@ -136,7 +136,7 @@ function Personal() {
           {editMode ? (
             <>
               <Button variant="outline-success" onClick={handleSubmit}>บันทึก</Button>
-              <Button variant="outline-danger" onClick={() => setEditMode(false)} className="ms-2">ยกเลิก</Button>
+              <Button variant="outline-danger" onClick={() => {setEditMode(false); setErrors({});}} className="ms-2">ยกเลิก</Button>
             </>
           ) : (
             <Button variant="outline-dark" onClick={() => setEditMode(true)}>แก้ไข</Button>

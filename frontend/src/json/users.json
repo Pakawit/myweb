@@ -3,7 +3,7 @@
     "_id": "66c705b9df4e2286dbe282a9",
     "name": "AW WP",
     "phone": "0000000000",
-    "other_numbers": "0998474561",
+    "other_numbers": "0998474569",
     "age": 99,
     "diagnosis": "เจ็บใจ",
     "hospital_number": "11234687",
@@ -13,12 +13,12 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:32:41.030Z",
-    "updatedAt": "2024-11-12T10:04:54.409Z",
+    "updatedAt": "2024-11-14T10:21:33.755Z",
     "__v": 0
   },
   {
     "_id": "66c705c7df4e2286dbe282b5",
-    "name": "AA AA",
+    "name": "God of war",
     "phone": "0812345675",
     "other_numbers": "0000000005",
     "age": 60,
@@ -30,14 +30,14 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:32:55.437Z",
-    "updatedAt": "2024-11-14T05:25:12.654Z",
+    "updatedAt": "2024-11-14T13:21:04.153Z",
     "__v": 0
   },
   {
     "_id": "66c705cfdf4e2286dbe282bf",
     "name": "BB BB",
     "phone": "0800000001",
-    "other_numbers": "0000000102",
+    "other_numbers": "0000000101",
     "age": 16,
     "diagnosis": "",
     "hospital_number": "",
@@ -47,7 +47,7 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:33:03.656Z",
-    "updatedAt": "2024-11-14T06:25:51.494Z",
+    "updatedAt": "2024-11-14T13:19:56.569Z",
     "__v": 0
   }
 ]
