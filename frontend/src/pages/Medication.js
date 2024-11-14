@@ -15,17 +15,15 @@ function Medication() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
+  const fetchDataOnLoad = async () => {
+    try {
+      await axios.get(`${API_BASE_URL}/getmedication`);
+    } catch (error) {
+      console.error("Failed to fetch medications on load:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchDataOnLoad = async () => {
-      try {
-        await axios.post(`${API_BASE_URL}/getmedication`);
-      } catch (error) {
-        console.error("Failed to fetch medications on load:", error);
-      }
-    };
-
-    fetchDataOnLoad();
-
     const intervalId = setInterval(() => {
       dispatch(loadMedicationsData());
     }, 5000);

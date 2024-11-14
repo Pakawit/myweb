@@ -27,7 +27,7 @@ function Home() {
     try {
       await axios.all([
         axios.get(`${API_BASE_URL}/getusers`),
-        axios.post(`${API_BASE_URL}/getmedication`),
+        axios.get(`${API_BASE_URL}/getmedication`),
       ]);
     } catch (error) {
       console.error("Failed to fetch data on page load:", error);
@@ -44,8 +44,6 @@ function Home() {
     fetchDataInterval();
     dispatch(deleteselectuser());
     dispatch(deleteMessage());
-
-    fetchDataOnPageLoad();
 
     const intervalId = setInterval(fetchDataInterval, 5000);
 

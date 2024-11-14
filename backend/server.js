@@ -232,7 +232,7 @@ app.post("/rejectChanges", async (req, res) => {
 });
 
 // Medication
-app.post("/getmedication", async (req, res) => {
+app.get("/getmedication", async (req, res) => {
   try {
     const medications = await Medication.find();
     await writeJSONFile(MEDICATIONS_FILE_PATH, medications);
