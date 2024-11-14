@@ -8,10 +8,9 @@ import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchChatNotificationThunk } from "../features/chatnotificationSlice";
+import { fetchChatNotificationThunk, removeChatNotificationThunk } from "../features/chatnotificationSlice";
 import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
 import { loadEstimationHFSData } from "../features/estimationHFSSlice";
-import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 
@@ -26,6 +25,15 @@ function Navigation() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const processedChatNotifications = chatnotification.map((notification) => {
+    const user = users.find((user) => user._id === notification.from);
+    return {
+      ...notification,
+      userName: user ? user.name : "Unknown User",
+      user,
+    };
+  });
+
   useEffect(() => {
     dispatch(fetchChatNotificationThunk());
     dispatch(loadPersonalnotificationData());
@@ -36,7 +44,6 @@ function Navigation() {
       dispatch(loadPersonalnotificationData());
       dispatch(loadEstimationHFSData());
     }, 3000);
-
     return () => clearInterval(intervalId);
   }, [dispatch]);
 
@@ -64,40 +71,25 @@ function Navigation() {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
-    if (notification && notification.from) {
-      const user = users.find((user) => user._id === notification.from);
-      if (user) {
-        try {
-          dispatch(setselectuser(user));
-          dispatch(removeChatNotificationThunk(user._id));
-          navigate("/chat");
-        } catch (error) {
-          console.error("Error handling notification click:", error);
-        }
-      }
+  const handleChatNotificationClick = async (notification) => {
+    if (notification.user) {
+      dispatch(setselectuser(notification.user));
+      dispatch(removeChatNotificationThunk(notification.user._id));
+      navigate("/chat");
     }
   };
 
-  const handlePersonalNotificationClick = async (userId) => {
+  const handlePersonalNotificationClick = (userId) => {
     if (userId && personal[userId]) {
-      try {
-        dispatch(setselectuser(personal[userId]));
-        navigate("/personal");
-      } catch (error) {
-        console.error("Error handling personal notification click:", error);
-      }
+      dispatch(setselectuser(personal[userId]));
+      navigate("/personal");
     }
   };
 
-  const handleHFSNotificationClick = async (estimationId) => {
+  const handleHFSNotificationClick = (estimationId) => {
     if (estimationId && estimationHFS[estimationId]) {
-      try {
-        dispatch(setselectuser(estimationHFS[estimationId].user));
-        navigate("/estimation");
-      } catch (error) {
-        console.error("Error handling HFS notification click:", error);
-      }
+      dispatch(setselectuser(estimationHFS[estimationId].user));
+      navigate("/estimation");
     }
   };
 
@@ -118,7 +110,6 @@ function Navigation() {
             <i className="bi bi-chevron-left"></i>
           </Button>
 
-          {/* แสดงชื่อ admin ที่เข้าสู่ระบบ ชิดซ้าย */}
           {admin && admin.name && (
             <Navbar.Text className="border border-secondary rounded px-3 py-1 fw-bold text-secondary">
               {admin.name}
@@ -126,7 +117,6 @@ function Navigation() {
           )}
         </div>
 
-        {/* ส่วนของปุ่มอื่นๆ ชิดขวา */}
         <Nav className="ms-auto d-flex align-items-center">
           <Dropdown className="me-2">
             <Dropdown.Toggle variant="outline-dark" id="personal-notification-dropdown">
@@ -150,8 +140,7 @@ function Navigation() {
 
                   {Object.keys(estimationHFS).map((estimationId) => (
                     <Dropdown.Item key={estimationId} onClick={() => handleHFSNotificationClick(estimationId)}>
-                      ประเมินอาการ{" "}
-                      {estimationHFS[estimationId]?.user?.name ? estimationHFS[estimationId]?.user?.name : "Unknown User"}
+                      ประเมินอาการ {estimationHFS[estimationId]?.user?.name || "Unknown User"}
                     </Dropdown.Item>
                   ))}
                 </>
@@ -172,14 +161,11 @@ function Navigation() {
               {chatnotification.length === 0 ? (
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
-                chatnotification.map((notification) => {
-                  const user = users.find((user) => user._id === notification.from);
-                  return (
-                    <Dropdown.Item key={notification.from} onClick={() => handleNotificationClick(notification)}>
-                      {user ? user.name : "Unknown User"}
-                    </Dropdown.Item>
-                  );
-                })
+                processedChatNotifications.map((notification) => (
+                  <Dropdown.Item key={notification.from} onClick={() => handleChatNotificationClick(notification)}>
+                    {notification.userName}
+                  </Dropdown.Item>
+                ))
               )}
             </Dropdown.Menu>
           </Dropdown>

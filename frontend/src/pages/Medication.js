@@ -75,8 +75,6 @@ function Medication() {
     .filter((med) => med.from === selectuser._id)
     .sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time));
 
-  const totalPages = Math.ceil(sortedMedications.length / itemsPerPage);
-
   const paginatedMedications = sortedMedications.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
@@ -128,7 +126,7 @@ function Medication() {
               previousLabel={"<"}
               nextLabel={">"}
               breakLabel={"..."}
-              pageCount={totalPages}
+              pageCount={Math.ceil(sortedMedications.length / itemsPerPage)}
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageChange}

@@ -196,7 +196,7 @@ function Personal() {
           { label: "เวลารับประทานยาช่วงเย็น", name: "eveningTime", type: "time" },
           { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
           { label: "ขาดยา", name: "ms_medicine", value: medication.filter((med) => med.from === selectuser._id && med.status === 0).length, disabled: true },
-          { label: "วันที่ลงทะเบียน", name: "createdAt", type: "text", value: new Date(selectuser.createdAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), disabled: true },
+          { label: "วันที่ลงทะเบียน", name: "createdAt", type: "text", value: new Date(selectuser.createdAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), disabled: true }
         ])}
         {admin.name === "Apatnipa" && renderAdminButtons()}
       </Form>

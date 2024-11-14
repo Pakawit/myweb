@@ -22,7 +22,6 @@ function Home() {
   const [currentPage, setCurrentPage] = useState(0);
 
   const itemsPerPage = 10;
-  const pageCount = Math.ceil(users.length / itemsPerPage);
 
   const fetchDataOnPageLoad = async () => {
     try {
@@ -103,6 +102,7 @@ function Home() {
   };
 
   const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
   const paginatedUsers = sortedUsers.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
@@ -132,7 +132,7 @@ function Home() {
               previousLabel={"<"}
               nextLabel={">"}
               breakLabel={"..."}
-              pageCount={pageCount}
+              pageCount={Math.ceil(users.length / itemsPerPage)}
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageClick}

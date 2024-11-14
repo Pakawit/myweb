@@ -182,7 +182,8 @@ function Chat() {
             <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg} />
             <Button variant="outline-dark" onClick={() => fileInputRef.current.click()}><i className="bi bi-image" /></Button>
             <Button variant="outline-secondary mx-2" onClick={() => setShowStickersModal(true)}><i className="bi bi-emoji-smile" /></Button>
-            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)} disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "", fontWeight: image ? "bold" : "normal" }} />
+            <Form.Control type="text" placeholder="Your message" value={message} onChange={(e) => setMessage(e.target.value)}
+              disabled={!!image} style={{ backgroundColor: image ? "#DDDDDD" : "", fontWeight: image ? "bold" : "normal" }} />
             <Button type="submit" disabled={!message && !image} className="ms-2"><i className="bi bi-send-fill" /></Button>
           </Form>
         </Col>
@@ -199,7 +200,8 @@ function Chat() {
         <Modal.Header closeButton />
         <Modal.Body className="d-flex flex-wrap justify-content-center">
           {stickers.map((sticker, i) => (
-            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} onClick={() => handleStickerSelect(sticker)} className="img-fluid m-1" style={{ cursor: "pointer", width: "100px" }} />
+            <img key={i} src={`/img/${sticker}`} alt={`sticker-${i}`} onClick={() => handleStickerSelect(sticker)}
+              className="img-fluid m-1" style={{ cursor: "pointer", width: "100px" }} />
           ))}
         </Modal.Body>
       </Modal>

@@ -342,7 +342,8 @@ app.put("/evaluateHFS", async (req, res) => {
   try {
     let estimationsHFS = await readJSONFile(ESTIMATIONHFS_FILE_PATH);
 
-    let estimation = estimationsHFS[estimationId]; // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
+    let estimation = estimationsHFS[estimationId];
+    // ถ้ายังไม่มีข้อมูลการประเมิน ให้สร้างข้อมูลใหม่
     if (!estimation) {
       estimation = { estimationId, user, evaluations: {} };
       estimationsHFS[estimationId] = estimation;
@@ -354,6 +355,7 @@ app.put("/evaluateHFS", async (req, res) => {
 
     // ตรวจสอบว่าทั้ง Apatnipa และ Chureeporn ประเมินแล้วหรือยัง
     if (Apatnipa?.hfsLevel !== undefined && Chureeporn?.hfsLevel !== undefined) {
+
       if (Apatnipa.hfsLevel === Chureeporn.hfsLevel) {
         const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId }, { hfsLevel: Apatnipa.hfsLevel }, { new: true });//ส่งกลับหลัง update
 
@@ -373,13 +375,13 @@ app.put("/evaluateHFS", async (req, res) => {
       } else {
         await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการ ${user.name} ผิดพลาด` });
 
-        delete estimation.evaluations.Apatnipa.hfsLevel;
-        delete estimation.evaluations.Chureeporn.hfsLevel;
+        delete estimation.evaluations.Apatnipa;
+        delete estimation.evaluations.Chureeporn;
         res.json({ message: `ประเมินอาการ ${user.name} ผิดพลาด` });
       }
+
     } else {
       await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการโดย ${adminName}` });
-
       res.json({ message: `ประเมินสำเร็จ กำลังรอ ${Apatnipa?.hfsLevel === undefined ? "Apatnipa" : "Chureeporn"} ประเมิน` });
     }
     await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
