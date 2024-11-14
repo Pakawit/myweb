@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { addMessage, setMessages } from "../features/messageSlice";
-import { removeChatNotificationThunk } from "../features/chatnotificationSlice";
+import {  removeChatNotification } from '../features/chatnotificationSlice';
 
 function Chat() {
   const { API_BASE_URL } = useContext(AppContext);
@@ -66,7 +66,7 @@ function Chat() {
     if (messages.length > previousMessagesLength.current) {
       scrollToBottom();
       const notification = chatnotification.find((n) => n.from === selectuser._id);
-      if (notification) dispatch(removeChatNotificationThunk(selectuser._id));
+      if (notification) dispatch(removeChatNotification(selectuser._id));
     }
     previousMessagesLength.current = messages.length;
   }, [messages, chatnotification, selectuser._id, dispatch]);

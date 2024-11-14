@@ -3,35 +3,26 @@ import axios from "axios";
 
 const initialState = [];
 
-export const fetchChatNotificationThunk = createAsyncThunk(
-  "chatnotification/fetchChatNotifications",
+export const fetchChatNotifications = createAsyncThunk(
+  "chatnotification/fetch",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        "http://localhost:4452/getchatnotification"
-      );
+      const response = await axios.get("http://localhost:4452/getchatnotification");
       return response.data;
     } catch (error) {
-      return rejectWithValue("Failed to fetch notifications");
+      return rejectWithValue("ไม่สามารถดึงข้อมูลการแจ้งเตือนได้");
     }
   }
 );
 
-export const removeChatNotificationThunk = createAsyncThunk(
-  "chatnotification/removeChatNotificationThunk",
-  async (from, { dispatch, rejectWithValue }) => {
+export const removeChatNotification = createAsyncThunk(
+  "chatnotification/remove",
+  async (from, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        "http://localhost:4452/removechatnotification",
-        {
-          from,
-        }
-      );
-      if (response.status === 200) {
-        dispatch(removeChatNotification(from));
-      }
+      await axios.post("http://localhost:4452/removechatnotification", { from });
+      return from; 
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue("ไม่สามารถลบการแจ้งเตือนได้");
     }
   }
 );
@@ -39,21 +30,14 @@ export const removeChatNotificationThunk = createAsyncThunk(
 const chatnotificationSlice = createSlice({
   name: "chatnotification",
   initialState,
-  reducers: {
-    removeChatNotification: (state, action) => {
-      return state.filter((n) => n.from !== action.payload);
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchChatNotificationThunk.fulfilled, (state, action) => {
-        return action.payload;
-      })
-      .addCase(removeChatNotificationThunk.rejected, (state, action) => {
-        console.error("Failed to remove notification:", action.payload);
-      });
+      .addCase(fetchChatNotifications.fulfilled, (state, action) => action.payload)
+      .addCase(removeChatNotification.fulfilled, (state, action) =>
+        state.filter((notification) => notification.from !== action.payload)
+      );
   },
 });
 
-export const { removeChatNotification } = chatnotificationSlice.actions;
 export default chatnotificationSlice.reducer;

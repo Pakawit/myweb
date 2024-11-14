@@ -8,7 +8,7 @@ import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchChatNotificationThunk, removeChatNotificationThunk } from "../features/chatnotificationSlice";
+import { fetchChatNotifications, removeChatNotification } from '../features/chatnotificationSlice';
 import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
 import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import { AppContext } from "../context/appContext";
@@ -27,12 +27,12 @@ function Navigation() {
   const location = useLocation();
 
   useEffect(() => {
-    dispatch(fetchChatNotificationThunk());
+    dispatch(fetchChatNotifications());
     dispatch(loadPersonalnotificationData());
     dispatch(loadEstimationHFSData());
 
     const intervalId = setInterval(() => {
-      dispatch(fetchChatNotificationThunk());
+      dispatch(fetchChatNotifications());
       dispatch(loadPersonalnotificationData());
       dispatch(loadEstimationHFSData());
     }, 3000);
@@ -67,7 +67,7 @@ function Navigation() {
     const selectedUser = users.find((user) => user._id === notification.from);
     if (selectedUser) {
       dispatch(setselectuser(selectedUser));
-      dispatch(removeChatNotificationThunk(notification.from));
+      dispatch(removeChatNotification(notification.from));
       navigate("/chat");
     }
   };
