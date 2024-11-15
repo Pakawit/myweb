@@ -63,11 +63,12 @@ function Estimation() {
       try {
         const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
           estimationId,
-          user: selectuser,
+          userId: selectuser._id,
+          userName: selectuser.name,
           adminName: admin.name,
           hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
         });
-
+  
         setNotification({ show: true, message: response.data.message });
         await fetchEstimations(currentPage);
         dispatch(loadEstimationHFSData());
@@ -75,7 +76,7 @@ function Estimation() {
         console.error("Error submitting evaluation:", error);
       }
     }
-  };
+  };  
 
   const handleShowModal = (image) => {
     setSelectedImage(image);
@@ -129,26 +130,26 @@ function Estimation() {
     const evaluations = estimationHFS[estimationId]?.evaluations || {};
     const ApatnipaLevel = evaluations.Apatnipa?.hfsLevel;
     const ChureepornLevel = evaluations.Chureeporn?.hfsLevel;
-
+  
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
       return { disabled: false, message: "ยืนยัน" };
     }
-
+  
     if (Object.keys(evaluations).length === 0) {
       return { disabled: true, message: "ประเมินแล้ว" };
     }
-
+  
     if (ApatnipaLevel !== undefined && admin.name === "Apatnipa") {
       return { disabled: true, message: "รอการประเมินจาก Chureeporn" };
     }
-
+  
     if (ChureepornLevel !== undefined && admin.name === "Chureeporn") {
       return { disabled: true, message: "รอการประเมินจาก Apatnipa" };
     }
-
+  
     return { disabled: false, message: "ยืนยัน" };
   };
-
+  
   const renderHfsLevel = (est) => {
     const adminEvaluatedLevel = estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel;
     const userEvaluation = adminEvaluatedLevel !== undefined ? `คุณประเมินว่า: ${adminEvaluatedLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${adminEvaluatedLevel}`}` : null;

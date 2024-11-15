@@ -63,37 +63,36 @@ function Navigation() {
     }
   };
 
-  const handleChatNotificationClick = async (notification) => {
+  const handleChatNotificationClick = (notification) => {
     const selectedUser = users.find((user) => user._id === notification.from);
-    if (selectedUser) {
-      dispatch(setselectuser(selectedUser));
-      dispatch(removeChatNotification(notification.from));
-      navigate("/chat");
-    }
-  };
+    if (!selectedUser) return;
+  
+    dispatch(setselectuser(selectedUser));
+    dispatch(removeChatNotification(notification.from));
+    navigate("/chat");
+  };  
 
   const handlePersonalNotificationClick = (userId) => {
-    if (userId && personal[userId]) {
-      const selectedUser = users.find((user) => user._id === userId);
-      if (selectedUser) {
-        dispatch(setselectuser(selectedUser));
-        navigate("/personal");
-      }
-    }
-  };
+    if (!personal[userId]) return;
+  
+    const selectedUser = users.find((user) => user._id === userId);
+    if (!selectedUser) return;
+  
+    dispatch(setselectuser(selectedUser));
+    navigate("/personal");
+  };  
 
   const handleHFSNotificationClick = (estimationId) => {
-    if (estimationId && estimationHFS[estimationId]) {
-      const estimationUser = estimationHFS[estimationId].user;
-      if (estimationUser) {
-        const selectedUser = users.find((user) => user._id === estimationUser._id);
-        if (selectedUser) {
-          dispatch(setselectuser(selectedUser));
-          navigate("/estimation");
-        }
-      }
-    }
+    const estimationUser = estimationHFS[estimationId];
+    if (!estimationUser) return;
+  
+    const selectedUser = users.find((user) => user._id === estimationUser.userId);
+    if (!selectedUser) return;
+  
+    dispatch(setselectuser(selectedUser));
+    navigate("/estimation");
   };
+  
 
   const totalPersonalNotifications = Object.keys(personal).length + Object.keys(estimationHFS).length;
   const shouldHideBackButton = location.pathname === "/";
@@ -147,7 +146,7 @@ function Navigation() {
 
                   {Object.keys(estimationHFS).map((estimationId) => (
                     <Dropdown.Item key={estimationId} onClick={() => handleHFSNotificationClick(estimationId)}>
-                      ประเมินอาการ {estimationHFS[estimationId]?.user?.name || "Unknown User"}
+                      ประเมินอาการ {estimationHFS[estimationId]?.userName || "Unknown User"}
                     </Dropdown.Item>
                   ))}
                 </>
