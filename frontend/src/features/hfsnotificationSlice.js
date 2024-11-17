@@ -8,7 +8,7 @@ export const hfsnotificationSlice = createSlice({
   initialState,
   reducers: {
     setHfsNotifications(state, action) {
-      return [...action.payload]; 
+      return [...action.payload];  // กำหนดค่า state ใหม่โดยใช้ข้อมูลจาก action.payload
     },
     clearNotifications: () => {
       return [];

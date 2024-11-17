@@ -8,17 +8,18 @@ import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import ReactPaginate from "react-paginate";
 
 function Estimation() {
+  const dispatch = useDispatch();
   const admin = useSelector((state) => state.admin);
   const { API_BASE_URL } = useContext(AppContext);
   const estimationHFS = useSelector((state) => state.estimationHFS);
   const selectuser = useSelector((state) => state.selectuser);
-  const dispatch = useDispatch();
   const [estimations, setEstimations] = useState([]);
   const [totalEstimations, setTotalEstimations] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "" });
   const [hfsLevels, setHfsLevels] = useState({});
+
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 1;
 
@@ -26,7 +27,7 @@ function Estimation() {
     try {
       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
-        page,
+        page, // ส่งหน้า page ปัจจุบัน
         limit: itemsPerPage,
       });
       setEstimations(response.data.data);
@@ -41,19 +42,20 @@ function Estimation() {
 
     const intervalId = setInterval(() => {
       fetchEstimations(currentPage);
-    }, 10000);
+    }, 10000); // ดึงข้อมูลใหม่ทุกๆ 10 วินาที
 
-    return () => clearInterval(intervalId);
-  }, [currentPage, selectuser._id, API_BASE_URL]);
+    return () => clearInterval(intervalId); // ลบ interval เมื่อ component ถูกทำลาย
+  }, [currentPage, selectuser._id]);
 
   useEffect(() => {
     dispatch(loadEstimationHFSData());
-  }, [dispatch]);
+  }, []);
 
+  // ฟังก์ชันเปลี่ยนระดับ HFS
   const handleHfsLevelChange = (estimationId, level) => {
     setHfsLevels((prevLevels) => ({
-      ...prevLevels,
-      [estimationId]: level,
+      ...prevLevels, // คงค่าเดิมไว้
+      [estimationId]: level, // เปลี่ยนระดับสำหรับ estimationId ที่กำหนด
     }));
   };
 
@@ -68,7 +70,7 @@ function Estimation() {
           adminName: admin.name,
           hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
         });
-  
+
         setNotification({ show: true, message: response.data.message });
         await fetchEstimations(currentPage);
         dispatch(loadEstimationHFSData());
@@ -76,7 +78,7 @@ function Estimation() {
         console.error("Error submitting evaluation:", error);
       }
     }
-  };  
+  };
 
   const handleShowModal = (image) => {
     setSelectedImage(image);
@@ -92,89 +94,33 @@ function Estimation() {
     setNotification({ show: false, message: "" });
   };
 
-  const renderPhotos = (photos) => {
-    const leftPhotos = [photos[0], photos[1], photos[4], photos[5]];
-    const rightPhotos = [photos[2], photos[3], photos[6], photos[7]];
-
-    const createGrid = (photosArray) => (
-      <Row className="g-0">
-        {photosArray.map((photo, i) => (
-          <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
-            <img
-              src={`data:image/jpeg;base64,${photo}`}
-              alt={`รูปภาพ ${i}`}
-              className="img-fluid"
-              style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
-              onClick={() => handleShowModal(photo)}
-            />
-          </Col>
-        ))}
-      </Row>
-    );
-
-    return (
-      <Row>
-        <Col>
-          <h5 className="fw-bold text-center">รูปฝั่งซ้าย</h5>
-          {createGrid(leftPhotos)}
-        </Col>
-        <Col>
-          <h5 className="fw-bold text-center">รูปฝั่งขวา</h5>
-          {createGrid(rightPhotos)}
-        </Col>
-      </Row>
-    );
-  };
-
   const checkEstimationStatus = (estimationId, hfsLevel) => {
     const evaluations = estimationHFS[estimationId]?.evaluations || {};
     const ApatnipaLevel = evaluations.Apatnipa?.hfsLevel;
     const ChureepornLevel = evaluations.Chureeporn?.hfsLevel;
-  
+
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
-      return { disabled: false, message: "ยืนยัน" };
+      return { disabled: false, message: "ยืนยัน" }; // ถ้ายังไม่ได้ประเมินเลย
     }
-  
+
     if (Object.keys(evaluations).length === 0) {
-      return { disabled: true, message: "ประเมินแล้ว" };
+      return { disabled: true, message: "ประเมินแล้ว" }; // ประเมินแล้วโดย admin ทั้งคู่
     }
-  
+
     if (ApatnipaLevel !== undefined && admin.name === "Apatnipa") {
       return { disabled: true, message: "รอการประเมินจาก Chureeporn" };
     }
-  
+
     if (ChureepornLevel !== undefined && admin.name === "Chureeporn") {
       return { disabled: true, message: "รอการประเมินจาก Apatnipa" };
     }
-  
+
     return { disabled: false, message: "ยืนยัน" };
   };
-  
-  const renderHfsLevel = (est) => {
-    const adminEvaluatedLevel = estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel;
-    const userEvaluation = adminEvaluatedLevel !== undefined ? `คุณประเมินว่า: ${adminEvaluatedLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${adminEvaluatedLevel}`}` : null;
 
-    if (est.hfsLevel !== 0) return <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>;
-    if (userEvaluation) return <span>{userEvaluation}</span>;
-
-    return (
-      <Dropdown>
-        <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
-          ระดับที่ {hfsLevels[est._id] ?? ""}
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
-            <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>
-              {level}
-            </Dropdown.Item>
-          ))}
-        </Dropdown.Menu>
-      </Dropdown>
-    );
-  };
-
-  const handlePageChange = ({ selected }) => {
-    setCurrentPage(selected);
+  // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
+  const handlePageChange = (selectedItem) => {
+    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state
   };
 
   return (
@@ -198,22 +144,88 @@ function Estimation() {
               {estimations.length > 0 ? (
                 estimations.map((est) => {
                   const { disabled, message } = checkEstimationStatus(est._id, est.hfsLevel);
+
                   return (
                     <tr key={est._id} className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
+
                       <td className="text-center">{est.date}</td>
+
                       <td className="text-center">{est.time}</td>
-                      <td className="text-center">{renderPhotos(est.photos)}</td>
+
+                      <td className="text-center">
+                        {/* Render Photos */}
+                        <Row>
+                          <Col>
+                            <h5 className="fw-bold text-center">รูปฝั่งซ้าย</h5>
+                            <Row className="g-0">
+                              {[est.photos[0], est.photos[1], est.photos[4], est.photos[5]].map((photo, i) => (
+                                <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
+                                  <img
+                                    src={`data:image/jpeg;base64,${photo}`}
+                                    alt={`รูปภาพ ${i}`}
+                                    className="img-fluid"
+                                    style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
+                                    onClick={() => handleShowModal(photo)}
+                                  />
+                                </Col>
+                              ))}
+                            </Row>
+                          </Col>
+                          <Col>
+                            <h5 className="fw-bold text-center">รูปฝั่งขวา</h5>
+                            <Row className="g-0">
+                              {[est.photos[2], est.photos[3], est.photos[6], est.photos[7]].map((photo, i) => (
+                                <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
+                                  <img
+                                    src={`data:image/jpeg;base64,${photo}`}
+                                    alt={`รูปภาพ ${i}`}
+                                    className="img-fluid"
+                                    style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
+                                    onClick={() => handleShowModal(photo)}
+                                  />
+                                </Col>
+                              ))}
+                            </Row>
+                          </Col>
+                        </Row>
+                      </td>
+
                       <td className="text-center">{est.painLevel}</td>
-                      <td className="text-center">{renderHfsLevel(est)}</td>
+
+                      <td className="text-center">
+                        {/* ตรวจสอบว่าเจ้าหน้าที่ได้ประเมินแล้วหรือยัง */}
+                        {estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel !== undefined ? (
+                          <span>
+                            คุณประเมินว่า:{" "}
+                            {estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel === 5
+                              ? "ไม่พบอาการ"
+                              : `ระดับที่ ${estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel}`}
+                          </span>
+                        ) : (
+                          /* ถ้าประเมินแล้วจากระบบ */
+                          est.hfsLevel !== 0 ? (
+                            <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
+                          ) : (
+                            /* ถ้ายังไม่ประเมินแสดง Dropdown */
+                            <Dropdown>
+                              <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
+                                ระดับที่ {hfsLevels[est._id] ?? ""}
+                              </Dropdown.Toggle>
+                              <Dropdown.Menu>
+                                {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
+                                  <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>
+                                    {level}
+                                  </Dropdown.Item>
+                                ))}
+                              </Dropdown.Menu>
+                            </Dropdown>
+                          )
+                        )}
+                      </td>
+
                       <td className="text-center">
                         <div className="d-flex justify-content-center">
-                          <Button
-                            variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
-                            onClick={() => handleSubmit(est._id)}
-                            disabled={disabled}
-                          >
-                            {disabled ? message : "ยืนยัน"}
-                          </Button>
+                          <Button variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"} onClick={() => handleSubmit(est._id)} disabled={disabled}>{disabled ? message : "ยืนยัน"}</Button>
                         </div>
                       </td>
                     </tr>
@@ -221,9 +233,7 @@ function Estimation() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center">
-                    ไม่มีข้อมูล
-                  </td>
+                  <td colSpan="6" className="text-center">ไม่มีข้อมูล</td>
                 </tr>
               )}
             </tbody>

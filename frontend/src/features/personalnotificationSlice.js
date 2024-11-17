@@ -8,7 +8,7 @@ export const personalnotificationSlice = createSlice({
   initialState,
   reducers: {
     setPersonalData(state, action) {
-      return { ...state, ...action.payload }; 
+      return { ...state, ...action.payload }; // รวม state เดิมกับข้อมูลใหม่ใน action.payload
     },
     clearPersonalData: () => {
       return {}; 

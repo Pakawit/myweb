@@ -1,40 +1,43 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-import { AppContext } from "../context/appContext";
-import axios from "axios";
+//import { AppContext } from "../context/appContext";
+//import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { loadMedicationsData } from "../features/medicationSlice";
 import ReactPaginate from "react-paginate";
 
 function Medication() {
-  const { API_BASE_URL } = useContext(AppContext);
+  const dispatch = useDispatch();
+  //const { API_BASE_URL } = useContext(AppContext);
   const medications = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
-  const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
 
-  const fetchDataOnLoad = async () => {
-    try {
-      await axios.get(`${API_BASE_URL}/getmedication`);
-    } catch (error) {
-      console.error("Failed to fetch medications on load:", error);
-    }
-  };
-
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      dispatch(loadMedicationsData());
-    }, 5000);
 
-    window.addEventListener("beforeunload", fetchDataOnLoad);
+    dispatch(loadMedicationsData());
 
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener("beforeunload", fetchDataOnLoad);
-    };
-  }, [dispatch, API_BASE_URL]);
+    // const fetchDataOnLoad = async () => {
+    //   try {
+    //     await axios.get(`${API_BASE_URL}/getmedication`);
+    //   } catch (error) {
+    //     console.error("Failed to fetch medications on load:", error);
+    //   }
+    // };
+    
+    // const intervalId = setInterval(() => {
+    //   dispatch(loadMedicationsData());
+    // }, 5000);
+
+    // window.addEventListener("beforeunload", fetchDataOnLoad);
+
+    // return () => {
+    //   clearInterval(intervalId);
+    //   window.removeEventListener("beforeunload", fetchDataOnLoad);
+    // };
+  }, []);
 
   const getStatusButton = (status) => {
     const statusInfo = {
@@ -51,35 +54,35 @@ function Medication() {
   };
 
   const convertDateTime = (date, time) => {
-    const [day, month, year] = date.split("/");
-    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-    const formattedTime = time.padStart(5, "0");
-    return new Date(`${formattedDate}T${formattedTime}`);
+    const [day, month, year] = date.split("/"); // แยกวันที่เป็นวัน เดือน ปี
+    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`; // ฟอร์แมตวันที่เป็น YYYY-MM-DD
+    const formattedTime = time.padStart(5, "0"); // ฟอร์แมตเวลาเป็น HH:MM
+    return new Date(`${formattedDate}T${formattedTime}`); // สร้าง Date object ด้วยวันที่และเวลา
   };
 
   const formatTimeRange = (time) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    const startDate = new Date();
+    const [hours, minutes] = time.split(":").map(Number); // แยกชั่วโมงและนาทีจากเวลา
+    const startDate = new Date(); // สร้าง Date object สำหรับเวลาเริ่มต้น
     startDate.setHours(hours, minutes);
 
     const endDate = new Date(startDate);
     endDate.setHours(startDate.getHours() + 6);
 
-    const formatTime = (date) => date.toTimeString().slice(0, 5);
-    return `${formatTime(startDate)}-${formatTime(endDate)}`;
+    const formatTime = (date) => date.toTimeString().slice(0, 5); // ดึงเวลา HH:MM จาก Date object
+    return `${formatTime(startDate)}-${formatTime(endDate)}`; // คืนค่าช่วงเวลาในรูปแบบ HH:MM-HH:MM
   };
 
-  const sortedMedications = medications
-    .filter((med) => med.from === selectuser._id)
-    .sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time));
-
+  const sortedMedications = [...medications].filter((med) => med.from === selectuser._id).sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)); // เรียงลำดับข้อมูลตามวันที่และเวลาล่าสุด
+ 
+  // แบ่งการกินยาตามหน้าปัจจุบัน
   const paginatedMedications = sortedMedications.slice(
-    currentPage * itemsPerPage,
-    (currentPage + 1) * itemsPerPage
+    currentPage * itemsPerPage, //0*10
+    (currentPage + 1) * itemsPerPage //1*10
   );
-
+ 
+   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedPage) => {
-    setCurrentPage(selectedPage.selected);
+    setCurrentPage(selectedPage.selected); // อัปเดตหน้าปัจจุบันใน state
   };
 
   return (

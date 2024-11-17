@@ -25,21 +25,21 @@ const rootReducer = combineReducers({
 });
 
 const persistConfig = {
-  key: "root",
-  storage,
+  key: "root", // กำหนด key หลักสำหรับการ persist
+  storage, // ใช้ local storage เป็นที่จัดเก็บข้อมูล
   blacklist: ["message"], // ระบุ slice ที่ไม่ต้องการเก็บใน local storage
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer(persistConfig, rootReducer); // สร้าง persisted reducer จาก rootReducer และ persistConfig
 
 // ตั้งค่า store
 const store = configureStore({
-  reducer: persistedReducer,
+  reducer: persistedReducer, // ใช้ persisted reducer
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false, 
+      serializableCheck: false,  // ปิดการตรวจสอบ serializable เพื่อหลีกเลี่ยง error จาก redux-persist
     }),
-  devTools: process.env.NODE_ENV !== "production", 
+  devTools: process.env.NODE_ENV !== "production",   // เปิด DevTools ในโหมด development เท่านั้น
 });
 
 export default store;

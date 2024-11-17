@@ -8,7 +8,7 @@ export const estimationHFSSlice = createSlice({
   initialState,
   reducers: {
     setEstimationHFS(state, action) {
-      return {...action.payload}; 
+      return {...action.payload}; // อัปเดต state ด้วยค่าที่ได้รับจาก action.payload
     },
     clearEstimationHFS: () => {
       return {};

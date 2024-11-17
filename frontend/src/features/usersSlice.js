@@ -8,7 +8,7 @@ export const usersSlice = createSlice({
   initialState,
   reducers: {
     setUsers(state, action) {
-      return [...action.payload]; 
+      return [...action.payload];  // อัปเดต state ด้วยข้อมูลใหม่ที่อยู่ใน action.payload
     },
     deleteUsers: () => {
       return []; 

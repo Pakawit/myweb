@@ -21,9 +21,11 @@ const Log = () => {
       }
     };
     fetchLogs();
-  }, [API_BASE_URL]);
+  }, []);
 
-  const handlePageChange = ({ selected }) => setCurrentPage(selected);
+  const handlePageChange = (selectedItem) => {
+    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state
+  };
 
   const paginatedLogs = logs.slice(
     currentPage * itemsPerPage,

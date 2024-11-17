@@ -8,7 +8,7 @@ export const medicationSlice = createSlice({
   initialState,
   reducers: {
     setMedications(state, action) {
-      return [...action.payload]; 
+      return [...action.payload];  // อัปเดต state ด้วยข้อมูลที่ส่งมาจาก action.payload
     },
     deleteMedication: () => {
       return []; 

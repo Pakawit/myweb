@@ -7,10 +7,10 @@ export const messageSlice = createSlice({
   initialState,
   reducers: {
     setMessages: (state, action) => {
-      return action.payload; 
+      return action.payload; // อัปเดต state ด้วยข้อมูลจาก action.payload
     },
     addMessage: (state, action) => {
-      state.push(action.payload);
+      state.push(action.payload); // เพิ่มข้อความใหม่ลงใน array ของ state
     },
     deleteMessage: () => {
       return [];
