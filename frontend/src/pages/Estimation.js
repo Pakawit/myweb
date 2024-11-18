@@ -120,7 +120,7 @@ function Estimation() {
 
   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state
+    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
   };
 
   return (

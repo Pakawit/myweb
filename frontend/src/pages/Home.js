@@ -82,14 +82,14 @@ function Home() {
   const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // เรียงผู้ป่วยตามวันที่สร้าง (ใหม่ไปเก่า)ใหม่กว่าค่าบวก
 
   // แบ่งผู้ป่วยตามหน้าปัจจุบัน
-  const paginatedUsers = sortedUsers.slice(
+  const paginatedUsers = sortedUsers.slice( //ใช้สำหรับการคัดลอกบางส่วนของอาร์เรย์ (เรื่มต้น.สุดท้าย)
     currentPage * itemsPerPage, //0*10
     (currentPage + 1) * itemsPerPage //1*10
   );
 
   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state
+    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
   };
 
   return (

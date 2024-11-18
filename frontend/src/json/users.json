@@ -37,7 +37,7 @@
     "_id": "66c705cfdf4e2286dbe282bf",
     "name": "ชัชวาล จริงใจ",
     "phone": "0800000011",
-    "other_numbers": "0246213248",
+    "other_numbers": "0246213249",
     "age": 70,
     "diagnosis": "",
     "hospital_number": "",
@@ -47,7 +47,7 @@
     "taking_capecitabine": "",
     "FirstLogin": true,
     "createdAt": "2024-08-22T09:33:03.656Z",
-    "updatedAt": "2024-11-18T05:05:56.866Z",
+    "updatedAt": "2024-11-18T13:20:06.443Z",
     "__v": 0
   }
 ]

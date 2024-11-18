@@ -10,13 +10,13 @@ import { loadPersonalnotificationData } from "../features/personalnotificationSl
 import { loadUsersData } from "../features/usersSlice";
 
 function Personal() {
+  const dispatch = useDispatch();
   const { API_BASE_URL } = useContext(AppContext);
   const admin = useSelector((state) => state.admin);
   const selectuser = useSelector((state) => state.selectuser);
   const users = useSelector((state) => state.users);
   const personal = useSelector((state) => state.personalnotification);
   const medication = useSelector((state) => state.medication);
-  const dispatch = useDispatch();
 
   const [userData, setUserData] = useState(selectuser); // ใช้ useState จัดการข้อมูล
   const [editMode, setEditMode] = useState(false);
@@ -78,6 +78,8 @@ function Personal() {
       });
       setEditMode(false);
       showNotification("แก้ไขข้อมูลแล้ว (รอการยืนยันจาก Chureeporn)");
+      dispatch(loadPersonalnotificationData());
+      setUserData(selectuser);
     } catch (error) {
       console.error("Error saving changes:", error);
     }

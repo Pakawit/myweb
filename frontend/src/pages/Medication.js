@@ -78,7 +78,7 @@ function Medication() {
 
   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedPage) => {
-    setCurrentPage(selectedPage.selected); // อัปเดตหน้าปัจจุบันใน state
+    setCurrentPage(selectedPage.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
   };
 
   return (
