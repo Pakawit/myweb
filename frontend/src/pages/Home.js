@@ -79,33 +79,6 @@ function Home() {
     return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };  // คืนค่าปุ่มตามสถานะ
   };
 
-  // ฟังก์ชันสร้างแถวของข้อมูลผู้ใช้
-  const renderUserRow = (user) => {
-
-    const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status; // หาสถานะสุดท้ายของการกินยา
-    const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length; // นับจำนวนครั้งที่ขาดยา
-    const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id) ? "outline-warning" : "outline-success"; //กำหนดสถานะการแจ้งเตือน HFS
-    const { variant, text } = getStatusButton(lastStatus);
-
-    return (
-      <tr key={user._id}>
-        <td className="text-center">{user.name}</td>
-        <td className="text-center">{user.phone}</td>
-        <td className="text-center">{user.age}</td>
-        <td className="text-center">{missedCount}</td>
-        <td className="text-center">
-          <Button variant={variant} disabled>{text}</Button>
-        </td>
-        <td className="text-center">
-          <Button variant="outline-success" onClick={() => handleNavigation(user, "/personal")}>ข้อมูลส่วนบุคคล</Button>
-          <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/medication")}>รายละเอียดการกินยา</Button>
-          <Button variant={hfsVariant} onClick={() => handleNavigation(user, "/estimation")}>การประเมินอาการ HFS</Button>
-          <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/chat")}>แชท</Button>
-        </td>
-      </tr>
-    );
-  };
-
   const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // เรียงผู้ป่วยตามวันที่สร้าง (ใหม่ไปเก่า)ใหม่กว่าค่าบวก
 
   // แบ่งผู้ป่วยตามหน้าปัจจุบัน
@@ -135,7 +108,35 @@ function Home() {
                 <th />
               </tr>
             </thead>
-            <tbody>{paginatedUsers.map(renderUserRow)}</tbody>
+            <tbody>
+              {paginatedUsers.map((user) => {
+                // สร้างแถวของข้อมูลผู่ป่วย
+                const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;  // หาสถานะสุดท้ายของการกินยา
+                const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;  // นับจำนวนครั้งที่ขาดยา
+                const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id) // กำหนดสถานะการแจ้งเตือน HFS .some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
+                  ? "outline-warning"
+                  : "outline-success";
+                const { variant, text } = getStatusButton(lastStatus);
+
+                return (
+                  <tr key={user._id}>
+                    <td className="text-center">{user.name}</td>
+                    <td className="text-center">{user.phone}</td>
+                    <td className="text-center">{user.age}</td>
+                    <td className="text-center">{missedCount}</td>
+                    <td className="text-center">
+                      <Button variant={variant} disabled>{text}</Button>
+                    </td>
+                    <td className="text-center">
+                      <Button variant="outline-success" onClick={() => handleNavigation(user, "/personal")}>ข้อมูลส่วนบุคคล</Button>
+                      <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/medication")}>รายละเอียดการกินยา</Button>
+                      <Button variant={hfsVariant} onClick={() => handleNavigation(user, "/estimation")}>การประเมินอาการ HFS</Button>
+                      <Button variant={`outline-${variant}`} onClick={() => handleNavigation(user, "/chat")}>แชท</Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </Table>
           {/* แสดงการแบ่งหน้าเฉพาะเมื่อผู้ใช้มีมากกว่า 10 คน*/}
           {users.length > itemsPerPage && (

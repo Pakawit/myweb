@@ -5,7 +5,7 @@ export const selectuserSlice = createSlice({
   initialState: {},
   reducers: {
     setselectuser: (state, action) => {
-      return action.payload;
+      return { ...state, ...action.payload }
     },
     deleteselectuser: () => {
       return {};

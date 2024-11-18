@@ -1,14 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const initialState = [];
-
-export const fetchChatNotifications = createAsyncThunk( //createAsyncThunk เพื่อสร้าง action
-  "chatnotification/fetch", // ชื่อ action type
-  async (_, { rejectWithValue }) => { // _ ไม่มีพารามิเตอร์ในคำขอ rejectWithValue ใช้สำหรับส่งข้อความเมื่อเกิดข้อผิดพลาด
+export const fetchChatNotifications = createAsyncThunk(
+  "chatnotification/fetch",
+  async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get("http://localhost:4452/getchatnotification");
-      return response.data;
+      return response.data; // data จะเป็น object
     } catch (error) {
       return rejectWithValue("ไม่สามารถดึงข้อมูลการแจ้งเตือนได้");
     }
@@ -17,10 +15,10 @@ export const fetchChatNotifications = createAsyncThunk( //createAsyncThunk เ�
 
 export const removeChatNotification = createAsyncThunk(
   "chatnotification/remove",
-  async (from, { rejectWithValue }) => { //from ผู้ป่วยที่ต้องการลบการแจ้งเตือน
+  async (from, { rejectWithValue }) => {
     try {
       await axios.post("http://localhost:4452/removechatnotification", { from });
-      return from; 
+      return from; // ส่งคืน key ที่ถูกลบ
     } catch (error) {
       return rejectWithValue("ไม่สามารถลบการแจ้งเตือนได้");
     }
@@ -29,13 +27,18 @@ export const removeChatNotification = createAsyncThunk(
 
 const chatnotificationSlice = createSlice({
   name: "chatnotification",
-  initialState,
+  initialState: {}, // เปลี่ยน state เริ่มต้นเป็น object
   reducers: {},
-  extraReducers: (builder) => { //ใช้จัดการ action ที่สร้างจาก createAsyncThunk
+  extraReducers: (builder) => {
     builder
-      .addCase(fetchChatNotifications.fulfilled, (state, action) => action.payload) //มื่อคำขอสำเร็จ (fulfilled): อัปเดต state ด้วยข้อมูลจาก action.payload
-      .addCase(removeChatNotification.fulfilled, (state, action) => state.filter((notification) => notification.from !== action.payload)); //เมื่อคำขอลบสำเร็จ (fulfilled): กรอง state โดยลบรายการที่มี from ตรงกับ action.payload
+      .addCase(fetchChatNotifications.fulfilled, (state, action) => {
+        return action.payload; // ใช้ข้อมูล object ทั้งหมดจาก payload
+      })
+      .addCase(removeChatNotification.fulfilled, (state, action) => {
+        delete state[action.payload]; // ลบ key ที่ตรงกับ action.payload
+      });
   },
 });
 
 export default chatnotificationSlice.reducer;
+

@@ -399,18 +399,17 @@ app.get("/getchatnotification", async (req, res) => {
 
 const updateChatNotification = async (from) => {
   try {
-    const userExists = await User.findById(from); // ตรวจสอบว่าผู้ใช้มีอยู่ในฐานข้อมูลหรือไม่
+    const userExists = await User.findById(from);
     if (!userExists) {
       console.log("User not found, notification not created");
       return;
     }
 
     let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
-    const existingNotification = notifications.find((n) => n.from === from); // ตรวจสอบว่ามีการแจ้งเตือนของผู้ใช้นี้แล้วหรือไม่
 
-    if (!existingNotification) {
-      // หากไม่มี ให้เพิ่มการแจ้งเตือนใหม่
-      notifications.push({ from, createdAt: new Date().toISOString() }); // ใส่ข้อมูลผู้ใช้และวันที่
+    if (!notifications[from]) {
+      // เพิ่ม key ใหม่สำหรับผู้ใช้
+      notifications[from] = { from, createdAt: new Date().toISOString() };
       await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
       console.log("Notification added successfully");
     } else {
@@ -425,8 +424,10 @@ app.post("/removechatnotification", async (req, res) => {
   const { from } = req.body;
   try {
     let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
-    notifications = notifications.filter((n) => n.from !== from); // ลบการแจ้งเตือนที่ตรงกับ ID ของผู้ใช้
-    await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
+    if (notifications[from]) {
+      delete notifications[from]; // ลบ key ที่ตรงกับ `from`
+      await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
+    }
     res.status(200).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

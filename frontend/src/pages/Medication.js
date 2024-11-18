@@ -26,7 +26,7 @@ function Medication() {
     //     console.error("Failed to fetch medications on load:", error);
     //   }
     // };
-    
+
     // const intervalId = setInterval(() => {
     //   dispatch(loadMedicationsData());
     // }, 5000);
@@ -39,18 +39,14 @@ function Medication() {
     // };
   }, []);
 
+  // ฟังก์ชันสำหรับแสดงปุ่มสถานะการกินยา
   const getStatusButton = (status) => {
     const statusInfo = {
       0: { variant: "danger", text: "ไม่ได้กิน" },
       1: { variant: "warning", text: "รอกิน" },
       2: { variant: "success", text: "กินแล้ว" },
     };
-    const { variant, text } = statusInfo[status] || {};
-    return (
-      variant && (
-        <Button variant={variant} disabled>{text}</Button>
-      )
-    );
+    return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };  // คืนค่าปุ่มตามสถานะ
   };
 
   const convertDateTime = (date, time) => {
@@ -73,14 +69,14 @@ function Medication() {
   };
 
   const sortedMedications = [...medications].filter((med) => med.from === selectuser._id).sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)); // เรียงลำดับข้อมูลตามวันที่และเวลาล่าสุด
- 
+
   // แบ่งการกินยาตามหน้าปัจจุบัน
   const paginatedMedications = sortedMedications.slice(
     currentPage * itemsPerPage, //0*10
     (currentPage + 1) * itemsPerPage //1*10
   );
- 
-   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
+
+  // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedPage) => {
     setCurrentPage(selectedPage.selected); // อัปเดตหน้าปัจจุบันใน state
   };
@@ -103,15 +99,18 @@ function Medication() {
             </thead>
             <tbody>
               {paginatedMedications.length ? (
-                paginatedMedications.map((med, index) => (
-                  <tr key={index}>
-                    <td className="text-center">{med.date}</td>
-                    <td className="text-center">{formatTimeRange(med.time)}</td>
-                    <td className="text-center">
-                      {getStatusButton(med.status)}
-                    </td>
-                  </tr>
-                ))
+                paginatedMedications.map((med, index) => {
+                  const { variant, text } = getStatusButton(med.status); // ดึง variant และ text
+                  return (
+                    <tr key={index}>
+                      <td className="text-center">{med.date}</td>
+                      <td className="text-center">{formatTimeRange(med.time)}</td>
+                      <td className="text-center">
+                        <Button variant={variant} disabled>{text}</Button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={3} className="text-center">
@@ -121,7 +120,6 @@ function Medication() {
               )}
             </tbody>
           </Table>
-
           {sortedMedications.length > itemsPerPage && (
             <ReactPaginate
               previousLabel={"<"}

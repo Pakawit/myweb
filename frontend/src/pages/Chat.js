@@ -40,7 +40,6 @@ function Chat() {
   const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" }); // ฟังก์ชันสำหรับเลื่อนข้อความไปยังข้อความล่าสุด
 
   useEffect(() => {
-    
     const fetchMessages = async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/getmessage`, {
@@ -66,7 +65,7 @@ function Chat() {
   useEffect(() => {
     if (messages.length > previousMessagesLength.current) { // ตรวจสอบว่ามีข้อความใหม่หรือไม่
       scrollToBottom();
-      const notification = chatnotification.find((n) => n.from === selectuser._id);  // ตรวจสอบการแจ้งเตือนสำหรับผู้ป่วยที่เลือก
+      const notification = Object.keys(chatnotification).find((key) => chatnotification[key].from === selectuser._id);  // ตรวจสอบการแจ้งเตือนสำหรับผู้ป่วยที่เลือก
       if (notification) dispatch(removeChatNotification(selectuser._id));
     }
     previousMessagesLength.current = messages.length; // อัปเดตความยาวข้อความก่อนหน้า
@@ -76,7 +75,7 @@ function Chat() {
     const file = e.target.files[0]; // รับไฟล์จาก input
     const validTypes = ["image/jpeg", "image/png"];
 
-    if (!validTypes.includes(file?.type)) { // .includes จะตรวจสอบว่า array มีค่าที่ต้องการหรือไม่ ผลลัพธ์ true หรือ false
+    if (!validTypes.includes(file?.type)) { // .includes มีค่าที่ต้องการหรือไม่ ผลลัพธ์ true หรือ false
       alert("Only JPG and PNG files are allowed");
       fileInputRef.current.value = "";
       return;
@@ -118,7 +117,7 @@ function Chat() {
       dispatch(addMessage(res.data));
     } catch (error) {
       console.error(error);
-    } finally {
+    } finally { //ทำงานเสมอ ไม่ว่าจะเกิดข้อผิดพลาดหรือไม่
       setShowStickersModal(false);
       scrollToBottom();
     }

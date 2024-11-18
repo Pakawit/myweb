@@ -151,17 +151,22 @@ function Navigation() {
           <Dropdown className="me-2">
             <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
               <i className="bi bi-bell"></i>
-              {chatnotification.length > 0 && (<Badge pill bg="danger" style={{ marginLeft: "5px" }}>{chatnotification.length}</Badge>)}
+              {Object.keys(chatnotification).length > 0 && (
+                <Badge pill bg="danger" style={{ marginLeft: "5px" }}>
+                  {Object.keys(chatnotification).length}
+                </Badge>
+              )}
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {chatnotification.length === 0 ? (
+              {Object.keys(chatnotification).length === 0 ? (
                 <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
               ) : (
-                chatnotification.map((notification) => {
-                  const user = users.find((user) => user._id === notification.from);
+                Object.keys(chatnotification).map((key) => {
+                  const notification = chatnotification[key]; // ดึงการแจ้งเตือนจาก key
+                  const user = users.find((user) => user._id === notification.from); // ค้นหาผู้ใช้จาก `from`
                   return (
                     <Dropdown.Item
-                      key={notification.from}
+                      key={key}
                       onClick={() => {
                         if (user) {
                           dispatch(setselectuser(user));
@@ -170,7 +175,7 @@ function Navigation() {
                         }
                       }}
                     >
-                      แชทจาก {user ? user.name : "Unknown User"} {/* แสดงชื่อผู้ใช้ หรือ Unknown User */}
+                      แชทจาก {user ? user.name : "Unknown User"}
                     </Dropdown.Item>
                   );
                 })

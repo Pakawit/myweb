@@ -61,16 +61,16 @@ function Personal() {
       eveningTime: /.+/, // เวลาช่วงเย็น: ต้องมีค่า
     };
 
-    const isValid = rules[name]?.test(value) ?? true; // ตรวจสอบความถูกต้องตามกฎ
+    const isValid = rules[name].test(value); // ตรวจสอบความถูกต้องตามกฎ คืนค่า true หรือ false
     setErrors((prev) => ({ ...prev, [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง` })); // อัปเดตข้อผิดพลาด
     setUserData((prev) => ({ ...prev, [name]: value })); // อัปเดตข้อมูลฟอร์ม
   };
 
   const handleSubmit = async () => {
-    
-    if (JSON.stringify(userData) === JSON.stringify(selectuser)) {showNotification("ไม่มีการเปลี่ยนแปลงข้อมูล"); return;}
 
-    if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง");
+    if (JSON.stringify(userData) === JSON.stringify(selectuser)) { showNotification("ไม่มีการเปลี่ยนแปลงข้อมูล"); return; } //JSON.stringify แปลง object ให้กลายเป็นข้อความในรูปแบบ JSON
+
+    if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง"); //.some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
 
     try {
       await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
@@ -107,9 +107,8 @@ function Personal() {
 
   const showNotification = (message) => setNotification({ message, show: true });
 
-  const renderAdminButtons = () => {
-    if (admin.name === "Apatnipa") {
-      const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id);
+  const renderAdminButtons = () => { 
+      const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id); //.some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
 
       if (isPendingApproval) {
         return (
@@ -133,12 +132,9 @@ function Personal() {
           </Col>
         </Row>
       );
-    }
-    return null;
   };
 
   const renderAdmin2Table = () => {
-    if (admin.name === "Chureeporn") {
       const selectedUser = personal[selectuser._id];
       return (
         selectedUser && (
@@ -181,7 +177,6 @@ function Personal() {
           </Table>
         )
       );
-    }
   };
 
   return (
@@ -189,35 +184,174 @@ function Personal() {
       <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
       <Form onSubmit={(e) => e.preventDefault()}>
-        {[
-          { label: "ชื่อ-สกุล", name: "name", type: "text" },
-          { label: "เบอร์โทรศัพท์", name: "phone", type: "text" },
-          { label: "เบอร์โทรศัพท์ผู้ติดต่อ", name: "other_numbers", type: "text" },
-          { label: "อายุ", name: "age", type: "number" },
-          { label: "การวินิจฉัยโรคหลัก", name: "diagnosis", type: "textarea" },
-          { label: "การรับประทานยา Capecitabine", name: "taking_capecitabine", type: "textarea" },
-          { label: "เวลารับประทานยาช่วงเช้า", name: "morningTime", type: "time" },
-          { label: "เวลารับประทานยาช่วงเย็น", name: "eveningTime", type: "time" },
-          { label: "เลขโรงพยาบาล", name: "hospital_number", type: "text" },
-          { label: "ขาดยา", name: "ms_medicine", value: medication.filter((med) => med.from === selectuser._id && med.status === 0).length, disabled: true },
-          { label: "วันที่ลงทะเบียน", name: "createdAt", type: "text", value: new Date(selectuser.createdAt).toLocaleString("th-TH", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), disabled: true }
-        ].map(({ label, name, type, value, disabled }) => (
-          <Form.Group as={Row} className="mb-3" key={name}>
-            <Form.Label column sm="6" className="text-center">{label}</Form.Label>
-            <Col sm="6">
-              <Form.Control
-                as={type === "textarea" ? "textarea" : "input"}
-                type={type}
-                name={name}
-                value={value ?? userData[name] ?? ""}
-                onChange={handleChange}
-                disabled={disabled || admin.name === "Chureeporn" || !editMode}
-              />
-              {errors[name] && <Alert variant="danger">{errors[name]}</Alert>}
-            </Col>
-          </Form.Group>
-        ))}
+        {/* ชื่อ-สกุล */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">ชื่อ-สกุล</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="name"
+              value={userData.name || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.name && <Alert variant="danger">{errors.name}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* เบอร์โทรศัพท์ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">เบอร์โทรศัพท์</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="phone"
+              value={userData.phone || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.phone && <Alert variant="danger">{errors.phone}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* เบอร์โทรศัพท์ผู้ติดต่อ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">เบอร์โทรศัพท์ผู้ติดต่อ</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="other_numbers"
+              value={userData.other_numbers || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.other_numbers && <Alert variant="danger">{errors.other_numbers}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* อายุ */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">อายุ</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="number"
+              name="age"
+              value={userData.age || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.age && <Alert variant="danger">{errors.age}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* การวินิจฉัยโรคหลัก */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">การวินิจฉัยโรคหลัก</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              as="textarea"
+              name="diagnosis"
+              value={userData.diagnosis || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.diagnosis && <Alert variant="danger">{errors.diagnosis}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* การรับประทานยา Capecitabine */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">การรับประทานยา Capecitabine</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              as="textarea"
+              name="taking_capecitabine"
+              value={userData.taking_capecitabine || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.taking_capecitabine && <Alert variant="danger">{errors.taking_capecitabine}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* เวลารับประทานยาช่วงเช้า */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">เวลารับประทานยาช่วงเช้า</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="time"
+              name="morningTime"
+              value={userData.morningTime || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.morningTime && <Alert variant="danger">{errors.morningTime}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* เวลารับประทานยาช่วงเย็น */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">เวลารับประทานยาช่วงเย็น</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="time"
+              name="eveningTime"
+              value={userData.eveningTime || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.eveningTime && <Alert variant="danger">{errors.eveningTime}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* เลขโรงพยาบาล */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">เลขโรงพยาบาล</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="hospital_number"
+              value={userData.hospital_number || ""}
+              onChange={handleChange}
+              disabled={!editMode}
+            />
+            {errors.hospital_number && <Alert variant="danger">{errors.hospital_number}</Alert>}
+          </Col>
+        </Form.Group>
+
+        {/* ขาดยา */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">ขาดยา</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="ms_medicine"
+              value={medication.filter((med) => med.from === selectuser._id && med.status === 0).length}
+              disabled
+            />
+          </Col>
+        </Form.Group>
+
+        {/* วันที่ลงทะเบียน */}
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column sm="6" className="text-center">วันที่ลงทะเบียน</Form.Label>
+          <Col sm="6">
+            <Form.Control
+              type="text"
+              name="createdAt"
+              value={new Date(selectuser.createdAt).toLocaleString("th-TH", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              disabled
+            />
+          </Col>
+        </Form.Group>
       </Form>
+
       {admin.name === "Apatnipa" && renderAdminButtons()}
       {admin.name === "Chureeporn" && renderAdmin2Table()}
       <Modal show={notification.show} onHide={() => setNotification({ message: "", show: false })} centered>
