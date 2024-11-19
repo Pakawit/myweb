@@ -1,15 +1,15 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import Navigation from "../components/Navigation";
-//import { AppContext } from "../context/appContext";
-//import axios from "axios";
+import { AppContext } from "../context/appContext";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { loadMedicationsData } from "../features/medicationSlice";
 import ReactPaginate from "react-paginate";
 
 function Medication() {
   const dispatch = useDispatch();
-  //const { API_BASE_URL } = useContext(AppContext);
+  const { API_BASE_URL } = useContext(AppContext);
   const medications = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
   const [currentPage, setCurrentPage] = useState(0);
@@ -19,24 +19,24 @@ function Medication() {
 
     dispatch(loadMedicationsData());
 
-    // const fetchDataOnLoad = async () => {
-    //   try {
-    //     await axios.get(`${API_BASE_URL}/getmedication`);
-    //   } catch (error) {
-    //     console.error("Failed to fetch medications on load:", error);
-    //   }
-    // };
+    const fetchDataOnLoad = async () => {
+      try {
+        await axios.get(`${API_BASE_URL}/getmedication`);
+      } catch (error) {
+        console.error("Failed to fetch medications on load:", error);
+      }
+    };
 
-    // const intervalId = setInterval(() => {
-    //   dispatch(loadMedicationsData());
-    // }, 5000);
+    const intervalId = setInterval(() => {
+      dispatch(loadMedicationsData());
+    }, 5000);
 
-    // window.addEventListener("beforeunload", fetchDataOnLoad);
+    window.addEventListener("beforeunload", fetchDataOnLoad);
 
-    // return () => {
-    //   clearInterval(intervalId);
-    //   window.removeEventListener("beforeunload", fetchDataOnLoad);
-    // };
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("beforeunload", fetchDataOnLoad);
+    };
   }, []);
 
   // ฟังก์ชันสำหรับแสดงปุ่มสถานะการกินยา

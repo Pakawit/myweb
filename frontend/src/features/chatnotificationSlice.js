@@ -28,7 +28,11 @@ export const removeChatNotification = createAsyncThunk(
 const chatnotificationSlice = createSlice({
   name: "chatnotification",
   initialState: {}, // เปลี่ยน state เริ่มต้นเป็น object
-  reducers: {},
+  reducers: {
+    clearChatNotifications: (state) => {
+      return {}; // ล้างข้อมูลการแจ้งเตือน
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchChatNotifications.fulfilled, (state, action) => {
@@ -40,5 +44,6 @@ const chatnotificationSlice = createSlice({
   },
 });
 
+export const { clearChatNotifications } = chatnotificationSlice.actions;
 export default chatnotificationSlice.reducer;
 

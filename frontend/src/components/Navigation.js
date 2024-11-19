@@ -8,9 +8,9 @@ import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchChatNotifications, removeChatNotification } from '../features/chatnotificationSlice';
+import { fetchChatNotifications, removeChatNotification, clearChatNotifications } from '../features/chatnotificationSlice';
 import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
-import { loadEstimationHFSData } from "../features/estimationHFSSlice";
+import { loadEstimationHFSData, clearEstimationHFS } from "../features/estimationHFSSlice";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
 
@@ -58,6 +58,8 @@ function Navigation() {
         dispatch(deleteMedication()),
         dispatch(deleteMessage()),
         dispatch(deleteAdmin()),
+        dispatch(clearEstimationHFS()),
+        dispatch(clearChatNotifications()),
       ]);
 
       await axios.post(`${API_BASE_URL}/admin/logout`, {

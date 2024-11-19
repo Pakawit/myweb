@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import { Container, Row, Col, Table, Button, Form, InputGroup } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -9,17 +9,19 @@ import { setselectuser, deleteselectuser } from "../features/selectuserSlice";
 import { loadMedicationsData } from "../features/medicationSlice";
 import { loadHFSNotifications } from "../features/hfsnotificationSlice";
 import { deleteMessage } from "../features/messageSlice";
-//import axios from "axios";
-//import { AppContext } from "../context/appContext";
+import axios from "axios";
+import { AppContext } from "../context/appContext";
 
 function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  //const { API_BASE_URL } = useContext(AppContext);
+  const { API_BASE_URL } = useContext(AppContext);
   const users = useSelector((state) => state.users);
   const medication = useSelector((state) => state.medication);
   const hfsNotifications = useSelector((state) => state.hfsnotification);
+
   const [currentPage, setCurrentPage] = useState(0);
+  const [searchText, setSearchText] = useState("");
 
   const itemsPerPage = 10;
 
@@ -40,27 +42,27 @@ function Home() {
 
     fetchInitialData();
 
-    // const intervalId = setInterval(() => {
-    //   fetchInitialData();
-    // }, 5000); // ตั้ง interval เพื่ออัปเดตข้อมูลทุก 5 วินาที
+    const intervalId = setInterval(() => {
+      fetchInitialData();
+    }, 5000); // ตั้ง interval เพื่ออัปเดตข้อมูลทุก 5 วินาที
 
-    // const fetchDataOnPageLoad = async () => {
-    //   try {
-    //     await axios.all([
-    //       axios.get(`${API_BASE_URL}/getusers`),
-    //       axios.get(`${API_BASE_URL}/getmedication`),
-    //     ]);
-    //   } catch (error) {
-    //     console.error("Failed to fetch data on page load:", error);
-    //   }
-    // };
+    const fetchDataOnPageLoad = async () => {
+      try {
+        await axios.all([
+          axios.get(`${API_BASE_URL}/getusers`),
+          axios.get(`${API_BASE_URL}/getmedication`),
+        ]);
+      } catch (error) {
+        console.error("Failed to fetch data on page load:", error);
+      }
+    };
 
-    // window.addEventListener("beforeunload", fetchDataOnPageLoad);  // ดึงข้อมูลอีกครั้งเมื่อผู้ใช้ปิดหน้า
+    window.addEventListener("beforeunload", fetchDataOnPageLoad);  // ดึงข้อมูลอีกครั้งเมื่อผู้ใช้ปิดหน้า
 
-    // return () => {
-    //   clearInterval(intervalId); // Cleanup เมื่อคอมโพเนนต์ถูกทำลาย
-    //   window.removeEventListener("beforeunload", fetchDataOnPageLoad); // ลบ event listener
-    // };
+    return () => {
+      clearInterval(intervalId); 
+      window.removeEventListener("beforeunload", fetchDataOnPageLoad); 
+    };
   }, []);
 
   // ฟังก์ชันนำทางไปยังหน้าอื่น
@@ -76,25 +78,38 @@ function Home() {
       1: { variant: "warning", text: "รอกิน" },
       2: { variant: "success", text: "กินแล้ว" },
     };
-    return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };  // คืนค่าปุ่มตามสถานะ
+    return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };
   };
 
-  const sortedUsers = [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // เรียงผู้ป่วยตามวันที่สร้าง (ใหม่ไปเก่า)ใหม่กว่าค่าบวก
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  // เรียงผู้ป่วยตามวันที่สร้าง (ใหม่ไปเก่า)
+  const sortedUsers = [...filteredUsers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   // แบ่งผู้ป่วยตามหน้าปัจจุบัน
-  const paginatedUsers = sortedUsers.slice( //ใช้สำหรับการคัดลอกบางส่วนของอาร์เรย์ (เรื่มต้น.สุดท้าย)
-    currentPage * itemsPerPage, //0*10
-    (currentPage + 1) * itemsPerPage //1*10
+  const paginatedUsers = sortedUsers.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
   // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
+    setCurrentPage(selectedItem.selected);
   };
 
   return (
     <Container fluid>
       <Navigation />
+      <Row className="mb-3">
+        <Col xs="12" md="4" className="ms-auto">
+          <InputGroup>
+            <Form.Control type="text" placeholder="ค้นหาชื่อผู้ป่วย..." value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+            <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
+          </InputGroup>
+        </Col>
+      </Row>
       <Row>
         <Col>
           <Table responsive striped bordered hover>
@@ -110,12 +125,10 @@ function Home() {
             </thead>
             <tbody>
               {paginatedUsers.map((user) => {
-                // สร้างแถวของข้อมูลผู่ป่วย
-                const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;  // หาสถานะสุดท้ายของการกินยา
-                const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;  // นับจำนวนครั้งที่ขาดยา
-                const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id) // กำหนดสถานะการแจ้งเตือน HFS .some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
-                  ? "outline-warning"
-                  : "outline-success";
+
+                const lastStatus = medication.filter((med) => med.from === user._id).at(-1)?.status;
+                const missedCount = medication.filter((med) => med.from === user._id && med.status === 0).length;
+                const hfsVariant = hfsNotifications.some((notif) => notif.userId === user._id) ? "outline-warning" : "outline-success";
                 const { variant, text } = getStatusButton(lastStatus);
 
                 return (
@@ -125,7 +138,7 @@ function Home() {
                     <td className="text-center">{user.age}</td>
                     <td className="text-center">{missedCount}</td>
                     <td className="text-center">
-                      <Button variant={variant} disabled>{text}</Button>
+                      <Button variant={variant} disabled>{text} </Button>
                     </td>
                     <td className="text-center">
                       <Button variant="outline-success" onClick={() => handleNavigation(user, "/personal")}>ข้อมูลส่วนบุคคล</Button>
@@ -138,26 +151,25 @@ function Home() {
               })}
             </tbody>
           </Table>
-          {/* แสดงการแบ่งหน้าเฉพาะเมื่อผู้ใช้มีมากกว่า 10 คน*/}
-          {users.length > itemsPerPage && (
+          {filteredUsers.length > itemsPerPage && (
             <ReactPaginate
-              previousLabel={"<"} // ปุ่มสำหรับย้อนกลับ
-              nextLabel={">"} // ปุ่มสำหรับถัดไป
-              breakLabel={"..."} // จุดไข่ปลาแสดงหน้าห่าง
-              pageCount={Math.ceil(users.length / itemsPerPage)} // จำนวนหน้าทั้งหมด
-              marginPagesDisplayed={2} // แสดงหน้าที่อยู่ใกล้จุดเริ่ม/จุดสิ้นสุด
-              pageRangeDisplayed={5} // แสดงหน้าที่อยู่ใกล้กับหน้าปัจจุบัน
-              onPageChange={handlePageChange} // เรียกฟังก์ชันเมื่อเปลี่ยนหน้า
-              containerClassName={"pagination justify-content-end"} // ตั้งค่า class ของ pagination
-              pageClassName={"page-item"} // ตั้งค่า class สำหรับหน้าปกติ
-              pageLinkClassName={"page-link"} // ตั้งค่า class สำหรับลิงก์ในหน้า
-              previousClassName={"page-item"} // ตั้งค่า class สำหรับปุ่มย้อนกลับ
-              previousLinkClassName={"page-link"} // ตั้งค่า class สำหรับลิงก์ย้อนกลับ
-              nextClassName={"page-item"} // ตั้งค่า class สำหรับปุ่มถัดไป
-              nextLinkClassName={"page-link"} // ตั้งค่า class สำหรับลิงก์ถัดไป
-              breakClassName={"page-item"} // ตั้งค่า class สำหรับจุดไข่ปลา
-              breakLinkClassName={"page-link"} // ตั้งค่า class สำหรับลิงก์จุดไข่ปลา
-              activeClassName={"active"} // ตั้งค่า class สำหรับหน้าปัจจุบัน
+              previousLabel={"<"}
+              nextLabel={">"}
+              breakLabel={"..."}
+              pageCount={Math.ceil(filteredUsers.length / itemsPerPage)}
+              marginPagesDisplayed={2}
+              pageRangeDisplayed={5}
+              onPageChange={handlePageChange}
+              containerClassName={"pagination justify-content-end"}
+              pageClassName={"page-item"}
+              pageLinkClassName={"page-link"}
+              previousClassName={"page-item"}
+              previousLinkClassName={"page-link"}
+              nextClassName={"page-item"}
+              nextLinkClassName={"page-link"}
+              breakClassName={"page-item"}
+              breakLinkClassName={"page-link"}
+              activeClassName={"active"}
             />
           )}
         </Col>

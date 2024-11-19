@@ -4,8 +4,11 @@ import Navigation from "../components/Navigation";
 import axios from "axios";
 import { AppContext } from "../context/appContext";
 import ReactPaginate from "react-paginate";
+import { useDispatch } from "react-redux";
+import { deleteselectuser } from "../features/selectuserSlice";
 
 const Log = () => {
+  const dispatch = useDispatch();
   const [logs, setLogs] = useState([]);
   const { API_BASE_URL } = useContext(AppContext);
   const [currentPage, setCurrentPage] = useState(0);
@@ -21,6 +24,7 @@ const Log = () => {
       }
     };
     fetchLogs();
+    dispatch( deleteselectuser())
   }, []);
 
   const handlePageChange = (selectedItem) => {
