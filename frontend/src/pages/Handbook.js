@@ -1,55 +1,36 @@
-import React from "react";
+import React, { useState } from "react";
+import { Container } from "react-bootstrap";
+import ReactPaginate from "react-paginate";
 
 const Handbook = () => {
-  return (
-    <div className="container mt-5">
-      <h1 className="text-primary">
-        คู่มือการดูแลตนเองเพื่อลดระดับความรุนแรงอาการฝ่ามือฝ่าเท้าอักเสบ
-      </h1>
-      <h2 className="text-secondary">
-        สำหรับผู้ป่วยมะเร็งลำไส้ใหญ่และทวารหนักที่ได้รับยาเคปไซตาบีน
-      </h2>
-      <img src="/img/ch1.png" alt="บทที่ 1" className="img-fluid my-3" />
+  const [currentPage, setCurrentPage] = useState(0); // เก็บหน้าปัจจุบันใน state
+  const itemsPerPage = 1; // กำหนดให้แสดง 1 บทต่อหน้า
 
-      <section className="mt-4">
-        <h3 className="text-info">เรียบเรียงโดย</h3>
-        <p>พว. อพัชนิภา บุญหลี</p>
-      </section>
-
-      <section className="mt-4">
-        <h3 className="text-info">สารบัญ</h3>
-        <ul className="list-unstyled">
-          <li>
-            <a href="#chapter1" className="text-decoration-none text-primary">
-              บทที่ 1 การรักษาผู้ป่วยมะเร็งลำไส้ใหญ่และทวารหนักด้วยยาเคปไซตาบีน
-            </a>
-          </li>
-          <li>
-            <a href="#chapter2" className="text-decoration-none text-primary">
-              บทที่ 2 อาการฝ่ามือฝ่าเท้าอักเสบ
-            </a>
-          </li>
-          <li>
-            <a href="#chapter3" className="text-decoration-none text-primary">
-              บทที่ 3 การประเมินอาการฝ่ามือฝ่าเท้าอักเสบ
-            </a>
-          </li>
-          <li>
-            <a href="#chapter4" className="text-decoration-none text-primary">
-              บทที่ 4
-              การดูแลตนเองเพื่อลดระดับความรุนแรงของอาการฝ่ามือฝ่าเท้าอักเสบ
-            </a>
-          </li>
-          <li>
-            <a href="#chapter5" className="text-decoration-none text-primary">
-              บทที่ 5 การบริหารยาเคปไซตาบีน
-            </a>
-          </li>
-        </ul>
-      </section>
-
-      <section id="chapter1" className="mt-4 card">
-        <div className="card-body">
+  // บทต่าง ๆ ในรูปแบบ array
+  const chapters = [
+    {
+      id: "intro",
+      content: (
+        <>
+          <h1 className="text-primary">
+            คู่มือการดูแลตนเองเพื่อลดระดับความรุนแรงอาการฝ่ามือฝ่าเท้าอักเสบ
+          </h1>
+          <h2 className="text-secondary">
+            สำหรับผู้ป่วยมะเร็งลำไส้ใหญ่และทวารหนักที่ได้รับยาเคปไซตาบีน
+          </h2>
+          <img src="/img/ch1.png" alt="บทที่ 1" className="img-fluid my-3" />
+          <section className="mt-4">
+            <h3 className="text-info">เรียบเรียงโดย</h3>
+            <p>พว. อพัชนิภา บุญหลี</p>
+          </section>
+        </>
+      ),
+    },
+    {
+      id: "chapter1",
+      content: (
+        <section className="mt-4 card">
+          <div className="card-body">
           <h3 className="text-info">
             บทที่ 1:
             การรักษาผู้ป่วยมะเร็งลำไส้ใหญ่และทวารหนักด้วยยาเคมีบำบัดชนิดรับประทาน
@@ -68,10 +49,14 @@ const Handbook = () => {
             </div>
           </div>
         </div>
-      </section>
-
-      <section id="chapter2" className="mt-4 card">
-        <div className="card-body">
+        </section>
+      ),
+    },
+    {
+      id: "chapter2",
+      content: (
+        <section className="mt-4 card">
+          <div className="card-body">
           <h3 className="text-info">
             บทที่ 2: อาการฝ่ามือฝ่าเท้าอักเสบ (Hand Foot Syndrome)
           </h3>
@@ -178,10 +163,14 @@ const Handbook = () => {
             </li>
           </ul>
         </div>
-      </section>
-
-      <section id="chapter3" className="mt-4 card">
-        <div className="card-body">
+        </section>
+      ),
+    },
+    {
+      id: "chapter3",
+      content: (
+        <section className="mt-4 card">
+          <div className="card-body">
           <h3 className="text-info">
             บทที่ 3: การประเมินอาการฝ่ามือฝ่าเท้าอักเสบ
           </h3>
@@ -256,10 +245,14 @@ const Handbook = () => {
             </li>
           </div>
         </div>
-      </section>
-
-      <section id="chapter4" className="mt-4 card">
-        <div className="card-body">
+        </section>
+      ),
+    },
+    {
+      id: "chapter4",
+      content: (
+        <section className="mt-4 card">
+           <div className="card-body">
           <h3 className="text-info">
             บทที่ 4:
             การดูแลตนเองเพื่อลดระดับความรุนแรงของอาการฝ่ามือฝ่าเท้าอักเสบ
@@ -312,18 +305,6 @@ const Handbook = () => {
               น้ำยาซักผ้าหรือผลิตภัณฑ์ทำความสะอาดในครัวเรือน
               และน้ำยาล้างมือที่มีแอลกอฮอล์13
               และควรใส่ถุงมือเมื่อใช้น้ำยาซักผ้าหรือผลิตภัณฑ์ทำความสะอาดในครัวเรือน
-            </li>
-            <li>
-              <div className="col-md-6 col-12">
-                <img
-                  src="/img/ch4-5.png"
-                  alt="บทที่ 4"
-                  className="img-fluid my-3"
-                />
-              </div>
-              ไม่ควรดื่มนมวัวมากกว่า 2 แก้วต่อวัน หรือมากกว่า 95 มิลลิลิตรต่อวัน
-              เพราะในนมวัวมีสารเพิ่มการอักเสบอาจทำให้มีอาการมากขึ้น15
-              แนะนำให้ดื่มนมถั่วเหลืองทดแทน
             </li>
             <li>
               <div className="col-md-6 col-12">
@@ -407,10 +388,14 @@ const Handbook = () => {
             </li>
           </ul>
         </div>
-      </section>
-
-      <section id="chapter5" className="mt-4 card">
-        <div className="card-body">
+        </section>
+      ),
+    },
+    {
+      id: "chapter5",
+      content: (
+        <section className="mt-4 card">
+          <div className="card-body">
           <h3 className="text-info">บทที่ 5: การบริหารยาเคปไซตาบีน</h3>
           <p>
             ข้อปฏิบัติเกี่ยวกับการรับประทานยาเคปไซตาบีนอย่างถูกต้อง
@@ -487,7 +472,52 @@ const Handbook = () => {
             </li>
           </ul>
         </div>
-      </section>
+        </section>
+      ),
+    },
+  ];
+
+  // ฟังก์ชันจัดการการเปลี่ยนหน้า
+  const handlePageChange = ({ selected }) => {
+    setCurrentPage(selected);
+  };
+
+  // ดึงบทที่ตรงกับหน้าปัจจุบัน
+  const currentChapter = chapters.slice(
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
+  );
+
+  return (
+    <div className="container mt-5">
+      <Container>
+        {currentChapter.map((chapter) => (
+          <div key={chapter.id}>
+            {chapter.content}
+          </div>
+        ))}
+
+        {/* แสดงการแบ่งหน้า */}
+        <ReactPaginate
+          previousLabel={"<"} // ปุ่มย้อนกลับ
+          nextLabel={">"} // ปุ่มถัดไป
+          breakLabel={"..."} // จุดไข่ปลา
+          pageCount={Math.ceil(chapters.length / itemsPerPage)} // จำนวนหน้าทั้งหมด
+          marginPagesDisplayed={2} // หน้าที่แสดงรอบขอบ
+          pageRangeDisplayed={5} // หน้าที่แสดงรอบปัจจุบัน
+          onPageChange={handlePageChange} // ฟังก์ชันเมื่อเปลี่ยนหน้า
+          containerClassName={"pagination justify-content-center mt-4"} // class สำหรับ container
+          pageClassName={"page-item"} // class ของปุ่ม
+          pageLinkClassName={"page-link"} // class ของลิงก์
+          previousClassName={"page-item"} // class ปุ่มย้อนกลับ
+          previousLinkClassName={"page-link"} // class ลิงก์ย้อนกลับ
+          nextClassName={"page-item"} // class ปุ่มถัดไป
+          nextLinkClassName={"page-link"} // class ลิงก์ถัดไป
+          breakClassName={"page-item"} // class จุดไข่ปลา
+          breakLinkClassName={"page-link"} // class ลิงก์จุดไข่ปลา
+          activeClassName={"active"} // class ปุ่มปัจจุบัน
+        />
+      </Container>
     </div>
   );
 };
