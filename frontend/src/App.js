@@ -12,9 +12,12 @@ import Handbook from "./pages/Handbook";
 import Log from "./pages/Log";
 import VideoPlayer from "./pages/VideoPlayer";
 
+import CreateEstimation from "./pages/CreateEstimation";
+
 function App() {
   const admin = useSelector((state) => state.admin);
   const API_BASE_URL = "http://localhost:4452";
+  //const API_BASE_URL = "http://fnnovation.com:4452";
 
   return (
     <AppContext.Provider value={{ API_BASE_URL }}>
@@ -35,6 +38,7 @@ function App() {
               <Route path="/medication" element={<Medication />} />
               <Route path="/estimation" element={<Estimation />} />
               <Route path="/log" element={<Log />} />
+              <Route path="/create-estimation" element={<CreateEstimation />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}

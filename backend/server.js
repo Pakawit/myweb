@@ -10,6 +10,7 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const { console } = require("inspector");
 const upload = multer();
 
 app.use(express.urlencoded({ extended: true, limit: "750kb" }));
@@ -28,8 +29,8 @@ const HFS_NOTIFICATION_FILE_PATH = path.join(BASE_PATH, "hfsnotification.json");
 // ฟังก์ชันอ่านไฟล์ JSON
 const readJSONFile = async (filePath) => {
   try {
-    const data = await fs.promises.readFile(filePath, "utf8");  // อ่านไฟล์ JSON จากเส้นทางที่กำหนด
-    return JSON.parse(data); // แปลงข้อมูล JSON เป็น Object
+    const data = await fs.promises.readFile(filePath, "utf8");  
+    return JSON.parse(data); 
   } catch (err) {
     return {};
   }
@@ -38,7 +39,7 @@ const readJSONFile = async (filePath) => {
 // ฟังก์ชันเขียนไฟล์ JSON
 const writeJSONFile = async (filePath, data) => {
   try {
-    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2)); // เขียนข้อมูล JSON ลงในไฟล์
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
   } catch (err) {
     console.error("Error writing to JSON file:", err);
   }
@@ -200,7 +201,7 @@ app.post("/confirmChanges", async (req, res) => {
 
     personalData[_id] = pendingChange;
 
-    delete personalData[_id]; // ลบข้อมูลที่ยืนยันแล้วจากไฟล์ JSON
+    delete personalData[_id]; 
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     const users = await User.find();
     await writeJSONFile(USERS_FILE_PATH, users);
@@ -226,7 +227,7 @@ app.post("/rejectChanges", async (req, res) => {
       user: "Chureeporn",
       details: `ยกเลิกการแก้ไขข้อมูล ${name}`,
     });
-    delete personalData[_id]; // ลบข้อมูลที่ถูกปฏิเสธ
+    delete personalData[_id]; 
     await writeJSONFile(PERSONAL_FILE_PATH, personalData);
     res.json({ message: "Changes rejected and removed from pending list" });
   } catch (error) {
@@ -256,6 +257,39 @@ app.post("/createmedication", async (req, res) => {
   }
 });
 
+app.delete("/deletemedication/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedMedication = await Medication.findByIdAndDelete(id);
+    if (!deletedMedication) {
+      return res.status(404).json({ message: "Medication not found" });
+    }
+    res.status(200).json({ message: "Medication deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting medication:", error);
+    res.status(500).json({ message: "Failed to delete medication" });
+  }
+});
+
+app.put("/editmedication/:id", async (req, res) => {
+  const { id } = req.params;
+  const { date, time, status } = req.body;
+  try {
+    const updatedMedication = await Medication.findByIdAndUpdate(
+      id,
+      { date, time, status },
+      { new: true }
+    );
+    if (!updatedMedication) {
+      return res.status(404).json({ message: "Medication not found" });
+    }
+    res.status(200).json({ message: "Medication updated successfully" });
+  } catch (error) {
+    console.error("Error updating medication:", error);
+    res.status(500).json({ message: "Failed to update medication" });
+  }
+});
+
 app.put("/updatemedication", async (req, res) => {
   try {
     const { from, status, time, date } = req.body;
@@ -281,16 +315,16 @@ app.post("/getestimation", async (req, res) => {
   const { from, page = 0, limit = 1 } = req.body;
 
   try {
-    const estimations = await Estimation.find({ from }) // ค้นหา estimation ตาม userId
-      .sort({ date: -1, time: -1 }) // เรียงลำดับจากวันที่และเวลาล่าสุด
-      .skip(page * limit)  // ข้ามข้อมูลตาม page
-      .limit(limit); // จำกัดจำนวนข้อมูลตาม limit
+    const estimations = await Estimation.find({ from }) 
+      .sort({ date: -1, time: -1 }) 
+      .skip(page * limit)  
+      .limit(limit); 
 
     const totalEstimations = await Estimation.countDocuments({ from });
 
     res.json({
-      data: estimations, // ส่งข้อมูลหน้าปัจจุบัน
-      total: totalEstimations, // ส่งจำนวนทั้งหมด
+      data: estimations, 
+      total: totalEstimations, 
     });
   } catch (error) {
     console.error("Error fetching estimations:", error);
@@ -343,30 +377,28 @@ app.put("/evaluateHFS", async (req, res) => {
   try {
     let estimationsHFS = await readJSONFile(ESTIMATIONHFS_FILE_PATH);
 
-    let estimation = estimationsHFS[estimationId]; // ค้นหา estimation 
+    let estimation = estimationsHFS[estimationId]; 
     if (!estimation) {
-      estimation = { estimationId, userId, evaluations: {} }; // สร้าง estimation ใหม่ถ้าไม่มีใน JSON
-      estimationsHFS[estimationId] = estimation; // เพิ่ม estimation
+      estimation = { estimationId, userId, evaluations: {} };
+      estimationsHFS[estimationId] = estimation; 
     }
 
-    estimation.evaluations[adminName] = { hfsLevel };  // เพิ่มการประเมิน
+    estimation.evaluations[adminName] = { hfsLevel };  
 
-    const { Apatnipa, Chureeporn } = estimation.evaluations; // ดึงข้อมูลการประเมินของ admin ทั้งสอง
+    const { Apatnipa, Chureeporn } = estimation.evaluations; 
 
     if (Apatnipa?.hfsLevel !== undefined && Chureeporn?.hfsLevel !== undefined) {
-      // ถ้า admin ทั้งสองประเมินแล้ว
       if (Apatnipa.hfsLevel === Chureeporn.hfsLevel) {
-        // ถ้าการประเมินตรงกัน
-        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId }, { hfsLevel: Apatnipa.hfsLevel }, { new: true });//ส่งกลับหลัง update
+        const updatedEstimation = await Estimation.findOneAndUpdate({ _id: estimationId }, { hfsLevel: Apatnipa.hfsLevel }, { new: true });
 
         let hfsNotifications = await readJSONFile(HFS_NOTIFICATION_FILE_PATH);
-        hfsNotifications = hfsNotifications.filter((n) => n.estimationId !== estimationId); // ลบการแจ้งเตือนที่เสร็จสิ้น
+        hfsNotifications = hfsNotifications.filter((n) => n.estimationId !== estimationId); 
         await writeJSONFile(HFS_NOTIFICATION_FILE_PATH, hfsNotifications);
 
         res.json({ message: `ประเมินอาการ ${userName} เสร็จสิ้น`, updatedEstimation });
         await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการของ ${userName} เสร็จสิ้น`, });
 
-        delete estimationsHFS[estimationId]; // ลบ estimation ที่เสร็จสิ้น
+        delete estimationsHFS[estimationId]; 
         await writeJSONFile(ESTIMATIONHFS_FILE_PATH, estimationsHFS);
       } else {
 
@@ -377,7 +409,6 @@ app.put("/evaluateHFS", async (req, res) => {
         res.json({ message: `ประเมินอาการ ${userName} ผิดพลาด` });
       }
     } else {
-      // ถ้า admin ยังประเมินไม่ครบ
       await Log.create({ action: "ประเมินอาการ HFS", user: adminName, details: `ประเมินอาการโดย ${adminName}`, });
       res.json({ message: `ประเมินสำเร็จ กำลังรอ ${Apatnipa?.hfsLevel === undefined ? "Apatnipa" : "Chureeporn"} ประเมิน`, });
     }
@@ -408,7 +439,6 @@ const updateChatNotification = async (from) => {
     let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
 
     if (!notifications[from]) {
-      // เพิ่ม key ใหม่สำหรับผู้ใช้
       notifications[from] = { from, createdAt: new Date().toISOString() };
       await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
       console.log("Notification added successfully");
@@ -425,7 +455,7 @@ app.post("/removechatnotification", async (req, res) => {
   try {
     let notifications = await readJSONFile(CHAT_NOTIFICATION_FILE_PATH);
     if (notifications[from]) {
-      delete notifications[from]; // ลบ key ที่ตรงกับ `from`
+      delete notifications[from]; 
       await writeJSONFile(CHAT_NOTIFICATION_FILE_PATH, notifications);
     }
     res.status(200).json({ success: true });
@@ -464,7 +494,7 @@ app.post("/createmessage", async (req, res) => {
     });
 
     if (from !== "admin") {
-      await updateChatNotification(from);  // อัปเดตการแจ้งเตือนหากผู้ส่งไม่ใช่ admin
+      await updateChatNotification(from);  
     }
 
     res.json(newMessage);
@@ -477,7 +507,7 @@ app.post("/createmessage", async (req, res) => {
 app.post("/chatphoto", upload.single("photo"), async (req, res) => {
   try {
     const { from, to, date, time } = req.body;
-    const image = req.file.buffer.toString("base64"); // แปลงภาพเป็น base64
+    const image = req.file.buffer.toString("base64"); 
 
     const newMessage = await Message.create({
       content: image,
@@ -489,7 +519,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
     });
 
     if (from !== "admin") {
-      await updateChatNotification(from); // อัปเดตการแจ้งเตือนหากผู้ส่งไม่ใช่ admin
+      await updateChatNotification(from); 
     }
 
     res.json(newMessage);
@@ -502,7 +532,7 @@ app.post("/chatphoto", upload.single("photo"), async (req, res) => {
 //log
 app.get("/logs", async (req, res) => {
   try {
-    const logs = await Log.find().sort({ timestamp: -1 }); // ระบุว่าต้องการเรียงลำดับจาก มากไปน้อย(ล่าสุดมาก่อน)
+    const logs = await Log.find().sort({ timestamp: -1 }); 
     res.json(logs);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -513,7 +543,6 @@ app.get("/video", (req, res) => {
   const videoPath = path.join(__dirname, "video", "VDO_nurse_final.mp4");
 
   fs.stat(videoPath, (err, stats) => {
-    // ตรวจสอบสถานะของไฟล์
     if (err) {
       console.error("Error retrieving video:", err);
       return res.status(404).send("Video not found");
@@ -524,24 +553,24 @@ app.get("/video", (req, res) => {
       return res.status(416).send("Requires Range header");
     }
 
-    const videoSize = stats.size; // ดึงขนาดไฟล์วิดีโอทั้งหมด
-    const CHUNK_SIZE = 10 ** 6; // กำหนดขนาด chunk เป็น 1 MB
-    const start = Number(range.replace(/\D/g, "")); // ดึงตำแหน่งเริ่มต้นของ chunk จาก Range header
-    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);  // คำนวณตำแหน่งสิ้นสุดของ chunk โดยไม่เกินขนาดไฟล์
+    const videoSize = stats.size; 
+    const CHUNK_SIZE = 10 ** 6;
+    const start = Number(range.replace(/\D/g, "")); 
+    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);  
 
-    const contentLength = end - start + 1; // คำนวณขนาด chunk ที่จะส่งให้ client
-    const headers = { // กำหนด headers ที่ต้องใช้สำหรับการ stream
+    const contentLength = end - start + 1; 
+    const headers = { 
       "Content-Range": `bytes ${start}-${end}/${videoSize}`, 
       "Accept-Ranges": "bytes",
       "Content-Length": contentLength,
       "Content-Type": "video/mp4",
     };
 
-    res.writeHead(206, headers); // ส่งสถานะ HTTP 206 (Partial Content) พร้อม headers
+    res.writeHead(206, headers); 
 
-    const videoStream = fs.createReadStream(videoPath, { start, end }); // สร้าง stream สำหรับอ่านไฟล์วิดีโอในช่วง start ถึง end
+    const videoStream = fs.createReadStream(videoPath, { start, end }); 
 
-    videoStream.pipe(res); // ส่งข้อมูลใน stream ไปยัง client ผ่าน response
+    videoStream.pipe(res);
   });
 });
 

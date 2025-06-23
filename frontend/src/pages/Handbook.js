@@ -3,10 +3,9 @@ import { Container } from "react-bootstrap";
 import ReactPaginate from "react-paginate";
 
 const Handbook = () => {
-  const [currentPage, setCurrentPage] = useState(0); // เก็บหน้าปัจจุบันใน state
-  const itemsPerPage = 1; // กำหนดให้แสดง 1 บทต่อหน้า
+  const [currentPage, setCurrentPage] = useState(0); 
+  const itemsPerPage = 1; 
 
-  // บทต่าง ๆ ในรูปแบบ array
   const chapters = [
     {
       id: "intro",

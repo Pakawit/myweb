@@ -28,7 +28,7 @@ const Log = () => {
   }, []);
 
   const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state
+    setCurrentPage(selectedItem.selected); 
   };
 
   const paginatedLogs = logs.slice(

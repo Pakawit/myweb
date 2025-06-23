@@ -44,7 +44,7 @@ function Home() {
 
     const intervalId = setInterval(() => {
       fetchInitialData();
-    }, 5000); // ตั้ง interval เพื่ออัปเดตข้อมูลทุก 5 วินาที
+    }, 5000); 
 
     const fetchDataOnPageLoad = async () => {
       try {
@@ -57,7 +57,7 @@ function Home() {
       }
     };
 
-    window.addEventListener("beforeunload", fetchDataOnPageLoad);  // ดึงข้อมูลอีกครั้งเมื่อผู้ใช้ปิดหน้า
+    window.addEventListener("beforeunload", fetchDataOnPageLoad);  
 
     return () => {
       clearInterval(intervalId); 
@@ -65,13 +65,11 @@ function Home() {
     };
   }, []);
 
-  // ฟังก์ชันนำทางไปยังหน้าอื่น
   const handleNavigation = (userData, path) => {
     dispatch(setselectuser(userData));
     navigate(path);
   };
 
-  // ฟังก์ชันสำหรับแสดงปุ่มสถานะการกินยา
   const getStatusButton = (status) => {
     const statusInfo = {
       0: { variant: "danger", text: "ไม่ได้กิน" },
@@ -85,16 +83,13 @@ function Home() {
     user.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  // เรียงผู้ป่วยตามวันที่สร้าง (ใหม่ไปเก่า)
   const sortedUsers = [...filteredUsers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-  // แบ่งผู้ป่วยตามหน้าปัจจุบัน
   const paginatedUsers = sortedUsers.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );
 
-  // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedItem) => {
     setCurrentPage(selectedItem.selected);
   };

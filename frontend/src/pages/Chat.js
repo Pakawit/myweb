@@ -20,9 +20,9 @@ function Chat() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [showStickersModal, setShowStickersModal] = useState(false);
 
-  const messageEndRef = useRef(null); // ใช้สำหรับ scroll ไปยังข้อความล่าสุด
-  const fileInputRef = useRef(null); // ใช้สำหรับการจัดการ input type file
-  const previousMessagesLength = useRef(messages.length); // เก็บความยาวของข้อความก่อนหน้า
+  const messageEndRef = useRef(null); 
+  const fileInputRef = useRef(null); 
+  const previousMessagesLength = useRef(messages.length); 
 
   const stickers = [
     "nurse_charactor-01.png",
@@ -37,7 +37,7 @@ function Chat() {
     "nurse_charactor-10.png",
   ];
 
-  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" }); // ฟังก์ชันสำหรับเลื่อนข้อความไปยังข้อความล่าสุด
+  const scrollToBottom = () => messageEndRef.current?.scrollIntoView({ behavior: "smooth" }); 
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -56,55 +56,55 @@ function Chat() {
       fetchMessages();
       scrollToBottom();
 
-      const intervalId = setInterval(fetchMessages, 3000); // ตั้ง interval ดึงข้อความทุก 3 วินาที
+      const intervalId = setInterval(fetchMessages, 3000); 
 
-      return () => clearInterval(intervalId); // ล้าง interval เมื่อ component ถูก ทำลาย
+      return () => clearInterval(intervalId); 
     }
   }, [selectuser._id]);
 
   useEffect(() => {
-    if (messages.length > previousMessagesLength.current) { // ตรวจสอบว่ามีข้อความใหม่หรือไม่
+    if (messages.length > previousMessagesLength.current) { 
       scrollToBottom();
-      const notification = Object.keys(chatnotification).find((key) => chatnotification[key].from === selectuser._id);  // ตรวจสอบการแจ้งเตือนสำหรับผู้ป่วยที่เลือก
+      const notification = Object.keys(chatnotification).find((key) => chatnotification[key].from === selectuser._id);  
       if (notification) dispatch(removeChatNotification(selectuser._id));
     }
-    previousMessagesLength.current = messages.length; // อัปเดตความยาวข้อความก่อนหน้า
+    previousMessagesLength.current = messages.length; 
   }, [messages, chatnotification, selectuser._id]);
 
-  const validateImg = (e) => { // ตรวจสอบไฟล์ภาพ
-    const file = e.target.files[0]; // รับไฟล์จาก input
+  const validateImg = (e) => { 
+    const file = e.target.files[0]; 
     const validTypes = ["image/jpeg", "image/png"];
 
-    if (!validTypes.includes(file?.type)) { // .includes มีค่าที่ต้องการหรือไม่ ผลลัพธ์ true หรือ false
+    if (!validTypes.includes(file?.type)) { 
       alert("Only JPG and PNG files are allowed");
       fileInputRef.current.value = "";
       return;
     }
 
-    if (file?.size >= 3048576) { // ตรวจสอบขนาดไฟล์
+    if (file?.size >= 3048576) { 
       alert("Max file size is 3MB");
-      fileInputRef.current.value = ""; // ล้างค่า input
+      fileInputRef.current.value = "";
     }
 
     else {
-      setImage(file); // เก็บไฟล์ใน state
+      setImage(file); 
       setMessage("Image selected");
     }
   };
 
   const getCurrentTime = () => {
-    const now = new Date();  // สร้าง Date object ปัจจุบัน
+    const now = new Date();  
     return {
-      todayDate: now.toLocaleDateString("en-GB"), // แปลงวันที่เป็นรูปแบบ DD/MM/YYYY
-      time: now.toTimeString().slice(0, 5), // แปลงเวลาเป็น HH:MM
+      todayDate: now.toLocaleDateString("en-GB"), 
+      time: now.toTimeString().slice(0, 5), 
     };
   };
 
   const handleStickerSelect = async (sticker) => {
     const { todayDate, time } = getCurrentTime();
     try {
-      const blob = await (await fetch(`/img/${sticker}`)).blob(); //ดึงสติกเกอร์ในรูปแบบ Blob จาก URL
-      const image = new File([blob], sticker, { type: "image/png" }); //แปลง Blob เป็นไฟล์ที่มีชื่อไฟล์ (sticker) และประเภท image/png
+      const blob = await (await fetch(`/img/${sticker}`)).blob(); 
+      const image = new File([blob], sticker, { type: "image/png" }); 
 
       const formData = new FormData();
       formData.append("photo", image);
@@ -117,14 +117,14 @@ function Chat() {
       dispatch(addMessage(res.data));
     } catch (error) {
       console.error(error);
-    } finally { //ทำงานเสมอ ไม่ว่าจะเกิดข้อผิดพลาดหรือไม่
+    } finally { 
       setShowStickersModal(false);
       scrollToBottom();
     }
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // ป้องกันการ reload หน้า
+    e.preventDefault(); 
     if (!message && !image) return;
 
     const { todayDate, time } = getCurrentTime();
@@ -158,7 +158,6 @@ function Chat() {
       <Navigation />
       <Row>
         <Col>
-          {/* กล่องแชท */}
           <div className="d-flex flex-column mb-3" style={{ overflowY: "auto", height: "80vh", border: "1px solid lightgray" }}>
             {messages.map((msg, i) => (
               <div key={i} className={`d-flex ${msg.from === "admin" ? "justify-content-end" : "justify-content-start"} my-2`}>
@@ -188,10 +187,9 @@ function Chat() {
                 </div>
               </div>
             ))}
-            <div ref={messageEndRef} /> {/* จุดสำหรับ scroll */}
+            <div ref={messageEndRef} /> 
           </div>
 
-          {/* ฟอร์มสำหรับส่งข้อความ */}
           <Form onSubmit={handleSubmit} className="d-flex align-items-center">
 
             <input type="file" accept="image/*" hidden ref={fileInputRef} onChange={validateImg} />
@@ -207,7 +205,6 @@ function Chat() {
         </Col>
       </Row>
 
-      {/* Modal สำหรับแสดงภาพ */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton />
         <Modal.Body>
@@ -215,7 +212,6 @@ function Chat() {
         </Modal.Body>
       </Modal>
 
-      {/* Modal สำหรับแสดงสติกเกอร์ */}
       <Modal show={showStickersModal} onHide={() => setShowStickersModal(false)} centered>
         <Modal.Header closeButton />
         <Modal.Body className="d-flex flex-wrap justify-content-center">

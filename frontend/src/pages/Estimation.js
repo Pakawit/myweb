@@ -6,6 +6,7 @@ import { AppContext } from "../context/appContext";
 import axios from "axios";
 import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import ReactPaginate from "react-paginate";
+import { useNavigate } from "react-router-dom";
 
 function Estimation() {
   const dispatch = useDispatch();
@@ -19,6 +20,7 @@ function Estimation() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "" });
   const [hfsLevels, setHfsLevels] = useState({});
+  const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 1;
@@ -27,7 +29,7 @@ function Estimation() {
     try {
       const response = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
-        page, // ส่งหน้า page ปัจจุบัน
+        page, 
         limit: itemsPerPage,
       });
       setEstimations(response.data.data);
@@ -42,20 +44,19 @@ function Estimation() {
 
     const intervalId = setInterval(() => {
       fetchEstimations(currentPage);
-    }, 10000); // ดึงข้อมูลใหม่ทุกๆ 10 วินาที
+    }, 10000); 
 
-    return () => clearInterval(intervalId); // ลบ interval เมื่อ component ถูกทำลาย
+    return () => clearInterval(intervalId); 
   }, [currentPage, selectuser._id]);
 
   useEffect(() => {
     dispatch(loadEstimationHFSData());
   }, []);
 
-  // ฟังก์ชันเปลี่ยนระดับ HFS
   const handleHfsLevelChange = (estimationId, level) => {
     setHfsLevels((prevLevels) => ({
-      ...prevLevels, // คงค่าเดิมไว้
-      [estimationId]: level, // เปลี่ยนระดับสำหรับ estimationId ที่กำหนด
+      ...prevLevels, 
+      [estimationId]: level,
     }));
   };
 
@@ -100,11 +101,11 @@ function Estimation() {
     const ChureepornLevel = evaluations.Chureeporn?.hfsLevel;
 
     if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
-      return { disabled: false, message: "ยืนยัน" }; // ถ้ายังไม่ได้ประเมินเลย
+      return { disabled: false, message: "ยืนยัน" }; 
     }
 
     if (Object.keys(evaluations).length === 0) {
-      return { disabled: true, message: "ประเมินแล้ว" }; // ประเมินแล้วโดย admin ทั้งคู่
+      return { disabled: true, message: "ประเมินแล้ว" }; 
     }
 
     if (ApatnipaLevel !== undefined && admin.name === "Apatnipa") {
@@ -118,9 +119,8 @@ function Estimation() {
     return { disabled: false, message: "ยืนยัน" };
   };
 
-  // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
+    setCurrentPage(selectedItem.selected); 
   };
 
   return (
@@ -128,6 +128,14 @@ function Estimation() {
       <Navigation />
       <Row>
         <h1>การประเมินอาการ HFS</h1>
+        <Row className="mb-3">
+          <Col className="d-flex justify-content-end">
+            <Button variant="outline-secondary" onClick={() => navigate("/create-estimation")}>
+              สร้างข้อมูลการประเมิน
+            </Button>
+          </Col>
+        </Row>
+
         <Col>
           <Table responsive striped bordered hover>
             <thead>
@@ -153,7 +161,6 @@ function Estimation() {
                       <td className="text-center">{est.time}</td>
 
                       <td className="text-center">
-                        {/* Render Photos */}
                         <Row>
                           <Col>
                             <h5 className="fw-bold text-center">รูปฝั่งซ้าย</h5>
@@ -193,7 +200,6 @@ function Estimation() {
                       <td className="text-center">{est.painLevel}</td>
 
                       <td className="text-center">
-                        {/* ตรวจสอบว่าเจ้าหน้าที่ได้ประเมินแล้วหรือยัง */}
                         {estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel !== undefined ? (
                           <span>
                             คุณประเมินว่า:{" "}
@@ -202,11 +208,9 @@ function Estimation() {
                               : `ระดับที่ ${estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel}`}
                           </span>
                         ) : (
-                          /* ถ้าประเมินแล้วจากระบบ */
                           est.hfsLevel !== 0 ? (
                             <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
                           ) : (
-                            /* ถ้ายังไม่ประเมินแสดง Dropdown */
                             <Dropdown>
                               <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
                                 ระดับที่ {hfsLevels[est._id] ?? ""}

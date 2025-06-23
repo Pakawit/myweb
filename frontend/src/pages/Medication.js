@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import { Container, Row, Col, Table, Button, Alert, Modal, Form } from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
@@ -14,18 +14,23 @@ function Medication() {
   const selectuser = useSelector((state) => state.selectuser);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editMedication, setEditMedication] = useState({ id: "", date: "", time: "", status: 0 });
+
+  const fetchDataOnLoad = async () => {
+    try {
+      await axios.get(`${API_BASE_URL}/getmedication`);
+      dispatch(loadMedicationsData());
+    } catch (error) {
+      console.error("Failed to fetch medications on load:", error);
+    }
+  };
 
   useEffect(() => {
-
-    dispatch(loadMedicationsData());
-
-    const fetchDataOnLoad = async () => {
-      try {
-        await axios.get(`${API_BASE_URL}/getmedication`);
-      } catch (error) {
-        console.error("Failed to fetch medications on load:", error);
-      }
-    };
+    fetchDataOnLoad();
 
     const intervalId = setInterval(() => {
       dispatch(loadMedicationsData());
@@ -39,46 +44,107 @@ function Medication() {
     };
   }, []);
 
-  // ฟังก์ชันสำหรับแสดงปุ่มสถานะการกินยา
   const getStatusButton = (status) => {
     const statusInfo = {
       0: { variant: "danger", text: "ไม่ได้กิน" },
       1: { variant: "warning", text: "รอกิน" },
       2: { variant: "success", text: "กินแล้ว" },
     };
-    return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };  // คืนค่าปุ่มตามสถานะ
+    return statusInfo[status] || { variant: "secondary", text: "ไม่พบข้อมูล" };
   };
 
   const convertDateTime = (date, time) => {
-    const [day, month, year] = date.split("/"); // แยกวันที่เป็นวัน เดือน ปี
-    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`; // ฟอร์แมตวันที่เป็น YYYY-MM-DD
-    const formattedTime = time.padStart(5, "0"); // ฟอร์แมตเวลาเป็น HH:MM
-    return new Date(`${formattedDate}T${formattedTime}`); // สร้าง Date object ด้วยวันที่และเวลา
+    const [day, month, year] = date.split("/");
+    const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    const formattedTime = time.padStart(5, "0");
+    return new Date(`${formattedDate}T${formattedTime}`);
   };
 
   const formatTimeRange = (time) => {
-    const [hours, minutes] = time.split(":").map(Number); // แยกชั่วโมงและนาทีจากเวลา
-    const startDate = new Date(); // สร้าง Date object สำหรับเวลาเริ่มต้น
+    const [hours, minutes] = time.split(":").map(Number);
+    const startDate = new Date();
     startDate.setHours(hours, minutes);
-
     const endDate = new Date(startDate);
     endDate.setHours(startDate.getHours() + 6);
-
-    const formatTime = (date) => date.toTimeString().slice(0, 5); // ดึงเวลา HH:MM จาก Date object
-    return `${formatTime(startDate)}-${formatTime(endDate)}`; // คืนค่าช่วงเวลาในรูปแบบ HH:MM-HH:MM
+    const formatTime = (date) => date.toTimeString().slice(0, 5);
+    return `${formatTime(startDate)}-${formatTime(endDate)}`;
   };
 
-  const sortedMedications = [...medications].filter((med) => med.from === selectuser._id).sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time)); // เรียงลำดับข้อมูลตามวันที่และเวลาล่าสุด
+  const sortedMedications = [...medications]
+    .filter((med) => med.from === selectuser._id)
+    .sort((a, b) => convertDateTime(b.date, b.time) - convertDateTime(a.date, a.time));
 
-  // แบ่งการกินยาตามหน้าปัจจุบัน
   const paginatedMedications = sortedMedications.slice(
-    currentPage * itemsPerPage, //0*10
-    (currentPage + 1) * itemsPerPage //1*10
+    currentPage * itemsPerPage,
+    (currentPage + 1) * itemsPerPage
   );
 
-  // ฟังก์ชันจัดการเมื่อผู้ใช้คลิกเปลี่ยนหน้า
   const handlePageChange = (selectedPage) => {
-    setCurrentPage(selectedPage.selected); // อัปเดตหน้าปัจจุบันใน state // Output: { selected: 1 }
+    setCurrentPage(selectedPage.selected);
+  };
+
+  const handleDeleteMedication = async (medicationId) => {
+    if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้?")) {
+      try {
+        await axios.delete(`${API_BASE_URL}/deletemedication/${medicationId}`);
+        await fetchDataOnLoad();
+        setSuccessMessage("ลบข้อมูลการกินยาสำเร็จ!");
+        setErrorMessage(null);
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการลบข้อมูล:", error);
+        setErrorMessage("ลบข้อมูลการกินยาล้มเหลว!");
+        setSuccessMessage(null);
+      }
+    }
+  };
+
+  const handleOpenEditModal = (med) => {
+    setEditMedication({ id: med._id, date: med.date, time: med.time, status: med.status });
+    setShowEditModal(true);
+  };
+
+  const handleEditMedicationChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "time") {
+      let [hours, minutes] = value.split(":");
+      hours = hours.padStart(2, "0");
+      minutes = minutes.padStart(2, "0");
+      setEditMedication((prev) => ({
+        ...prev,
+        [name]: `${hours}:${minutes}`,
+      }));
+    } else if (name === "date") {
+      const [day, month, year] = value.split("/");
+      const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+      setEditMedication((prev) => ({
+        ...prev,
+        [name]: formattedDate,
+      }));
+    } else {
+      setEditMedication((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await axios.put(`${API_BASE_URL}/editmedication/${editMedication.id}`, {
+        date: editMedication.date,
+        time: editMedication.time,
+        status: editMedication.status,
+      });
+      await fetchDataOnLoad();
+      setShowEditModal(false);
+      setSuccessMessage("แก้ไขข้อมูลสำเร็จ!");
+      setErrorMessage(null);
+    } catch (error) {
+      console.error("เกิดข้อผิดพลาดในการแก้ไขข้อมูล:", error);
+      setErrorMessage("แก้ไขข้อมูลล้มเหลว!");
+      setSuccessMessage(null);
+    }
   };
 
   return (
@@ -89,18 +155,26 @@ function Medication() {
       </Row>
       <Row>
         <Col>
+          {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
+          {successMessage && (
+            <Alert variant={successMessage.includes("แก้ไขข้อมูล") ? "warning" : "success"}>
+              {successMessage}
+            </Alert>
+          )}
+
           <Table responsive striped bordered hover>
             <thead>
               <tr>
                 <th className="text-center">วัน/เดือน/ปี</th>
                 <th className="text-center">เวลา</th>
                 <th className="text-center">สถานะ</th>
+                <th className="text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody>
               {paginatedMedications.length ? (
                 paginatedMedications.map((med, index) => {
-                  const { variant, text } = getStatusButton(med.status); // ดึง variant และ text
+                  const { variant, text } = getStatusButton(med.status);
                   return (
                     <tr key={index}>
                       <td className="text-center">{med.date}</td>
@@ -108,18 +182,36 @@ function Medication() {
                       <td className="text-center">
                         <Button variant={variant} disabled>{text}</Button>
                       </td>
+                      <td className="text-center">
+                        <Button
+                          variant="warning"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => handleOpenEditModal(med)}
+                        >
+                          แก้ไข
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleDeleteMedication(med._id)}
+                        >
+                          ลบ
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={3} className="text-center">
+                  <td colSpan={4} className="text-center">
                     ไม่มีข้อมูลการกินยา
                   </td>
                 </tr>
               )}
             </tbody>
           </Table>
+
           {sortedMedications.length > itemsPerPage && (
             <ReactPaginate
               previousLabel={"<"}
@@ -143,6 +235,58 @@ function Medication() {
           )}
         </Col>
       </Row>
+
+      {/* Modal แก้ไขข้อมูล */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>แก้ไขข้อมูลการกินยา</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>วันที่ (วัน/เดือน/ปี)</Form.Label>
+              <Form.Control
+                type="text"
+                name="date"
+                value={editMedication.date}
+                onChange={handleEditMedicationChange}
+                placeholder="เช่น 26/04/2025"
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>เวลา (hh:mm)</Form.Label>
+              <Form.Control
+                type="time"
+                name="time"
+                value={editMedication.time}
+                onChange={handleEditMedicationChange}
+                placeholder="เช่น 14:00"
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>สถานะ</Form.Label>
+              <Form.Select
+                name="status"
+                value={editMedication.status}
+                onChange={handleEditMedicationChange}
+              >
+                <option value={0}>ไม่ได้กิน</option>
+                <option value={1}>รอกิน</option>
+                <option value={2}>กินแล้ว</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            ยกเลิก
+          </Button>
+          <Button variant="warning" onClick={handleSaveEdit}>
+            บันทึกการแก้ไข
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
     </Container>
   );
 }

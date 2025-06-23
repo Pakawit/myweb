@@ -18,7 +18,7 @@ function Personal() {
   const personal = useSelector((state) => state.personalnotification);
   const medication = useSelector((state) => state.medication);
 
-  const [userData, setUserData] = useState(selectuser); // ใช้ useState จัดการข้อมูล
+  const [userData, setUserData] = useState(selectuser); 
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState({ message: "", show: false });
@@ -39,38 +39,37 @@ function Personal() {
   }, []);
 
   useEffect(() => {
-    // ดึงข้อมูลจาก users โดยใช้ selectuser._id 
     if (selectuser._id && users) {
       const matchingUser = users.find((user) => user._id === selectuser._id);
       if (matchingUser) {
         setUserData(matchingUser);
       }
     }
-  }, [selectuser, users]); // ทำงานเมื่อ selectuser หรือ users เปลี่ยนแปลง
+  }, [selectuser, users]); 
 
   const handleChange = ({ target: { name, value } }) => {
     const rules = {
-      name: /^[a-zA-Zก-๙\s]{1,30}$/, // ชื่อ: ต้องเป็นตัวอักษรและมีความยาวไม่เกิน 30
-      phone: /^\d{0,10}$/, // เบอร์โทรศัพท์: ตัวเลขไม่เกิน 10 หลัก
-      other_numbers: /^\d{0,10}$/, // เบอร์โทรศัพท์ผู้ติดต่อ: ตัวเลขไม่เกิน 10 หลัก
-      age: /^\d{1,3}$/, // อายุ: ตัวเลข 1-3 หลัก
-      diagnosis: /^.{0,300}$/, // การวินิจฉัย: ความยาวไม่เกิน 300 ตัวอักษร
-      taking_capecitabine: /^.{0,300}$/, // การรับประทานยา Capecitabine: ความยาวไม่เกิน 300 ตัวอักษร
-      hospital_number: /^.{0,50}$/, // เลขโรงพยาบาล: ความยาวไม่เกิน 50 ตัวอักษร
-      morningTime: /.+/, // เวลาช่วงเช้า: ต้องมีค่า
-      eveningTime: /.+/, // เวลาช่วงเย็น: ต้องมีค่า
+      name: /^[a-zA-Zก-๙\s]{1,30}$/,
+      phone: /^\d{0,10}$/, 
+      other_numbers: /^\d{0,10}$/, 
+      age: /^\d{1,3}$/,
+      diagnosis: /^.{0,300}$/, 
+      taking_capecitabine: /^.{0,300}$/, 
+      hospital_number: /^.{0,50}$/, 
+      morningTime: /.+/, 
+      eveningTime: /.+/, 
     };
 
-    const isValid = rules[name].test(value); // ตรวจสอบความถูกต้องตามกฎ คืนค่า true หรือ false
-    setErrors((prev) => ({ ...prev, [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง` })); // อัปเดตข้อผิดพลาด
-    setUserData((prev) => ({ ...prev, [name]: value })); // อัปเดตข้อมูลฟอร์ม
+    const isValid = rules[name].test(value); 
+    setErrors((prev) => ({ ...prev, [name]: isValid ? "" : `ข้อมูล ${name} ไม่ถูกต้อง` })); 
+    setUserData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
 
-    if (JSON.stringify(userData) === JSON.stringify(selectuser)) { showNotification("ไม่มีการเปลี่ยนแปลงข้อมูล"); return; } //JSON.stringify แปลง object ให้กลายเป็นข้อความในรูปแบบ JSON
+    if (JSON.stringify(userData) === JSON.stringify(selectuser)) { showNotification("ไม่มีการเปลี่ยนแปลงข้อมูล"); return; } 
 
-    if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง"); //.some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
+    if (Object.values(errors).some((err) => err)) return showNotification("กรุณาตรวจสอบข้อมูลอีกครั้ง"); 
 
     try {
       await axios.post(`${API_BASE_URL}/saveChangesToJson`, {
@@ -90,7 +89,7 @@ function Personal() {
       await axios.post(`${API_BASE_URL}/confirmChanges`, { _id: selectuser._id, name: selectuser.name });
       showNotification("ยืนยันการเปลี่ยนแปลงแล้ว");
       dispatch(loadPersonalnotificationData());
-      dispatch(setselectuser(personal[selectuser._id])); // ตั้งค่า selectuser ใหม่หลังยืนยัน
+      dispatch(setselectuser(personal[selectuser._id])); 
     } catch (error) {
       console.error("Error in confirmChanges:", error);
     }
@@ -101,7 +100,7 @@ function Personal() {
       await axios.post(`${API_BASE_URL}/rejectChanges`, { _id: selectuser._id, name: selectuser.name });
       showNotification("ยกเลิกการเปลี่ยนแปลงแล้ว");
       dispatch(loadPersonalnotificationData());
-      setUserData(selectuser); // รีเซ็ตข้อมูลกลับไปที่ selectuser
+      setUserData(selectuser); 
     } catch (error) {
       console.error("Error in rejectChanges:", error);
     }
@@ -110,7 +109,7 @@ function Personal() {
   const showNotification = (message) => setNotification({ message, show: true });
 
   const renderAdminButtons = () => { 
-      const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id); //.some() ตรงเงื่อนไข อย่างน้อยหนึ่งสมาชิก ตืนต่า true
+      const isPendingApproval = Object.values(personal).some((notification) => notification._id === selectuser._id); 
 
       if (isPendingApproval) {
         return (
@@ -186,7 +185,6 @@ function Personal() {
       <Navigation />
       <h1>ข้อมูลส่วนบุคคล</h1>
       <Form onSubmit={(e) => e.preventDefault()}>
-        {/* ชื่อ-สกุล */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">ชื่อ-สกุล</Form.Label>
           <Col sm="6">
@@ -201,7 +199,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* เบอร์โทรศัพท์ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">เบอร์โทรศัพท์</Form.Label>
           <Col sm="6">
@@ -216,7 +213,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* เบอร์โทรศัพท์ผู้ติดต่อ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">เบอร์โทรศัพท์ผู้ติดต่อ</Form.Label>
           <Col sm="6">
@@ -231,7 +227,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* อายุ */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">อายุ</Form.Label>
           <Col sm="6">
@@ -246,7 +241,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* การวินิจฉัยโรคหลัก */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">การวินิจฉัยโรคหลัก</Form.Label>
           <Col sm="6">
@@ -261,7 +255,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* การรับประทานยา Capecitabine */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">การรับประทานยา Capecitabine</Form.Label>
           <Col sm="6">
@@ -276,7 +269,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* เวลารับประทานยาช่วงเช้า */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">เวลารับประทานยาช่วงเช้า</Form.Label>
           <Col sm="6">
@@ -291,7 +283,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* เวลารับประทานยาช่วงเย็น */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">เวลารับประทานยาช่วงเย็น</Form.Label>
           <Col sm="6">
@@ -306,7 +297,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* เลขโรงพยาบาล */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">เลขโรงพยาบาล</Form.Label>
           <Col sm="6">
@@ -321,7 +311,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* ขาดยา */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">ขาดยา</Form.Label>
           <Col sm="6">
@@ -334,7 +323,6 @@ function Personal() {
           </Col>
         </Form.Group>
 
-        {/* วันที่ลงทะเบียน */}
         <Form.Group as={Row} className="mb-3">
           <Form.Label column sm="6" className="text-center">วันที่ลงทะเบียน</Form.Label>
           <Col sm="6">
