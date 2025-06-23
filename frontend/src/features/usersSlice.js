@@ -1,22 +1,30 @@
 import { createSlice } from "@reduxjs/toolkit";
+import usersData from "../json/users.json"; 
+
+const initialState = [];
 
 export const usersSlice = createSlice({
   name: "users",
-  initialState: null,
+  initialState,
   reducers: {
-    setUsers: (state, action) => {
-      return action.payload;
+    setUsers(state, action) {
+      return [...action.payload]; 
     },
-    deleteUsers: (state, action) => {
-      return null;
-    },
-    updateUsers: (state, action) => {
-      const index = state.findIndex(x => x._id === action.payload._id);
-      state[index] = { ...action.payload }; 
+    deleteUsers: () => {
+      return []; 
     },
   },
 });
 
-export const { setUsers, deleteUsers, updateUsers } = usersSlice.actions;
+export const loadUsersData = () => async (dispatch) => {
+  try {
+    const data = usersData; 
+    dispatch(setUsers(data)); 
+  } catch (error) {
+    console.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้", error);
+  }
+};
+
+export const { setUsers, deleteUsers } = usersSlice.actions;
 
 export default usersSlice.reducer;
