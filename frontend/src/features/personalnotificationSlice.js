@@ -1,31 +1,30 @@
 import { createSlice } from "@reduxjs/toolkit";
-import personalData from "../json/personal.json"; 
+import axios from "axios";
+import { AppContext } from "../context/appContext";
 
 const initialState = {};
 
 export const personalnotificationSlice = createSlice({
-  name: "personal",
+  name: "personalnotification",
   initialState,
   reducers: {
     setPersonalData(state, action) {
-      return { ...state, ...action.payload }; // รวม state เดิมกับข้อมูลใหม่ใน action.payload
+      return { ...action.payload };
     },
-    clearPersonalData: () => {
-      return {}; 
-    }
+    clearPersonalData: () => ({}),
   },
 });
 
 export const loadPersonalnotificationData = () => async (dispatch) => {
   try {
-    dispatch(clearPersonalData());  
-    const data = personalData;  
-    dispatch(setPersonalData(data)); 
+    dispatch(clearPersonalData());
+    const { API_BASE_URL } = AppContext._currentValue; 
+    const res = await axios.get(`${API_BASE_URL}/personal/pending`);
+    dispatch(setPersonalData(res.data)); 
   } catch (error) {
     console.error("ไม่สามารถโหลดแจ้งเตือนการแก้ไขข้อมูลส่วนตัวได้", error);
   }
 };
 
 export const { setPersonalData, clearPersonalData } = personalnotificationSlice.actions;
-
 export default personalnotificationSlice.reducer;

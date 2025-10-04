@@ -34,12 +34,19 @@ function Login() {
   };
 
   return (
-    <Container>
-      <Row className="justify-content-center align-items-center min-vh-100">
-        <Col xs={12} md={6} lg={4}>
-          <Form onSubmit={handleLogin}>
-            <h1 className="mb-4 text-center fw-bold">Login</h1>
+    <Container
+      fluid
+      className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary"
+    >
+      <Row className="w-100 justify-content-center px-3">
+        <Col xs={12} md={8} lg={5} xl={4}>
+          <Form
+            onSubmit={handleLogin}
+            className="p-3 p-sm-4 bg-white rounded-3 shadow-sm"
+          >
+            <h1 className="mb-4 text-center fw-bold">LOG IN</h1>
             {error && <p className="alert alert-danger">{error}</p>}
+
             <Form.Group className="mb-3" controlId="formBasicEmail">
               <Form.Label>User Name</Form.Label>
               <Form.Control
@@ -50,7 +57,8 @@ function Login() {
                 required
               />
             </Form.Group>
-            <Form.Group className="mb-3" controlId="formBasicPassword">
+
+            <Form.Group className="mb-4" controlId="formBasicPassword">
               <Form.Label>Password</Form.Label>
               <Form.Control
                 type="password"
@@ -60,6 +68,7 @@ function Login() {
                 required
               />
             </Form.Group>
+
             <Button variant="success" type="submit" className="w-100">
               Login
             </Button>

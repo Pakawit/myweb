@@ -1,83 +1,101 @@
 import React, { useState, useContext, useEffect } from "react";
-import { Container, Row, Col, Table, Button, Dropdown, Modal } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Table,
+  Button,
+  Dropdown,
+  Modal,
+} from "react-bootstrap";
 import Navigation from "../components/Navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { AppContext } from "../context/appContext";
 import axios from "axios";
-import { loadEstimationHFSData } from "../features/estimationHFSSlice";
 import ReactPaginate from "react-paginate";
 import { useNavigate } from "react-router-dom";
 
+// 🔁 ใช้ตัวรวมแจ้งเตือน HFS
+import { loadHFSNotifications } from "../features/hfsnotificationSlice";
+
 function Estimation() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const admin = useSelector((state) => state.admin);
-  const { API_BASE_URL } = useContext(AppContext);
-  const estimationHFS = useSelector((state) => state.estimationHFS);
   const selectuser = useSelector((state) => state.selectuser);
+  const { API_BASE_URL } = useContext(AppContext);
+
   const [estimations, setEstimations] = useState([]);
   const [totalEstimations, setTotalEstimations] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [notification, setNotification] = useState({ show: false, message: "" });
-  const [hfsLevels, setHfsLevels] = useState({});
-  const navigate = useNavigate();
-
+  const [hfsLevels, setHfsLevels] = useState({}); // { [estimationId]: level }
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 1;
 
+  // ถ้าไม่มี selectuser (เช่นรีเฟรชหน้า) -> กลับหน้าแรก
+  useEffect(() => {
+    if (!selectuser?._id) navigate("/");
+  }, [selectuser, navigate]);
+
   const fetchEstimations = async (page = 0) => {
+    if (!selectuser?._id) return;
     try {
-      const response = await axios.post(`${API_BASE_URL}/getestimation`, {
+      const res = await axios.post(`${API_BASE_URL}/getestimation`, {
         from: selectuser._id,
-        page, 
+        page,
         limit: itemsPerPage,
       });
-      setEstimations(response.data.data);
-      setTotalEstimations(response.data.total);
-    } catch (error) {
-      console.error("Error fetching estimations:", error);
+      setEstimations(res.data?.data || []);
+      setTotalEstimations(res.data?.total || 0);
+    } catch (err) {
+      console.error("Error fetching estimations:", err);
     }
   };
 
+  // โหลดรายการ (เปลี่ยนหน้า/เปลี่ยนคน)
   useEffect(() => {
+    if (!selectuser?._id) return;
     fetchEstimations(currentPage);
+    const t = setInterval(() => fetchEstimations(currentPage), 10000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, selectuser?._id]);
 
-    const intervalId = setInterval(() => {
-      fetchEstimations(currentPage);
-    }, 10000); 
-
-    return () => clearInterval(intervalId); 
-  }, [currentPage, selectuser._id]);
-
+  // โหลด notification map เพื่ออัปเดต badge ที่ navbar หลังมีการยืนยัน
   useEffect(() => {
-    dispatch(loadEstimationHFSData());
-  }, []);
+    dispatch(loadHFSNotifications());
+  }, [dispatch]);
 
   const handleHfsLevelChange = (estimationId, level) => {
-    setHfsLevels((prevLevels) => ({
-      ...prevLevels, 
-      [estimationId]: level,
-    }));
+    setHfsLevels((prev) => ({ ...prev, [estimationId]: level }));
   };
 
   const handleSubmit = async (estimationId) => {
-    const hfsLevel = hfsLevels[estimationId];
-    if (hfsLevel !== undefined && hfsLevel !== 0) {
-      try {
-        const response = await axios.put(`${API_BASE_URL}/evaluateHFS`, {
-          estimationId,
-          userId: selectuser._id,
-          userName: selectuser.name,
-          adminName: admin.name,
-          hfsLevel: hfsLevel === "ไม่พบอาการ" ? 5 : hfsLevel,
-        });
+    const chosen = hfsLevels[estimationId];
+    if (chosen === undefined || chosen === 0) return;
 
-        setNotification({ show: true, message: response.data.message });
-        await fetchEstimations(currentPage);
-        dispatch(loadEstimationHFSData());
-      } catch (error) {
-        console.error("Error submitting evaluation:", error);
-      }
+    try {
+      const payload = {
+        estimationId,
+        userId: selectuser._id,
+        userName: selectuser.name,
+        adminName: admin.name,
+        hfsLevel: chosen === "ไม่พบอาการ" ? 5 : chosen,
+      };
+
+      const res = await axios.put(`${API_BASE_URL}/evaluateHFS`, payload);
+
+      setNotification({ show: true, message: res.data?.message || "ดำเนินการสำเร็จ" });
+
+      // ดึงรายการล่าสุดเพื่อให้เห็นผล evaluations/hfsLevel ที่อัปเดตจริง
+      await fetchEstimations(currentPage);
+
+      // อัปเดตแจ้งเตือน (ใช้ทั้งแบดจ์ขวาบน + ปุ่มเหลืองหน้า Home)
+      dispatch(loadHFSNotifications());
+    } catch (err) {
+      console.error("Error submitting evaluation:", err);
     }
   };
 
@@ -85,59 +103,70 @@ function Estimation() {
     setSelectedImage(image);
     setShowModal(true);
   };
-
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedImage(null);
   };
-
-  const handleCloseNotificationModal = () => {
+  const handleCloseNotificationModal = () =>
     setNotification({ show: false, message: "" });
-  };
 
-  const checkEstimationStatus = (estimationId, hfsLevel) => {
-    const evaluations = estimationHFS[estimationId]?.evaluations || {};
-    const ApatnipaLevel = evaluations.Apatnipa?.hfsLevel;
-    const ChureepornLevel = evaluations.Chureeporn?.hfsLevel;
+  // ✅ เช็คสถานะจากข้อมูลจริงในเอกสาร Estimation (est.evaluations/hfsLevel)
+  const checkEstimationStatus = (est, adminName) => {
+    const evaluations = est.evaluations || {};
+    const A = evaluations?.Apatnipa?.hfsLevel;
+    const C = evaluations?.Chureeporn?.hfsLevel;
 
-    if (hfsLevel === 0 && Object.keys(evaluations).length === 0) {
-      return { disabled: false, message: "ยืนยัน" }; 
+    // ยังไม่มีใครประเมิน และยังไม่สรุป
+    if (est.hfsLevel === 0 && Object.keys(evaluations).length === 0) {
+      return { disabled: false, message: "ยืนยัน" };
     }
 
-    if (Object.keys(evaluations).length === 0) {
-      return { disabled: true, message: "ประเมินแล้ว" }; 
+    // มีใครสักคนประเมินแล้ว แต่ยังไม่สรุป
+    if (Object.keys(evaluations).length > 0 && est.hfsLevel === 0) {
+      // ถ้าคนล็อกอินคือคนที่ "ยังไม่" ประเมิน -> ให้ยืนยันได้
+      if (adminName === "Apatnipa" && A === undefined) {
+        return { disabled: false, message: "ยืนยัน" };
+      }
+      if (adminName === "Chureeporn" && C === undefined) {
+        return { disabled: false, message: "ยืนยัน" };
+      }
+      // คนนี้ประเมินไปแล้ว → รออีกคน
+      if (adminName === "Apatnipa" && A !== undefined) {
+        return { disabled: true, message: "รอการประเมินจาก Chureeporn" };
+      }
+      if (adminName === "Chureeporn" && C !== undefined) {
+        return { disabled: true, message: "รอการประเมินจาก Apatnipa" };
+      }
     }
 
-    if (ApatnipaLevel !== undefined && admin.name === "Apatnipa") {
-      return { disabled: true, message: "รอการประเมินจาก Chureeporn" };
-    }
-
-    if (ChureepornLevel !== undefined && admin.name === "Chureeporn") {
-      return { disabled: true, message: "รอการประเมินจาก Apatnipa" };
+    // สรุปแล้ว (hfsLevel !== 0)
+    if (est.hfsLevel !== 0) {
+      return { disabled: true, message: "ประเมินแล้ว" };
     }
 
     return { disabled: false, message: "ยืนยัน" };
   };
 
-  const handlePageChange = (selectedItem) => {
-    setCurrentPage(selectedItem.selected); 
-  };
+  const handlePageChange = (selected) => setCurrentPage(selected.selected);
 
   return (
-    <Container fluid>
+    <Container fluid className="px-2 px-sm-3 px-md-4">
       <Navigation />
-      <Row>
-        <h1>การประเมินอาการ HFS</h1>
-        <Row className="mb-3">
-          <Col className="d-flex justify-content-end">
-            <Button variant="outline-secondary" onClick={() => navigate("/create-estimation")}>
-              สร้างข้อมูลการประเมิน
-            </Button>
-          </Col>
-        </Row>
 
+      <div className="d-flex flex-wrap align-items-center justify-content-between mb-3 my-3">
+        <h1 className="h3 h2-md m-0">การประเมินอาการ HFS</h1>
+        <Button
+          variant="outline-secondary"
+          onClick={() => navigate("/create-estimation")}
+          className="mt-2 mt-md-0"
+        >
+          สร้างข้อมูลการประเมิน
+        </Button>
+      </div>
+
+      <Row>
         <Col>
-          <Table responsive striped bordered hover>
+          <Table responsive="md" striped bordered hover className="align-middle">
             <thead>
               <tr>
                 <th className="text-center">วัน/เดือน/ปี</th>
@@ -151,47 +180,64 @@ function Estimation() {
             <tbody>
               {estimations.length > 0 ? (
                 estimations.map((est) => {
-                  const { disabled, message } = checkEstimationStatus(est._id, est.hfsLevel);
+                  const { disabled, message } = checkEstimationStatus(est, admin.name);
+                  const myEval = est.evaluations?.[admin.name]?.hfsLevel;
 
                   return (
-                    <tr key={est._id} className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}>
-
+                    <tr
+                      key={est._id}
+                      className={est.hfsLevel !== 0 ? "bg-secondary text-white" : ""}
+                    >
                       <td className="text-center">{est.date}</td>
-
                       <td className="text-center">{est.time}</td>
 
                       <td className="text-center">
-                        <Row>
-                          <Col>
-                            <h5 className="fw-bold text-center">รูปฝั่งซ้าย</h5>
-                            <Row className="g-0">
-                              {[est.photos[0], est.photos[1], est.photos[4], est.photos[5]].map((photo, i) => (
-                                <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
-                                  <img
-                                    src={`data:image/jpeg;base64,${photo}`}
-                                    alt={`รูปภาพ ${i}`}
-                                    className="img-fluid"
-                                    style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
-                                    onClick={() => handleShowModal(photo)}
-                                  />
-                                </Col>
-                              ))}
+                        <Row className="gx-2 gy-2">
+                          <Col xs={12} md={6}>
+                            <h6 className="fw-bold text-center mb-2">รูปฝั่งซ้าย</h6>
+                            <Row className="row-cols-2 g-2 justify-content-center">
+                              {[est.photos[0], est.photos[1], est.photos[4], est.photos[5]].map(
+                                (photo, i) => (
+                                  <Col key={i} className="d-flex justify-content-center">
+                                    <img
+                                      src={`data:image/jpeg;base64,${photo}`}
+                                      alt={`ซ้าย ${i}`}
+                                      className="img-fluid rounded border"
+                                      style={{
+                                        width: "120px",
+                                        height: "120px",
+                                        objectFit: "cover",
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleShowModal(photo)}
+                                    />
+                                  </Col>
+                                )
+                              )}
                             </Row>
                           </Col>
-                          <Col>
-                            <h5 className="fw-bold text-center">รูปฝั่งขวา</h5>
-                            <Row className="g-0">
-                              {[est.photos[2], est.photos[3], est.photos[6], est.photos[7]].map((photo, i) => (
-                                <Col key={i} xs={6} className="p-1 d-flex justify-content-center">
-                                  <img
-                                    src={`data:image/jpeg;base64,${photo}`}
-                                    alt={`รูปภาพ ${i}`}
-                                    className="img-fluid"
-                                    style={{ cursor: "pointer", maxWidth: "150px", maxHeight: "150px" }}
-                                    onClick={() => handleShowModal(photo)}
-                                  />
-                                </Col>
-                              ))}
+
+                          <Col xs={12} md={6} className="mt-3 mt-md-0">
+                            <h6 className="fw-bold text-center mb-2">รูปฝั่งขวา</h6>
+                            <Row className="row-cols-2 g-2 justify-content-center">
+                              {[est.photos[2], est.photos[3], est.photos[6], est.photos[7]].map(
+                                (photo, i) => (
+                                  <Col key={i} className="d-flex justify-content-center">
+                                    <img
+                                      src={`data:image/jpeg;base64,${photo}`}
+                                      alt={`ขวา ${i}`}
+                                      className="img-fluid rounded border"
+                                      style={{
+                                        width: "120px",
+                                        height: "120px",
+                                        objectFit: "cover",
+                                        cursor: "pointer",
+                                      }}
+                                      onClick={() => handleShowModal(photo)}
+                                    />
+                                  </Col>
+                                )
+                              )}
                             </Row>
                           </Col>
                         </Row>
@@ -200,36 +246,45 @@ function Estimation() {
                       <td className="text-center">{est.painLevel}</td>
 
                       <td className="text-center">
-                        {estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel !== undefined ? (
+                        {myEval !== undefined ? (
                           <span>
-                            คุณประเมินว่า:{" "}
-                            {estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel === 5
-                              ? "ไม่พบอาการ"
-                              : `ระดับที่ ${estimationHFS[est._id]?.evaluations?.[admin.name]?.hfsLevel}`}
+                            คุณประเมินว่า: {myEval === 5 ? "ไม่พบอาการ" : `ระดับที่ ${myEval}`}
                           </span>
+                        ) : est.hfsLevel !== 0 ? (
+                          <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
                         ) : (
-                          est.hfsLevel !== 0 ? (
-                            <span>{est.hfsLevel === 5 ? "ไม่พบอาการ" : `ระดับที่ ${est.hfsLevel}`}</span>
-                          ) : (
-                            <Dropdown>
-                              <Dropdown.Toggle variant="outline-success" id="dropdown-basic">
-                                ระดับที่ {hfsLevels[est._id] ?? ""}
-                              </Dropdown.Toggle>
-                              <Dropdown.Menu>
-                                {["ไม่พบอาการ", 1, 2, 3].map((level, idx) => (
-                                  <Dropdown.Item key={idx} onClick={() => handleHfsLevelChange(est._id, level)}>
-                                    {level}
-                                  </Dropdown.Item>
-                                ))}
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          )
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              variant="outline-success"
+                              id={`level-${est._id}`}
+                              size="sm"
+                            >
+                              {`เลือกระดับ${hfsLevels[est._id] ? `: ${hfsLevels[est._id]}` : ""}`}
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu>
+                              {["ไม่พบอาการ", 1, 2, 3].map((level) => (
+                                <Dropdown.Item
+                                  key={String(level)}
+                                  onClick={() => handleHfsLevelChange(est._id, level)}
+                                >
+                                  {level}
+                                </Dropdown.Item>
+                              ))}
+                            </Dropdown.Menu>
+                          </Dropdown>
                         )}
                       </td>
 
                       <td className="text-center">
-                        <div className="d-flex justify-content-center">
-                          <Button variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"} onClick={() => handleSubmit(est._id)} disabled={disabled}>{disabled ? message : "ยืนยัน"}</Button>
+                        <div className="d-flex flex-wrap gap-2 justify-content-center">
+                          <Button
+                            variant={est.hfsLevel !== 0 ? "outline-secondary" : "outline-success"}
+                            onClick={() => handleSubmit(est._id)}
+                            disabled={disabled}
+                            size="sm"
+                          >
+                            {disabled ? message : "ยืนยัน"}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -237,7 +292,9 @@ function Estimation() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center">ไม่มีข้อมูล</td>
+                  <td colSpan="6" className="text-center">
+                    ไม่มีข้อมูล
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -252,7 +309,7 @@ function Estimation() {
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageChange}
-              containerClassName={"pagination justify-content-end"}
+              containerClassName={"pagination justify-content-end flex-wrap"}
               activeClassName={"active"}
               pageClassName={"page-item"}
               pageLinkClassName={"page-link"}
@@ -274,8 +331,8 @@ function Estimation() {
             <img
               src={`data:image/jpeg;base64,${selectedImage}`}
               alt="รูปภาพ"
-              className="img-fluid"
-              style={{ maxHeight: "80vh", margin: "0 auto", display: "block" }}
+              className="img-fluid d-block mx-auto"
+              style={{ maxHeight: "80vh", objectFit: "contain" }}
             />
           )}
         </Modal.Body>

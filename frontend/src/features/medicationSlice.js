@@ -1,32 +1,27 @@
+// src/features/medicationSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import medicationsData from "../json/medications.json"; 
+import axios from "axios";
+import config from "../config";          
 
-const initialState = [];
+const initialState = [];               
 
 export const medicationSlice = createSlice({
   name: "medication",
   initialState,
   reducers: {
-    setMedications(state, action) {
-      return [...action.payload];  
-    },
-    deleteMedication: () => {
-      return []; 
-    },
+    setMedications: (_state, action) => [...action.payload], 
+    deleteMedication: () => [],                             
   },
 });
 
-
 export const loadMedicationsData = () => async (dispatch) => {
   try {
-  
-    const data = medicationsData; 
-    dispatch(setMedications(data)); 
+    const res = await axios.get(`${config.API_BASE_URL}/getmedication`);
+    dispatch(setMedications(res.data || []));
   } catch (error) {
-    console.error("ไม่สามารถโหลดข้อมูลยาได้", error);
+    console.error("❌ ไม่สามารถโหลดข้อมูลยาได้:", error);
   }
 };
 
 export const { setMedications, deleteMedication } = medicationSlice.actions;
-
 export default medicationSlice.reducer;

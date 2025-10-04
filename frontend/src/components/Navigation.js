@@ -1,201 +1,296 @@
-import React, { useContext, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { Button, Container, Nav, Navbar, Dropdown, Badge } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+// src/components/Navigation.jsx
+import React, {
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  memo,
+} from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch, shallowEqual } from "react-redux";
+import { Button, Container, Navbar, Dropdown, Badge } from "react-bootstrap";
+import axios from "axios";
+
+import config from "../config";
+
 import { deleteUsers } from "../features/usersSlice";
 import { deleteMedication } from "../features/medicationSlice";
 import { deleteMessage } from "../features/messageSlice";
 import { deleteAdmin } from "../features/adminSlice";
 import { setselectuser } from "../features/selectuserSlice";
-import { fetchChatNotifications, removeChatNotification, clearChatNotifications } from '../features/chatnotificationSlice';
-import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
-import { loadEstimationHFSData, clearEstimationHFS } from "../features/estimationHFSSlice";
-import { AppContext } from "../context/appContext";
-import axios from "axios";
 
-function Navigation() {
-  const admin = useSelector((state) => state.admin);
-  const chatnotification = useSelector((state) => state.chatnotification);
-  const users = useSelector((state) => state.users);
-  const selectuser = useSelector((state) => state.selectuser);
-  const personal = useSelector((state) => state.personalnotification);
-  const estimationHFS = useSelector((state) => state.estimationHFS);
+import {
+  fetchChatNotifications,
+  removeChatNotification,
+  clearChatNotifications,
+} from "../features/chatnotificationSlice";
+
+import { loadPersonalnotificationData } from "../features/personalnotificationSlice";
+
+import {
+  loadHFSNotifications,
+  clearHfsNotifications,
+} from "../features/hfsnotificationSlice";
+
+import store, { persistor } from "../store";
+
+// ลด re-render
+function useAppSelector(selector) {
+  return useSelector(selector, shallowEqual);
+}
+
+const Navigation = memo(function Navigation() {
   const dispatch = useDispatch();
-  const { API_BASE_URL } = useContext(AppContext);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchChatNotifications()),
-          dispatch(loadPersonalnotificationData()),
-          dispatch(loadEstimationHFSData()),
-        ]);
-      } catch (error) {
-        console.error("Error loading data:", error);
-      }
-    };
+  // เลือกเฉพาะที่จำเป็น
+  const adminName = useAppSelector((s) => s.admin?.name || "Admin");
+  const users = useAppSelector((s) => s.users);
+  const selectuserId = useAppSelector((s) => s.selectuser?._id);
+  const personal = useAppSelector((s) => s.personalnotification);
+  const hfs = useAppSelector((s) => s.hfsnotification);
+  const chatnotification = useAppSelector((s) => s.chatnotification);
 
-    loadData();
+  // สร้าง map id->user
+  const usersById = useMemo(() => {
+    const map = Object.create(null);
+    for (const u of users) map[u._id] = u;
+    return map;
+  }, [users]);
 
-    const intervalId = setInterval(loadData, 3000);
+  // ชื่อ user ที่เลือกปัจจุบัน (โชว์ตรงกลาง navbar)
+  const selectedUserName = useMemo(() => {
+    if (!selectuserId) return null;
+    return usersById[selectuserId]?.name || "Unknown User";
+  }, [usersById, selectuserId]);
 
-    return () => clearInterval(intervalId);
-  }, []);
+  // รวมจำนวนแจ้งเตือน personal + HFS
+  const totalPersonalNotifications = useMemo(() => {
+    const hfsCount = Object.keys(hfs?.byEstimationId || {}).length;
+    return Object.keys(personal || {}).length + hfsCount;
+  }, [personal, hfs?.byEstimationId]);
 
-  const back = () => {
-    navigate("/");
-  };
+  const hideBackButton = location.pathname === "/";
 
-  const handleLogout = async (e) => {
-    e.preventDefault();  // ป้องกันพฤติกรรมเริ่มต้นของปุ่ม
+  // polling แบบคงตัว + หยุดเมื่อแท็บไม่โฟกัส
+  const intervalRef = useRef(null);
+
+  const loadData = useCallback(async () => {
     try {
       await Promise.all([
-        dispatch(deleteUsers()),
-        dispatch(deleteMedication()),
-        dispatch(deleteMessage()),
-        dispatch(deleteAdmin()),
-        dispatch(clearEstimationHFS()),
-        dispatch(clearChatNotifications()),
+        dispatch(fetchChatNotifications()),
+        dispatch(loadPersonalnotificationData()),
+        dispatch(loadHFSNotifications()),
       ]);
-
-      await axios.post(`${API_BASE_URL}/admin/logout`, {
-        name: admin.name,
-      });
-
-      navigate("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
+    } catch {
+      // เงียบ เพื่อลด log noise
     }
-  };
+  }, [dispatch]);
 
-  const totalPersonalNotifications = Object.keys(personal).length + Object.keys(estimationHFS).length; // รวมจำนวนการแจ้งเตือนส่วนบุคคลและการประเมิน HFS
-  const shouldHideBackButton = location.pathname === "/"; // ซ่อนปุ่ม "Back" ถ้าอยู่ในหน้าแรก
+  const startPolling = useCallback(() => {
+    if (intervalRef.current) return;
+    intervalRef.current = setInterval(loadData, 3000);
+  }, [loadData]);
+
+  const stopPolling = useCallback(() => {
+    if (!intervalRef.current) return;
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    startPolling();
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        loadData();
+        startPolling();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      stopPolling();
+    };
+  }, [loadData, startPolling, stopPolling]);
+
+  const back = useCallback(() => navigate("/"), [navigate]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await axios.post(`${config.API_BASE_URL}/logout`, { name: adminName });
+    } catch {
+      // เงียบไว้
+    } finally {
+      try {
+        store.dispatch({ type: "RESET_STORE" });
+        dispatch(deleteUsers());
+        dispatch(deleteMedication());
+        dispatch(deleteMessage());
+        dispatch(deleteAdmin());
+        dispatch(clearHfsNotifications());
+        dispatch(clearChatNotifications());
+        await persistor.purge();
+      } finally {
+        navigate("/login");
+      }
+    }
+  }, [adminName, dispatch, navigate]);
 
   return (
-    <Navbar>
-      <Container fluid>
-        <div className="d-flex align-items-center">
-          <Button variant="outline-dark" onClick={back} style={{ visibility: shouldHideBackButton ? "hidden" : "visible" }} className="me-2">
-            <i className="bi bi-chevron-left"></i>
-          </Button>
-
-          <Navbar.Text className="border border-secondary rounded px-3 py-1 fw-bold text-secondary">
-            {admin.name}
-          </Navbar.Text>
-        </div>
-
-        <div className="d-flex flex-grow-1 justify-content-center">
-          {selectuser && selectuser._id && (
-            <Navbar.Text className="fw-bold fs-5">
-              {users.find((user) => user._id === selectuser._id)?.name || "Unknown User"}
+    <Navbar bg="body-tertiary" className="sticky-top border-bottom">
+      <Container fluid className="py-2">
+        <div className="row w-100 align-items-center g-2">
+          {/* ซ้าย */}
+          <div className="col-auto d-flex align-items-center">
+            <Button
+              variant="outline-dark"
+              onClick={back}
+              style={{ visibility: hideBackButton ? "hidden" : "visible" }}
+              className="me-2"
+            >
+              <i className="bi bi-chevron-left"></i>
+            </Button>
+            <Navbar.Text className="border border-secondary rounded px-3 py-1 fw-bold text-secondary">
+              <span
+                className="d-inline-block text-truncate"
+                style={{ maxWidth: 160 }}
+              >
+                {adminName}
+              </span>
             </Navbar.Text>
-          )}
-        </div>
+          </div>
 
-        <Nav className="ms-auto d-flex align-items-center">
+          {/* กลาง */}
+          <div className="col text-center">
+            {selectuserId && (
+              <Navbar.Text
+                className="fw-bold fs-5 text-truncate d-inline-block"
+                style={{ maxWidth: 480 }}
+                title={selectedUserName || "Unknown User"}
+              >
+                {selectedUserName || "Unknown User"}
+              </Navbar.Text>
+            )}
+          </div>
 
-          <Dropdown className="me-2">
-            <Dropdown.Toggle variant="outline-dark" id="personal-notification-dropdown">
-              <i className="bi bi-exclamation-triangle"></i>
-              {totalPersonalNotifications > 0 && (
-                <Badge pill bg="warning" style={{ marginLeft: "5px" }}>{totalPersonalNotifications}</Badge>
-              )}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {totalPersonalNotifications === 0 ? (
-                <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
-              ) : (
-                <>
-                  {/* Personal Notification */}
-                  {Object.keys(personal).map((userId) => {
-                    const user = users.find((user) => user._id === userId); // ค้นหา user ใน users
-                    return (
-                      <Dropdown.Item key={userId}
-                        onClick={() => {
-                          if (user) {
+          {/* ขวา */}
+          <div className="col-auto d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            {/* ปุ่มรวมแจ้งเตือน: แก้ข้อมูล + HFS */}
+            <Dropdown align="end">
+              <Dropdown.Toggle variant="outline-dark" id="personal-dropdown">
+                <i className="bi bi-exclamation-triangle"></i>
+                {totalPersonalNotifications > 0 && (
+                  <Badge pill bg="warning" className="ms-2">
+                    {totalPersonalNotifications}
+                  </Badge>
+                )}
+              </Dropdown.Toggle>
+              <Dropdown.Menu className="dropdown-menu-end">
+                {totalPersonalNotifications === 0 ? (
+                  <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
+                ) : (
+                  <>
+                    {/* pending personal edits */}
+                    {Object.keys(personal || {}).map((uid) => {
+                      const user = usersById[uid];
+                      if (!user) return null;
+                      return (
+                        <Dropdown.Item
+                          key={uid}
+                          onClick={() => {
                             dispatch(setselectuser(user));
                             navigate("/personal");
-                          }
-                        }}>
-                        แก้ไขข้อมูล {user ? user.name : "Unknown User"}
-                      </Dropdown.Item>
-                    );
-                  })}
+                          }}
+                        >
+                          แก้ไขข้อมูล {user.name}
+                        </Dropdown.Item>
+                      );
+                    })}
 
-                  {/* HFS Notification */}
-                  {Object.keys(estimationHFS).map((estimationId) => {
-                    const estimationUser = estimationHFS[estimationId];
-                    const user = estimationUser ? users.find((user) => user._id === estimationUser.userId) : null; // ค้นหา user ใน estimationHFS
-                    return (
-                      <Dropdown.Item
-                        key={estimationId}
-                        onClick={() => {
-                          if (user) {
+                    {/* HFS notifications */}
+                    {Object.values(hfs?.byEstimationId || {}).map((it) => {
+                      const user = it?.userId ? usersById[it.userId] : null;
+                      if (!user) return null;
+                      return (
+                        <Dropdown.Item
+                          key={it.estimationId}
+                          onClick={() => {
                             dispatch(setselectuser(user));
                             navigate("/estimation");
-                          }
+                          }}
+                        >
+                          ประเมินอาการ {user.name}
+                        </Dropdown.Item>
+                      );
+                    })}
+                  </>
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
+
+            {/* Chat notifications */}
+            <Dropdown align="end">
+              <Dropdown.Toggle variant="outline-dark" id="chat-dropdown">
+                <i className="bi bi-bell"></i>
+                {Object.keys(chatnotification || {}).length > 0 && (
+                  <Badge pill bg="danger" className="ms-2">
+                    {Object.keys(chatnotification).length}
+                  </Badge>
+                )}
+              </Dropdown.Toggle>
+              <Dropdown.Menu className="dropdown-menu-end">
+                {Object.keys(chatnotification || {}).length === 0 ? (
+                  <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
+                ) : (
+                  Object.keys(chatnotification).map((key) => {
+                    const n = chatnotification[key];
+                    const user = n ? usersById[n.from] : null;
+                    if (!n || !user) return null;
+
+                    return (
+                      <Dropdown.Item
+                        key={key}
+                        onClick={() => {
+                          // ล้างแจ้งเตือนของ user นี้ แล้วค่อยไปหน้าแชท
+                          dispatch(removeChatNotification(n.from));
+                          dispatch(setselectuser(user));
+                          navigate("/chat");
                         }}
                       >
-                        ประเมินอาการ {user ? user.name : "Unknown User"}
+                        แชทจาก {user.name}
                       </Dropdown.Item>
                     );
-                  })}
-                </>
-              )}
-            </Dropdown.Menu>
-          </Dropdown>
+                  })
+                )}
+              </Dropdown.Menu>
+            </Dropdown>
 
-          {/* Chat Notification */}
-          <Dropdown className="me-2">
-            <Dropdown.Toggle variant="outline-dark" id="dropdown-basic">
-              <i className="bi bi-bell"></i>
-              {Object.keys(chatnotification).length > 0 && (
-                <Badge pill bg="danger" style={{ marginLeft: "5px" }}>
-                  {Object.keys(chatnotification).length}
-                </Badge>
-              )}
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {Object.keys(chatnotification).length === 0 ? (
-                <Dropdown.Item>ไม่มีการแจ้งเตือน</Dropdown.Item>
-              ) : (
-                Object.keys(chatnotification).map((key) => {
-                  const notification = chatnotification[key]; // ดึงการแจ้งเตือนจาก key
-                  const user = users.find((user) => user._id === notification.from); // ค้นหาผู้ใช้จาก `from`
-                  return (
-                    <Dropdown.Item
-                      key={key}
-                      onClick={() => {
-                        if (user) {
-                          dispatch(setselectuser(user));
-                          dispatch(removeChatNotification(notification.from)); // ลบการแจ้งเตือน
-                          navigate("/chat"); // นำทางไปยังหน้าแชท
-                        }
-                      }}
-                    >
-                      แชทจาก {user ? user.name : "Unknown User"}
-                    </Dropdown.Item>
-                  );
-                })
-              )}
-            </Dropdown.Menu>
-          </Dropdown>
+            <Button
+              variant="outline-dark"
+              onClick={() => navigate("/log")}
+              title="Log"
+            >
+              <i className="bi bi-journal"></i>
+            </Button>
 
-          <Button variant="outline-dark" className="me-2" onClick={() => navigate("/log")}>
-            <i className="bi bi-journal"></i>
-          </Button>
-
-          <Button variant="outline-dark" onClick={handleLogout}>
-            <i className="bi bi-box-arrow-in-right"></i>
-          </Button>
-        </Nav>
+            <Button
+              variant="outline-dark"
+              onClick={handleLogout}
+              title="Logout"
+            >
+              <i className="bi bi-box-arrow-in-right"></i>
+            </Button>
+          </div>
+        </div>
       </Container>
     </Navbar>
   );
-}
+});
 
 export default Navigation;

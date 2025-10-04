@@ -12,13 +12,20 @@ function Medication() {
   const { API_BASE_URL } = useContext(AppContext);
   const medications = useSelector((state) => state.medication);
   const selectuser = useSelector((state) => state.selectuser);
+
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 10;
+
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editMedication, setEditMedication] = useState({ id: "", date: "", time: "", status: 0 });
+  const [editMedication, setEditMedication] = useState({
+    id: "",
+    date: "",
+    time: "",
+    status: 0,
+  });
 
   const fetchDataOnLoad = async () => {
     try {
@@ -31,13 +38,10 @@ function Medication() {
 
   useEffect(() => {
     fetchDataOnLoad();
-
     const intervalId = setInterval(() => {
       dispatch(loadMedicationsData());
     }, 5000);
-
     window.addEventListener("beforeunload", fetchDataOnLoad);
-
     return () => {
       clearInterval(intervalId);
       window.removeEventListener("beforeunload", fetchDataOnLoad);
@@ -63,11 +67,11 @@ function Medication() {
   const formatTimeRange = (time) => {
     const [hours, minutes] = time.split(":").map(Number);
     const startDate = new Date();
-    startDate.setHours(hours, minutes);
+    startDate.setHours(hours, minutes, 0, 0);
     const endDate = new Date(startDate);
     endDate.setHours(startDate.getHours() + 6);
-    const formatTime = (date) => date.toTimeString().slice(0, 5);
-    return `${formatTime(startDate)}-${formatTime(endDate)}`;
+    const fmt = (d) => d.toTimeString().slice(0, 5);
+    return `${fmt(startDate)}-${fmt(endDate)}`;
   };
 
   const sortedMedications = [...medications]
@@ -99,7 +103,12 @@ function Medication() {
   };
 
   const handleOpenEditModal = (med) => {
-    setEditMedication({ id: med._id, date: med.date, time: med.time, status: med.status });
+    setEditMedication({
+      id: med._id,
+      date: med.date,
+      time: med.time.padStart(5, "0"),
+      status: med.status,
+    });
     setShowEditModal(true);
   };
 
@@ -107,26 +116,27 @@ function Medication() {
     const { name, value } = e.target;
 
     if (name === "time") {
-      let [hours, minutes] = value.split(":");
-      hours = hours.padStart(2, "0");
-      minutes = minutes.padStart(2, "0");
-      setEditMedication((prev) => ({
-        ...prev,
-        [name]: `${hours}:${minutes}`,
-      }));
-    } else if (name === "date") {
-      const [day, month, year] = value.split("/");
-      const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-      setEditMedication((prev) => ({
-        ...prev,
-        [name]: formattedDate,
-      }));
-    } else {
-      setEditMedication((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      let [h = "", m = ""] = value.split(":");
+      const hh = String(h).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      setEditMedication((prev) => ({ ...prev, time: `${hh}:${mm}` }));
+      return;
     }
+
+    if (name === "date") {
+      const parts = value.split("/");
+      if (parts.length === 3) {
+        const [d, mo, y] = parts;
+        const dd = String(d).padStart(2, "0");
+        const mm = String(mo).padStart(2, "0");
+        setEditMedication((prev) => ({ ...prev, date: `${dd}/${mm}/${y}` }));
+      } else {
+        setEditMedication((prev) => ({ ...prev, date: value }));
+      }
+      return;
+    }
+
+    setEditMedication((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveEdit = async () => {
@@ -134,7 +144,7 @@ function Medication() {
       await axios.put(`${API_BASE_URL}/editmedication/${editMedication.id}`, {
         date: editMedication.date,
         time: editMedication.time,
-        status: editMedication.status,
+        status: Number(editMedication.status),
       });
       await fetchDataOnLoad();
       setShowEditModal(false);
@@ -148,11 +158,12 @@ function Medication() {
   };
 
   return (
-    <Container fluid>
+    <Container fluid className="px-2 px-sm-3 px-md-4">
       <Navigation />
-      <Row>
-        <h1>รายละเอียดการกินยา</h1>
-      </Row>
+
+
+      <h1 className="h3 h2-md text-center text-md-start my-3">รายละเอียดการกินยา</h1>
+
       <Row>
         <Col>
           {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
@@ -162,7 +173,7 @@ function Medication() {
             </Alert>
           )}
 
-          <Table responsive striped bordered hover>
+          <Table responsive="md" striped bordered hover className="align-middle">
             <thead>
               <tr>
                 <th className="text-center">วัน/เดือน/ปี</th>
@@ -173,31 +184,34 @@ function Medication() {
             </thead>
             <tbody>
               {paginatedMedications.length ? (
-                paginatedMedications.map((med, index) => {
+                paginatedMedications.map((med) => {
                   const { variant, text } = getStatusButton(med.status);
                   return (
-                    <tr key={index}>
-                      <td className="text-center">{med.date}</td>
+                    <tr key={med._id}>
+                      <td className="text-center text-truncate">{med.date}</td>
                       <td className="text-center">{formatTimeRange(med.time)}</td>
                       <td className="text-center">
-                        <Button variant={variant} disabled>{text}</Button>
+                        <Button variant={variant} size="sm" disabled>
+                          {text}
+                        </Button>
                       </td>
                       <td className="text-center">
-                        <Button
-                          variant="warning"
-                          size="sm"
-                          className="me-2"
-                          onClick={() => handleOpenEditModal(med)}
-                        >
-                          แก้ไข
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleDeleteMedication(med._id)}
-                        >
-                          ลบ
-                        </Button>
+                        <div className="d-flex flex-wrap gap-2 justify-content-center">
+                          <Button
+                            variant="warning"
+                            size="sm"
+                            onClick={() => handleOpenEditModal(med)}
+                          >
+                            แก้ไข
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={() => handleDeleteMedication(med._id)}
+                          >
+                            ลบ
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -221,7 +235,7 @@ function Medication() {
               marginPagesDisplayed={2}
               pageRangeDisplayed={5}
               onPageChange={handlePageChange}
-              containerClassName={"pagination justify-content-end"}
+              containerClassName={"pagination justify-content-end flex-wrap"}
               activeClassName={"active"}
               pageClassName={"page-item"}
               pageLinkClassName={"page-link"}
@@ -236,14 +250,13 @@ function Medication() {
         </Col>
       </Row>
 
-      {/* Modal แก้ไขข้อมูล */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>แก้ไขข้อมูลการกินยา</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>วันที่ (วัน/เดือน/ปี)</Form.Label>
               <Form.Control
                 type="text"
@@ -251,16 +264,16 @@ function Medication() {
                 value={editMedication.date}
                 onChange={handleEditMedicationChange}
                 placeholder="เช่น 26/04/2025"
+                inputMode="numeric"
               />
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>เวลา (hh:mm)</Form.Label>
               <Form.Control
                 type="time"
                 name="time"
                 value={editMedication.time}
                 onChange={handleEditMedicationChange}
-                placeholder="เช่น 14:00"
               />
             </Form.Group>
             <Form.Group>
@@ -286,7 +299,6 @@ function Medication() {
           </Button>
         </Modal.Footer>
       </Modal>
-
     </Container>
   );
 }

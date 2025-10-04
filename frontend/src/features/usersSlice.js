@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import usersData from "../json/users.json"; 
+import axios from "axios";
+import config from "../config";
 
 const initialState = [];
 
@@ -7,24 +8,19 @@ export const usersSlice = createSlice({
   name: "users",
   initialState,
   reducers: {
-    setUsers(state, action) {
-      return [...action.payload]; 
-    },
-    deleteUsers: () => {
-      return []; 
-    },
+    setUsers: (_state, action) => [...(action.payload || [])],
+    deleteUsers: () => [],
   },
 });
 
 export const loadUsersData = () => async (dispatch) => {
   try {
-    const data = usersData; 
-    dispatch(setUsers(data)); 
+    const res = await axios.get(`${config.API_BASE_URL}/getusers`);
+    dispatch(setUsers(res.data || []));
   } catch (error) {
-    console.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้", error);
+    console.error("❌ ไม่สามารถโหลดข้อมูลผู้ใช้ได้:", error);
   }
 };
 
 export const { setUsers, deleteUsers } = usersSlice.actions;
-
 export default usersSlice.reducer;

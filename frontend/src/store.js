@@ -1,6 +1,7 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import storage from "redux-persist/lib/storage";
-import { persistReducer } from "redux-persist";
+import { persistReducer, persistStore } from "redux-persist";
+
 import adminSlice from "./features/adminSlice";
 import usersSlice from "./features/usersSlice";
 import selectuserSlice from "./features/selectuserSlice";
@@ -9,37 +10,44 @@ import messageSlice from "./features/messageSlice";
 import chatnotificationSlice from "./features/chatnotificationSlice";
 import hfsnotificationSlice from "./features/hfsnotificationSlice";
 import personalnotificationSlice from "./features/personalnotificationSlice";
-import estimationHFSSlice from "./features/estimationHFSSlice";
 
-// รวม reducers ทั้งหมดใน rootReducer
-const rootReducer = combineReducers({
+const appReducer = combineReducers({
   admin: adminSlice,
-  users: usersSlice,
   selectuser: selectuserSlice,
+
+  users: usersSlice,
   medication: medicationSlice,
   message: messageSlice,
   chatnotification: chatnotificationSlice,
   hfsnotification: hfsnotificationSlice,
   personalnotification: personalnotificationSlice,
-  estimationHFS: estimationHFSSlice,
 });
 
-const persistConfig = {
-  key: "root", // กำหนด key หลักสำหรับการ persist
-  storage, // ใช้ local storage เป็นที่จัดเก็บข้อมูล
-  blacklist: ["message"], // ระบุ slice ที่ไม่ต้องการเก็บใน local storage
+const rootReducer = (state, action) => {
+  if (action.type === "RESET_STORE") {
+    state = undefined; 
+  }
+  return appReducer(state, action);
 };
 
-const persistedReducer = persistReducer(persistConfig, rootReducer); // สร้าง persisted reducer จาก rootReducer และ persistConfig
+const persistConfig = {
+  key: "root",
+  version: 1,
+  storage,
+  whitelist: ["admin", "selectuser"], 
+};
 
-// ตั้งค่า store
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
 const store = configureStore({
-  reducer: persistedReducer, // ใช้ persisted reducer
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,  // ปิดการตรวจสอบ serializable เพื่อหลีกเลี่ยง error จาก redux-persist
-    }),
-  devTools: process.env.NODE_ENV !== "production",   // เปิด DevTools ในโหมด development เท่านั้น
+      serializableCheck: false, 
+    })
+  ,
+  devTools: process.env.NODE_ENV !== "production",
 });
 
+export const persistor = persistStore(store);
 export default store;
